@@ -1,9 +1,9 @@
 """Converts a text file (optionally with a title) to the conll2 format."""
 
 import os.path
-from langtools.Scripts import nltk
+from langtools import nltk
 from langtools.Scripts.utils import cmd_utils
-from langtools.Scripts.conll2.conll_iter import WikiPage
+from langtools.Scripts.io.conll2.conll_iter import WikiPage
 
 # TODO: rename WikiPage to ConllDocument
 # TODO: encoding!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
