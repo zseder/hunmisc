@@ -30,10 +30,19 @@ def read_file(infile, title=False):
 def write_doc(doc, outs):
     """Writes the document with to outs. A header line is written, then the
     Title field (if any), then the body."""
-    outs.write("%%#PAGE\t{0}\n".format(doc.))
-    if 'Title' in fields:
+    outs.write("%%#PAGE\t{0}\n".format(doc.title))
+    if 'Title' in doc.fields:
         outs.write("%%#Field\tTitle\n")
-        for 
+        write_text(doc.fields['Title'])
+    outs.write("%%#Field\tBody\n")
+    write_text(doc.fields['Body'])
+            
+def write_text(text, outs):
+    for sen in text:
+        for token in sen:
+            outs.write("\t".join(token))
+            outs.write("\n")
+        outs.write("\n")
 
 if __name__ == '__main__':
     import sys
@@ -60,9 +69,14 @@ if __name__ == '__main__':
     else:
         out = sys.stdout
     
-    for infile in filter(os.path.isfile,
-        [os.path.join(params['i'], infile) for infile in os.listdir(params['i'])]):
-        
+    nt = nltk.NltkTools(pos=True, stem=True, tok=True)
+    for infile in filter(os.path.isfile, [os.path.join(params['i'], infile)
+                                          for infile in os.listdir(params['i'])]):
+        doc = WikiPage(infile)
+        doc.fields = {}
+        for field, raw_text in read_file(infile, True).iteritems():
+            doc.fields[field] = nt.tag_raw(raw_text)
+        write_doc(doc, out)
     
     if 'o' in params:
         out.close()
