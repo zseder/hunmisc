@@ -2,8 +2,8 @@
 
 import os.path
 from langtools import nltk
-from langtools.Scripts.utils import cmd_utils
-from langtools.Scripts.io.conll2.conll_iter import WikiPage
+from langtools.utils import cmd_utils
+from langtools.io.conll2.conll_iter import WikiPage
 
 # TODO: rename WikiPage to ConllDocument
 # TODO: encoding!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
