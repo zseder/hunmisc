@@ -68,6 +68,6 @@ class FileWriter(StreamWriter, FileHandler):
         """Guess."""
         if file_mode not in ['a', 'w', 'ab', 'wb', 'r+', 'r+b']:
             raise ArgumentError
-        StreamWriter.__init__(self, file_name, encoding)
+        StreamWriter.__init__(self, None, encoding)
         FileHandler.__init__(self, file_name, file_mode)
         
