@@ -13,55 +13,59 @@ def ensure_dir(dir_name):
             os.mkdir(dir_name)
     return True
 
-class FileStreamHandler(object):
-    def __init__(self, file_name, encoding = 'utf-8'):
-        """Guess."""
-        self.file_name = file_name
+class StreamHandler(object):
+    def __init__(self, stream, encoding='utf-8'):
+        self.stream = stream
         self.encoding = encoding
-        self.stream = None
     
     def __del__(self):
         self.close()
-    
-    def open(self):
-        """Opens the file. Implemented in the subclasses."""
-        raise NotImplementedError
-    
+
     def close(self):
-        """Closes the file."""
+        """Closes the stream."""
         if self.stream:
             self.stream.close()
             self.stream = None
-    
-class FileReader(FileStreamHandler):
-    def __init__(self, file_name, encoding = 'utf-8'):
-        """Guess."""
-        FileStreamHandler.__init__(self, file_name, encoding)
-        
-    def open(self):
-        """Opens the file for reading."""
-#        self.stream = codecs.getreader(self.encoding)(open(self.file_name, 'r'))
-        self.stream = open(self.file_name, 'r')
-        return self
+
+class StreamReader(StreamHandler):
+    def __init__(self, stream, encoding='utf-8'):
+        StreamHandler.__init__(self, stream, encoding)
     
     def __iter__(self):
-        """Iterates through the lines in the file."""
+        """Iterates through the lines in the stream."""
         for line in self.stream:
             yield line.decode(self.encoding)
         return
     
-class FileWriter(FileStreamHandler):
-    def __init__(self, file_name, encoding = 'utf-8'):
-        """Guess."""
-        FileStreamHandler.__init__(self, file_name, encoding)
-        
-    def open(self):
-        """Opens the file for writing."""
-#        self.stream = codecs.getwriter(self.encoding)(open(self.file_name, 'w'))
-        self.stream = open(self.file_name, 'w')
-        return self
+class StreamWriter(StreamHandler):
+    def __init__(self, stream, encoding='utf-8'):
+        StreamHandler.__init__(self, stream, encoding)
     
     def write(self, text):
         """Writes C{text} to the file in the correct encoding."""
         self.stream.write(text.encode(self.encoding))
-
+    
+class FileHandler(object):
+    def __init__(self, file_name, file_mode='r'):
+        """Guess."""
+        self.file_name = file_name
+        self.file_mode = file_mode
+    
+    def open(self):
+        """Opens the file."""
+#        self.stream = codecs.getreader(self.encoding)(open(self.file_name, 'r'))
+        self.stream = open(self.file_name, self.file_mode)
+        return self
+    
+class FileReader(StreamReader, FileHandler):
+    def __init__(self, file_name, encoding='utf-8'):
+        """Guess."""
+        StreamReader.__init__(self, None, encoding)
+        FileHandler.__init__(self, file_name, 'r')
+        
+class FileWriter(StreamWriter, FileHandler):
+    def __init__(self, file_name, encoding='utf-8'):
+        """Guess."""
+        StreamWriter.__init__(self, file_name, encoding)
+        FileHandler.__init__(self, file_name, 'w')
+        
