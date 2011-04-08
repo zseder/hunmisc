@@ -27,7 +27,6 @@ class NltkTools:
         if tok:
             wtok = True
             stok = True
-            self.abbrev_set = (set(abbrev_set) if abbrev_set is not None else set())
             
         if wtok:
             self.wordTokenizer = PunktWordTokenizer()
@@ -35,6 +34,9 @@ class NltkTools:
             # Bragantino,2006.In fix this shit
         if stok:
             self.senTokenizer = PunktSentenceTokenizer()
+        
+        self.abbrev_set = (set(abbrev_set) if abbrev_set is not None else set())
+        
         if pos:
             if pos_model is not None:
                 self.posTagger = HunposTagger(pos_model, encoding="utf-8")
