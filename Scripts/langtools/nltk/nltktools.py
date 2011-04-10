@@ -117,7 +117,13 @@ class NltkTools:
         instance must have been initialized with C{pos=True, stem=True, tok=True}.
         It is a generator: returns attribute array of one word at a time. The
         attributes are the word, the pos tag and the stem."""
-        raw = raw_text.decode("utf-8").rstrip()
+        read = False
+        while not read:
+            try:
+                raw = raw_text.decode("utf-8").rstrip()
+                read = True
+            except UnicodeDecodeError as ude:
+                raw_text = raw_text[:ude.start] + ' ' + raw_text[ude.end:]
         sens = self.tokenize(raw)
         pos_tagged = list(self.pos_tag(sen) for sen in sens)
         stemmed = list(self.stem(pos_tagged_sen) for pos_tagged_sen in pos_tagged)
