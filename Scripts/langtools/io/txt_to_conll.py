@@ -4,11 +4,9 @@ import os.path
 from langtools.nltk.nltktools import NltkTools
 from langtools.utils import cmd_utils
 from langtools.utils.file_utils import *
-from langtools.io.conll2.conll_iter import WikiPage
+from langtools.io.conll2.conll_iter import FieldedDocument
 
-# TODO: rename WikiPage to ConllDocument
-# TODO: encoding!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+# Decoding is not required as NltkTools.tag_raw() handles that for utf-8.
 def read_stream(ins, title=False):
     """Reads a stream. Returns a {field:raw text} map, with a Body field. If title
     is true, a Title field will be added too."""
@@ -25,7 +23,8 @@ def read_stream(ins, title=False):
 def read_file(infile, title=False):
     """Reads a file. Returns a {field:raw text} map, with a Body field. If title
     is true, a Title field will be added too."""
-    return read_stream(FileReader(infile).open(), title)
+    with open(infile, 'r') as ins:
+        return read_stream(ins, title)
 
 def write_doc(doc, outs):
     """Writes the document to outs. A header line is written, then the
@@ -72,7 +71,7 @@ if __name__ == '__main__':
     nt = NltkTools(pos=True, stem=True, tok=True, pos_model=params.get('m'))
     for infile in filter(os.path.isfile, [os.path.join(params['i'], infile)
                                           for infile in os.listdir(params['i'])]):
-        doc = WikiPage(infile)
+        doc = FieldedDocument(infile)
         doc.fields = {}
         for field, raw_text in read_file(infile, True).iteritems():
             doc.fields[field] = nt.tag_raw(raw_text)

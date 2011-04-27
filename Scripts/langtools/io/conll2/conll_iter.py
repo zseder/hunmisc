@@ -8,7 +8,7 @@ else:
     from Queue import Queue
     from conll_reader import *
 
-class WikiPage(object):
+class FieldedDocument(object):
     """Represents a wiki page. It has the following fields:
     - title: the page title;
     - fields: a set of {field name -> word list} mappings, where a word entry
@@ -21,17 +21,17 @@ class WikiPage(object):
         self.redirect = False
         self.templates = None
 
-class ConllWikiPageConverter(DefaultConllCallback):
-    """A C{ConllCallback} that puts C{WikiPage} objects in a queue."""
+class ConllDocumentConverter(DefaultConllCallback):
+    """A C{ConllCallback} that puts C{FieldedDocument} objects in a queue."""
     def __init__(self, queue):
         self.queue = queue
-        self.page = WikiPage(None)
+        self.page = FieldedDocument(None)
         self.words = []
     
     def documentStart(self, title):
         """Called when the document header C{##%PAGE} is met.
         @param title: the title of the document."""
-        self.page = WikiPage(title)
+        self.page = FieldedDocument(title)
     
     def templates(self, templates):
         """Notifies the callback of the templates present in the document.
@@ -69,16 +69,16 @@ class ConllWikiPageConverter(DefaultConllCallback):
 
 class ConllIter(object):
     """Provides an iterable interface to C{ConllReader} via
-    C{ConllWikiPageConverter}."""
+    C{ConllDocumentConverter}."""
     EOF = None
     """The item put into the queue once all records have been read."""
     
     def __init__(self, reader, charset='utf-8'):
-        """@param reader a C{ConllReader} object. A C{ConllWikiPageConverter}
+        """@param reader a C{ConllReader} object. A C{ConllDocumentConverter}
         callback is added to it; otherwise it is not abused."""
         self.reader = reader
         self.queue = Queue(16)
-        self.callback = ConllWikiPageConverter(self.queue)
+        self.callback = ConllDocumentConverter(self.queue)
         self.reader.addCallback(self.callback)
         self.charset = charset
     
@@ -110,7 +110,7 @@ class ConllIter(object):
 if __name__ == '__main__':
     import sys
     queue = Queue(16)
-#    reader = ConllReader([ConllWikiPageConverter(queue)])
+#    reader = ConllReader([ConllDocumentConverter(queue)])
 #    for input_file in sys.argv[1:]:
 #        reader.read(input_file, 'utf-8')
 #    while not queue.empty():
