@@ -25,11 +25,10 @@ def read_stream(ins, title=False):
 def read_file(infile, title=False):
     """Reads a file. Returns a {field:raw text} map, with a Body field. If title
     is true, a Title field will be added too."""
-    with open(infile, 'r') as ins:
-        return read_stream(ins, title)
+    return read_stream(FileReader(infile).open(), title)
 
 def write_doc(doc, outs):
-    """Writes the document with to outs. A header line is written, then the
+    """Writes the document to outs. A header line is written, then the
     Title field (if any), then the body."""
     outs.write(u"%%#PAGE\t{0}\n".format(doc.title))
     if 'Title' in doc.fields:
