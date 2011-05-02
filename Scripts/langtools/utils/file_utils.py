@@ -18,9 +18,15 @@ class StreamHandler(object):
         self.stream = stream
         self.encoding = encoding
     
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+    
     def __del__(self):
         self.close()
-
+    
     def close(self):
         """Closes the stream."""
         if self.stream:
@@ -28,13 +34,14 @@ class StreamHandler(object):
             self.stream = None
 
 class StreamReader(StreamHandler):
-    def __init__(self, stream, encoding='utf-8'):
+    def __init__(self, stream, encoding='utf-8', replace=False):
         StreamHandler.__init__(self, stream, encoding)
+        self.uni_errors = 'replace' if replace else 'ignore'
     
     def __iter__(self):
         """Iterates through the lines in the stream."""
         for line in self.stream:
-            yield line.decode(self.encoding)
+            yield line.decode(self.encoding, self.uni_errors)
         return
     
 class StreamWriter(StreamHandler):
@@ -58,9 +65,9 @@ class FileHandler(object):
         return self
     
 class FileReader(StreamReader, FileHandler):
-    def __init__(self, file_name, encoding='utf-8'):
+    def __init__(self, file_name, encoding='utf-8', replace=False):
         """Guess."""
-        StreamReader.__init__(self, None, encoding)
+        StreamReader.__init__(self, None, encoding, replace)
         FileHandler.__init__(self, file_name, 'r')
         
 class FileWriter(StreamWriter, FileHandler):
