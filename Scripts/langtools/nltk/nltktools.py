@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 from collections import defaultdict
 
 from nltk.tokenize.punkt import PunktSentenceTokenizer
@@ -61,6 +62,12 @@ class NltkTools:
         raw = NltkTools.cleanup_puncts(raw)
         return self.senTokenizer.tokenize(raw)
 
+    def filter_long_sentences(self, raw, length=1024):
+        """Filters "sentences" (non-whitespace character sequences longer than
+        length) from the text."""
+        # TODO: This looks nice but it is too generous with memory use
+        return ' '.join(filter(lambda x: len(x) <= length, re.split(r"\s+", raw)))
+        
     def sen_abbr_tokenize(self, raw):
         """Tokenizes the sentence, and tries to handle problems caused by
         abbreviations and such."""
@@ -112,18 +119,12 @@ class NltkTools:
     def stem(self, tokens):
         return ((tok, pos, self.stemmer.lemmatize(tok, penn_to_major_pos[pos])) for tok, pos in tokens)
         
-    def tag_raw(self, raw_text):
+    def tag_raw(self, raw_text, errors='strict'):
         """Convenience method for tagging (a line of) raw text. The NltkTools
         instance must have been initialized with C{pos=True, stem=True, tok=True}.
         It is a generator: returns attribute array of one word at a time. The
         attributes are the word, the pos tag and the stem."""
-        read = False
-        while not read:
-            try:
-                raw = raw_text.decode("utf-8").rstrip()
-                read = True
-            except UnicodeDecodeError as ude:
-                raw_text = raw_text[:ude.start] + ' ' + raw_text[ude.end:]
+        raw = raw_text.decode("utf-8", errors).rstrip()
         sens = self.tokenize(raw)
         pos_tagged = list(self.pos_tag(sen) for sen in sens)
         stemmed = list(self.stem(pos_tagged_sen) for pos_tagged_sen in pos_tagged)
