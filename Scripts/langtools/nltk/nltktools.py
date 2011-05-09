@@ -119,13 +119,12 @@ class NltkTools:
     def stem(self, tokens):
         return ((tok, pos, self.stemmer.lemmatize(tok, penn_to_major_pos[pos])) for tok, pos in tokens)
         
-    def tag_raw(self, raw_text, errors='strict'):
+    def tag_raw(self, raw_text):
         """Convenience method for tagging (a line of) raw text. The NltkTools
         instance must have been initialized with C{pos=True, stem=True, tok=True}.
         It is a generator: returns attribute array of one word at a time. The
         attributes are the word, the pos tag and the stem."""
-        raw = raw_text.decode("utf-8", errors).rstrip()
-        sens = self.tokenize(raw)
+        sens = self.tokenize(raw_text)
         pos_tagged = list(self.pos_tag(sen) for sen in sens)
         stemmed = list(self.stem(pos_tagged_sen) for pos_tagged_sen in pos_tagged)
         for sen in stemmed:
