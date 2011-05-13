@@ -39,7 +39,7 @@ if __name__ == '__main__':
             l = line.strip()
             if l.startswith(pagesep):
                 page = l[8:]
-                curr_out = bad_out if page in bad_pages else good_out
+                curr_out = bad_out if page in bad_pages or 'disambig' in page else good_out
                 curr_out.write(u"{0}\n".format(l))
                 curr_out.write(anchor)
             else:
