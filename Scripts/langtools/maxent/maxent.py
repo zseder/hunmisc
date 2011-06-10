@@ -20,8 +20,8 @@ class MaxEnt(object):
     
     def iterate(self, num_iters):
         """Does n full (all mus) iterations."""
-        for n in num_iters:
-            for i in self.features:
+        for n in xrange(num_iters):
+            for i in xrange(len(self.features)):
                 self.do_iteration(i)
     
     def do_iteration(self, i):
@@ -34,6 +34,18 @@ class MaxEnt(object):
         self.mu[i + 1] = self.mu[i + 1] * nSumPi / nEfi * Efi / sumPi
         self.mu[0]     = self.mu[0]     * nEfi / nSumPi
         self.refresh_states()
+    
+    def get_class(self, x):
+        """Returns the class for the vector x. x differs from elements in the
+        training set in that it must be one item shorter -- the class must be
+        cut off."""
+        classes = self.state_space[
+                tuple(self.axes[i].index(val) for i, val in enumerate(x))]
+        ret = (None, 0)
+        for i, p in enumerate(classes):
+            if (p > ret[1]):
+                ret = (self.axes[-1][i], p)
+        return ret
     
     def refresh_states(self):
         """Recomputes the probabilities in the state space."""
@@ -105,10 +117,15 @@ if __name__ == '__main__':
     print m.Es
     print m.mu
     print m.state_space
-    m.do_iteration(0)
-    print m.axes
-    print m.Es
-    print m.mu
+#    m.do_iteration(0)
+#    print m.axes
+#    print m.Es
+#    print m.mu
+#    print m.state_space
+#    m.do_iteration(1)
+    m.iterate(2)
     print m.state_space
-    m.do_iteration(1)
-    print m.state_space
+    print m.get_class([1, 1])
+    print m.get_class([1, 0])
+    print m.get_class([0, 1])
+    print m.get_class([0, 0])
