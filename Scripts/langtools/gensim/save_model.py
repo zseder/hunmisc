@@ -4,7 +4,7 @@ other languages / framework."""
 import sys
 import numpy
 #from gensim import corpora, models
-from gensim.model import LsiModel
+from gensim.models import LsiModel
 from langtools.utils import file_utils
 
 #model_mapping = {'tfidf': models.TfidfModel, 'tf-idf': models.TfidfModel,
