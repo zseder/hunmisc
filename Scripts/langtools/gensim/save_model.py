@@ -5,7 +5,7 @@ import sys
 import numpy
 #from gensim import corpora, models
 from gensim.models import LsiModel
-from langtools.utils import file_utils
+from langtools.utils.file_utils import FileWriter
 
 #model_mapping = {'tfidf': models.TfidfModel, 'tf-idf': models.TfidfModel,
 #                 'lsa': models.LsiModel, 'lsi': models.LsiModel,
@@ -15,12 +15,12 @@ def export_model(model_file, out_file):
     """Saves the model. The output will be utf-8 encoded."""
 #    model = model_mapping[model_type].load(model_file)
     model = LsiModel.load(model_file)
-    with FileWriter(out_file, 'w') as out:
-        out.write("{0}\t{1}\n".format(model.numTerms, model.numTopics))
+    with FileWriter(out_file, 'w').open() as out:
+        out.write(u"{0}\t{1}\n".format(model.numTerms, model.numTopics))
         for term in xrange(model.numTerms):
-            out.write("{0}\t{1}\n".format(term, model.id2word.id2token[term])
+            out.write(u"{0}\t{1}\n".format(term, model.id2word.id2token[term].decode("utf-8")))
         for term in xrange(model.numTerms):
-            out.write("{0}\n".format("\t".join(
+            out.write(u"{0}\n".format(u"\t".join(str(f) for f in
                     numpy.asarray(model.projection.u.T[:, term]).flatten())))
 
 if __name__ == '__main__':
