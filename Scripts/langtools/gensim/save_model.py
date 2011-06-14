@@ -21,7 +21,7 @@ def export_model(model_file, out_file):
             word = model.id2word.id2token[term].decode("utf-8")
             while len(word) > 0 and not word[-1].isalnum():
                 word = word[0:-1]
-            out.write(u"{0}\t{1}\n".format(term, word))
+            out.write(u"{0}\n".format(word))
             out.write(u"{0}\n".format(u"\t".join(str(f) for f in
                     numpy.asarray(model.projection.u.T[:, term]).flatten())))
 
