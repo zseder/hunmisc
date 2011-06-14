@@ -18,7 +18,10 @@ def export_model(model_file, out_file):
     with FileWriter(out_file, 'w').open() as out:
         out.write(u"{0}\t{1}\n".format(model.numTerms, model.numTopics))
         for term in xrange(model.numTerms):
-            out.write(u"{0}\t{1}\n".format(term, model.id2word.id2token[term].decode("utf-8")))
+            word = model.id2word.id2token[term].decode("utf-8")
+            while len(word) > 0 and not word[-1].isalnum():
+                word = word[0:-1]
+            out.write(u"{0}\t{1}\n".format(term, word))
         for term in xrange(model.numTerms):
             out.write(u"{0}\n".format(u"\t".join(str(f) for f in
                     numpy.asarray(model.projection.u.T[:, term]).flatten())))
