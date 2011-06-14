@@ -16,10 +16,10 @@ def export_model(model_file, out_file):
 #    model = model_mapping[model_type].load(model_file)
     model = LsiModel.load(model_file)
     with FileWriter(out_file, 'w') as out:
-        out.write("{0}\t{1}\n".format(model.numTerms(), model.numTopics()))
-        for term in xrange(model.numTerms()):
+        out.write("{0}\t{1}\n".format(model.numTerms, model.numTopics))
+        for term in xrange(model.numTerms):
             out.write("{0}\t{1}\n".format(term, model.id2word.id2token[term])
-        for term in xrange(model.numTerms()):
+        for term in xrange(model.numTerms):
             out.write("{0}\n".format("\t".join(
                     numpy.asarray(model.projection.u.T[:, term]).flatten())))
 
