@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 from collections import defaultdict
 
 from nltk.tokenize.punkt import PunktSentenceTokenizer
@@ -61,6 +62,12 @@ class NltkTools:
         raw = NltkTools.cleanup_puncts(raw)
         return self.senTokenizer.tokenize(raw)
 
+    def filter_long_sentences(self, raw, length=1024):
+        """Filters "sentences" (non-whitespace character sequences longer than
+        length) from the text."""
+        # TODO: This looks nice but it is too generous with memory use
+        return ' '.join(filter(lambda x: len(x) <= length, re.split(r"\s+", raw)))
+        
     def sen_abbr_tokenize(self, raw):
         """Tokenizes the sentence, and tries to handle problems caused by
         abbreviations and such."""

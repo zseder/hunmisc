@@ -33,8 +33,9 @@ def write_doc(doc, outs):
     if 'Title' in doc.fields:
         outs.write(u"%%#Field\tTitle\n")
         write_text(doc.fields['Title'], outs)
-    outs.write(u"%%#Field\tBody\n")
-    write_text(doc.fields['Body'], outs)
+    if 'Body' in doc.fields:
+        outs.write(u"%%#Field\tBody\n")
+        write_text(doc.fields['Body'], outs)
             
 def write_text(text, outs):
     for token in text:
@@ -74,8 +75,14 @@ if __name__ == '__main__':
         doc = FieldedDocument(infile)
         doc.fields = {}
         for field, raw_text in read_file(infile, True).iteritems():
-            doc.fields[field] = nt.tag_raw(raw_text)
-        write_doc(doc, out)
+            filtered = nt.filter_long_sentences(raw_text)
+            diff = len(raw_text) - len(filtered)
+            if diff > 0:
+                sys.stderr.write("{0}: {1} bytes filtered.\n".format(infile, diff))
+            if len(filtered) > 0:
+                doc.fields[field] = nt.tag_raw(filtered)
+        if len(doc.fields) > 0:
+            write_doc(doc, out)
     
     if 'o' in params:
         out.close()

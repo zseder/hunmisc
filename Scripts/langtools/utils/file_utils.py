@@ -71,7 +71,7 @@ class FileReader(StreamReader, FileHandler):
         FileHandler.__init__(self, file_name, 'r')
         
 class FileWriter(StreamWriter, FileHandler):
-    def __init__(self, file_name, file_mode, encoding='utf-8'):
+    def __init__(self, file_name, file_mode='w', encoding='utf-8'):
         """Guess."""
         if file_mode not in ['a', 'w', 'ab', 'wb', 'r+', 'r+b']:
             raise ArgumentError
