@@ -17,7 +17,7 @@ def clean_utf8_accents(s):
     
     return s
 
-def change_utf_to_sziget(s):
+def change_utf_to_proszeky(s):
     s = s.replace(u"\u00C1", u"A1")
     s = s.replace(u"\u00C9", u"E1")
     s = s.replace(u"\u00CD", u"I1")
@@ -54,6 +54,6 @@ if __name__ == "__main__":
         if options.clean:
             l = clean_utf8_accents(l)
         if options.proszeky:
-            l = change_utf_to_sziget(l)
+            l = change_utf_to_proszeky(l)
         print l.encode("utf-8"),
 
