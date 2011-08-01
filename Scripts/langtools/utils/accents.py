@@ -55,10 +55,10 @@ def proszeky_to_utf(s):
         s = s.replace(k, pum[k])
     return s
 
-def change_any_coding_to_proszeky(s, encoding):
+def any_encoding_to_proszeky(s, encoding):
     decoded = s.decode(encoding)
     utf = decoded.encode("utf-8")
-    result = change_utf_to_proszeky(utf)
+    result = utf_to_proszeky(utf)
     return result
 
 def proszeky_to_any_encoding(s, encoding):
