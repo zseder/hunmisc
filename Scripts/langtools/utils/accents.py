@@ -1,3 +1,28 @@
+
+def create_utf_proszeky_map():
+    upm = {}
+
+    upm[u"\u00C1"] = [u"A1"]
+    upm[u"\u00C9"] = [u"E1"]
+    upm[u"\u00CD"] = [u"I1"]
+    upm[u"\u00D3"] = [u"O1"]
+    upm[u"\u00D6"] = [u"O2"]
+    upm[u"\u0150"] = [u"O3"]
+    upm[u"\u00DA"] = [u"U1"]
+    upm[u"\u00DC"] = [u"U2"]
+    upm[u"\u0170"] = [u"U3"]
+    
+    upm[u"\u00E1"] = [u"a1"]
+    upm[u"\u00E9"] = [u"e1"]
+    upm[u"\u00ED"] = [u"i1"]
+    upm[u"\u00F3"] = [u"o1"]
+    upm[u"\u00F6"] = [u"o2"]
+    upm[u"\u0151"] = [u"o3"]
+    upm[u"\u00FA"] = [u"u1"]
+    upm[u"\u00FC"] = [u"u2"]
+    upm[u"\u0171"] = [u"u3"]
+    return upm
+
 def clean_utf8_accents(s):
     #o3
     s = s.replace(u"\u00F4" , u"\u0151")
@@ -17,27 +42,30 @@ def clean_utf8_accents(s):
     
     return s
 
-def change_utf_to_proszeky(s):
-    s = s.replace(u"\u00C1", u"A1")
-    s = s.replace(u"\u00C9", u"E1")
-    s = s.replace(u"\u00CD", u"I1")
-    s = s.replace(u"\u00D3", u"O1")
-    s = s.replace(u"\u00D6", u"O2")
-    s = s.replace(u"\u0150", u"O3")
-    s = s.replace(u"\u00DA", u"U1")
-    s = s.replace(u"\u00DC", u"U2")
-    s = s.replace(u"\u0170", u"U3")
-    
-    s = s.replace(u"\u00E1", u"a1")
-    s = s.replace(u"\u00E9", u"e1")
-    s = s.replace(u"\u00ED", u"i1")
-    s = s.replace(u"\u00F3", u"o1")
-    s = s.replace(u"\u00F6", u"o2")
-    s = s.replace(u"\u0151", u"o3")
-    s = s.replace(u"\u00FA", u"u1")
-    s = s.replace(u"\u00FC", u"u2")
-    s = s.replace(u"\u0171", u"u3")
+def utf_to_proszeky(s):
+    upm = create_utf_proszeky_map()
+    for k in upm.keys():
+        s = s.replace(k, upm[k])
     return s
+
+def proszeky_to_utf(s):
+    upm = create_utf_proszeky_map()
+    pum = dict([(i[1], i[0]) for i in upm.items()])
+    for k in pum.keys():
+        s = s.replace(k, pum[k])
+    return s
+
+def change_any_coding_to_proszeky(s, encoding):
+    decoded = s.decode(encoding)
+    utf = decoded.encode("utf-8")
+    result = change_utf_to_proszeky(utf)
+    return result
+
+def proszeky_to_any_encoding(s, encoding):
+    utf = proszeky_to_utf(s)
+    decoded = utf.decode("utf-8")
+    result = decoded.encode(encoding)
+    return result
 
 if __name__ == "__main__":
     from optparse import OptionParser
