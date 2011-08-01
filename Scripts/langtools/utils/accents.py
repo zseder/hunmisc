@@ -1,26 +1,25 @@
 
 def create_utf_proszeky_map():
     upm = {}
-
-    upm[u"\u00C1"] = [u"A1"]
-    upm[u"\u00C9"] = [u"E1"]
-    upm[u"\u00CD"] = [u"I1"]
-    upm[u"\u00D3"] = [u"O1"]
-    upm[u"\u00D6"] = [u"O2"]
-    upm[u"\u0150"] = [u"O3"]
-    upm[u"\u00DA"] = [u"U1"]
-    upm[u"\u00DC"] = [u"U2"]
-    upm[u"\u0170"] = [u"U3"]
+    upm[u"\u00C1"] = u"A1"
+    upm[u"\u00C9"] = u"E1"
+    upm[u"\u00CD"] = u"I1"
+    upm[u"\u00D3"] = u"O1"
+    upm[u"\u00D6"] = u"O2"
+    upm[u"\u0150"] = u"O3"
+    upm[u"\u00DA"] = u"U1"
+    upm[u"\u00DC"] = u"U2"
+    upm[u"\u0170"] = u"U3"
     
-    upm[u"\u00E1"] = [u"a1"]
-    upm[u"\u00E9"] = [u"e1"]
-    upm[u"\u00ED"] = [u"i1"]
-    upm[u"\u00F3"] = [u"o1"]
-    upm[u"\u00F6"] = [u"o2"]
-    upm[u"\u0151"] = [u"o3"]
-    upm[u"\u00FA"] = [u"u1"]
-    upm[u"\u00FC"] = [u"u2"]
-    upm[u"\u0171"] = [u"u3"]
+    upm[u"\u00E1"] = u"a1"
+    upm[u"\u00E9"] = u"e1"
+    upm[u"\u00ED"] = u"i1"
+    upm[u"\u00F3"] = u"o1"
+    upm[u"\u00F6"] = u"o2"
+    upm[u"\u0151"] = u"o3"
+    upm[u"\u00FA"] = u"u1"
+    upm[u"\u00FC"] = u"u2"
+    upm[u"\u0171"] = u"u3"
     return upm
 
 def clean_utf8_accents(s):
