@@ -1,3 +1,6 @@
+# TODO: ' to separate token (currently it is not removed from the beginning of
+#       words).
+
 import re
 import sys
 
