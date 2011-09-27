@@ -191,7 +191,7 @@ def add_pos_tags(tokens):
 def add_stems(tokens):
     for sen_i, sen in enumerate(tokens):
         stemmed = nt.stem(((tok[0], tok[3]) for tok in sen))
-        hard_stemmed = nt.stem((((tok[0][0].lower() + tok[0][1:] if tok[0][0].isupper() and tok[0][1:].islower() else tok[0]), tok[3]) for tok in sen))
+        hard_stemmed = nt.stem((((tok[0][0].tolower() + tok[0][1:] if tok[0][0].isupper() and tok[0][1:].islower() else tok[0]), tok[3]) for tok in sen))
         for tok_i, (tok_stemmed, tok_hard_stemmed) in enumerate(zip(stemmed, hard_stemmed)):
             tokens[sen_i][tok_i].append(tok_stemmed[2])
             tokens[sen_i][tok_i].append(tok_hard_stemmed[2])
