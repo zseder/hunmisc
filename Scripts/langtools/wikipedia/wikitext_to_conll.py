@@ -10,8 +10,8 @@ abbrevs = None
 if len(sys.argv) > 3:
     abbrevs = set((l.strip() for l in file(sys.argv[3])))
 
-from nltk_tools import NltkTools
-nt = NltkTools(tok=True, pos=True, stem=True, pos_model="/home/zseder/all.model", abbrev_set=abbrevs)
+from langtools.nltk.nltktools import NltkTools
+nt = NltkTools(tok=True, pos=True, stem=True, pos_model="/home/zseder/all2.model", abbrev_set=abbrevs)
 
 ws_stripper = re.compile(r"\s*", re.UNICODE)
 ws_replacer_in_link = re.compile(r"\s+", re.UNICODE)
@@ -191,7 +191,7 @@ def add_pos_tags(tokens):
 def add_stems(tokens):
     for sen_i, sen in enumerate(tokens):
         stemmed = nt.stem(((tok[0], tok[3]) for tok in sen))
-        hard_stemmed = nt.stem((((tok[0][0].tolower() + tok[0][1:] if tok[0][0].isupper() and tok[0][1:].islower() else tok[0]), tok[3]) for tok in sen))
+        hard_stemmed = nt.stem((((tok[0][0].lower() + tok[0][1:] if tok[0][0].isupper() and tok[0][1:].islower() else tok[0]), tok[3]) for tok in sen))
         for tok_i, (tok_stemmed, tok_hard_stemmed) in enumerate(zip(stemmed, hard_stemmed)):
             tokens[sen_i][tok_i].append(tok_stemmed[2])
             tokens[sen_i][tok_i].append(tok_hard_stemmed[2])
