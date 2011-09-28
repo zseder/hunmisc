@@ -17,7 +17,8 @@ if __name__ == "__main__":
         if actual_page is None:
             actual_page = le[0], [le[1:]]
         elif actual_page[0] != le[0]:
-            print "%%#PAGE {0}".format(actual_page[0])
+            print "%%#PAGE\t{0}".format(actual_page[0])
+            print "%%#Field\tAnchors"
             for l in actual_page[1]:
                 print "\t".join(l)
             print
