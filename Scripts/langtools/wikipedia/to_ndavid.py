@@ -4,7 +4,7 @@ This script reads normal parsed Wikipedia pages in Conll-like format
 and transforms it to format needed by ndavid
 """
 
-from nltk_tools import NltkTools
+from langtools.nltk.nltktools import NltkTools
 nt = NltkTools(tok=True, pos=True, stem=True)
 
 pageSep = "%%#PAGE"
