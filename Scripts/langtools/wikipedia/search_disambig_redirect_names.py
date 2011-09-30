@@ -25,7 +25,7 @@ links_file = file(sys.argv[2])
 redirect_pages_file = file(sys.argv[3])
 disambig_pages_file = file(sys.argv[4])
 normal_pages_file = file(sys.argv[5])
-is_reverse = bool(sys.argv[6])
+is_reverse = (bool(sys.argv[6]) if len(sys.argv) > 6 else False)
 
 def read_to_set(f):
     s = set()
