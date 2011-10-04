@@ -39,8 +39,6 @@ disambig_pages = read_to_set(disambig_pages_file)
 normal_pages = read_to_set(normal_pages_file)
 
 def read_links(f, page_ids, reverse=False):
-    import gc
-    gc.disable()
     links = defaultdict(set)
     c = 0
     for l in f:
@@ -63,7 +61,6 @@ def read_links(f, page_ids, reverse=False):
             links[tgt_id].add(src_id)
         else:
             links[src_id].add(tgt_id)
-    gc.enable()
     return links
 
 def read_ids(f):
@@ -75,11 +72,14 @@ def read_ids(f):
         id_to_title[int(le[0])] = le[2]
     return title_to_id, id_to_title
 
+import gc
+gc.disable()
 title_to_id, id_to_title = read_ids(page_ids_file)
 dr_pages = set(title_to_id[page] for page in (redirect_pages | disambig_pages) if page in title_to_id)
 del redirect_pages
 del disambig_pages
 links = read_links(links_file, title_to_id)
+gc.enable()
 
 sys.stderr.write("%d pages to process\n" % len(normal_pages))
 c = 0
