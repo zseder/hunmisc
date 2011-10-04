@@ -39,6 +39,8 @@ disambig_pages = read_to_set(disambig_pages_file)
 normal_pages = read_to_set(normal_pages_file)
 
 def read_links(f, page_ids, reverse=False):
+    import gc
+    gc.disable()
     links = defaultdict(set)
     c = 0
     for l in f:
@@ -61,6 +63,7 @@ def read_links(f, page_ids, reverse=False):
             links[tgt_id].add(src_id)
         else:
             links[src_id].add(tgt_id)
+    gc.enable()
     return links
 
 def read_ids(f):
