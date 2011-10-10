@@ -1,3 +1,5 @@
+import re
+
 charset_pattern = re.compile(r"charset=([a-zA-Z0-9\-]+)")
 position_interval_pattern = re.compile(r"position ([0-9]*)-([0-9]*)")
 position_pattern = re.compile(r"position ([0-9]*):")
