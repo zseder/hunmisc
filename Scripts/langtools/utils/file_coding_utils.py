@@ -39,6 +39,8 @@ def test_encoding(t, enc):
         try:
             t = t.decode(enc)
             break
+        except LookupError:
+            return len(t)
         except UnicodeError, e:
             msg = str(e)
             s = position_interval_pattern.search(msg)
