@@ -65,5 +65,5 @@ def decode_text(text):
     else:
         enc = guess_encoding(text)
     decoded_text = text.decode(enc, "ignore")
-    return decoded_doc
+    return decoded_text
 
