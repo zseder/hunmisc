@@ -18,8 +18,7 @@ Formats (description of what a line should contain)(TAB separated inputs):
     title
 """
 
-logging.basicConfig(level=logging.INFO)
-
+logging.basicConfig(level=logging.INFO, format="%(asctime)s : %(module)s - %(levelname)s - %(message)s")
 page_ids_file = file(sys.argv[1])
 links_file = file(sys.argv[2])
 redirect_pages_file = file(sys.argv[3])
@@ -44,7 +43,7 @@ def read_links(f, page_ids, reverse=False):
     for l in f:
         c += 1
         if c % 1000000 == 0:
-            sys.stderr.write("%f read.\n" % (c / 1000000.0))
+            logging.info("%f read." % (c / 1000000.0))
         le = l.strip().split("\t")
         src_id = int(le[0])
         if le[1] != "0":
@@ -75,53 +74,67 @@ def read_ids(f):
 import gc
 gc.disable()
 title_to_id, id_to_title = read_ids(page_ids_file)
+logging.info("ids read.")
 dr_pages = set(title_to_id[page] for page in (redirect_pages | disambig_pages) if page in title_to_id)
 del redirect_pages
 del disambig_pages
-links = read_links(links_file, title_to_id)
+links = read_links(links_file, title_to_id, is_reverse)
 gc.enable()
 
-sys.stderr.write("%d pages to process\n" % len(normal_pages))
+logging.info("%d pages to process" % len(normal_pages))
 c = 0
 for page in normal_pages:
     c += 1
     if c % 10000 == 0:
-        sys.stderr.write("%d pages processed\n" % c)
+        logging.info("%d pages processed" % c)
     try:
         page_id = title_to_id[page]
     except KeyError:
-        sys.stderr.write("No id found for page: %s\n" % page)
+        logging.info("No id found for page: %s" % page)
         continue
     
-    #logging.info("Computing page: %s" % page)
+    logging.debug("Computing page: %s" % page)
     in_out_pairs = set()
     processed = set()
     to_be_processed = set()
     for neighbour in links[page_id]:
         if neighbour in dr_pages:
-            in_out_pairs.add((neighbour, page_id))
+            logging.debug("DR page: " + id_to_title[neighbour])
+            in_out_pairs.add((neighbour, page_id, "DR"))
             to_be_processed.add(neighbour)
+        else:
+            in_out_pairs.add((neighbour, page_id, "Normal"))
+    logging.debug("Neighbours added")
     
     while len(to_be_processed) > 0:
-        logging.debug(repr(to_be_processed))
+        logging.debug("to_be_p length = " + str(len(to_be_processed)))
         actual_processed_node = to_be_processed.pop()
+        logging.debug(repr(actual_processed_node))
         
         if actual_processed_node in processed:
-            sys.stderr.write("There is a circle at \"%s\" started from \"%s\"\n" % (id_to_title[actual_processed_node], page))
+            logging.info("There is a circle at \"%s\" started from \"%s\"" % (id_to_title[actual_processed_node], page))
             continue
         
+        if len(links[actual_processed_node]) == 0:
+            logging.info("RD page (%s) has no target!" % (id_to_title[actual_processed_node]))
         for neighbour in links[actual_processed_node]:
             if neighbour == actual_processed_node:
                 continue
             if neighbour in dr_pages:
-                in_out_pairs.add((neighbour, actual_processed_node))
+                logging.debug("DR page: " + id_to_title[neighbour])
+                in_out_pairs.add((neighbour, actual_processed_node, "DR"))
                 to_be_processed.add(neighbour)
+            else:
+                in_out_pairs.add((neighbour, actual_processed_node, "Normal"))
         
         processed.add(actual_processed_node)
     
     print "%%#PAGE\t%s" % page
     for pair in in_out_pairs:
-        src, tgt = pair
-        print "%s\t%s" % (id_to_title[src], id_to_title[tgt])
+        if not is_reverse:
+            print "%s\t%s\t%s" % (id_to_title[pair[0]], id_to_title[pair[1]], pair[2])
+        else:
+            print "%s\t%s\t%s" % (id_to_title[pair[1]], id_to_title[pair[0]], pair[2])
+
     print
 
