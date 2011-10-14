@@ -64,19 +64,11 @@ def read_ids(f):
         id_to_title[int(le[0])] = le[2]
     return title_to_id, id_to_title
 
-def main():
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s : %(module)s - %(levelname)s - %(message)s")
-    page_ids_file = file(sys.argv[1])
-    links_file = file(sys.argv[2])
-    redirect_pages_file = file(sys.argv[3])
-    disambig_pages_file = file(sys.argv[4])
-    normal_pages_file = file(sys.argv[5])
-    is_reverse = (bool(int(sys.argv[6])) if len(sys.argv) > 6 else False)
-
+def read_all(redirect_pages_file, disambig_pages_file, normal_pages_file, page_ids_file, links_file, is_reverse):
     redirect_pages = read_to_set(redirect_pages_file)
     disambig_pages = read_to_set(disambig_pages_file)
     normal_pages = read_to_set(normal_pages_file)
-    
+
     import gc
     gc.disable()
     title_to_id, id_to_title = read_ids(page_ids_file)
@@ -86,6 +78,10 @@ def main():
     del disambig_pages
     links = read_links(links_file, title_to_id, id_to_title, is_reverse)
     gc.enable()
+    return normal_pages, dr_pages, links, (title_to_id, id_to_title)
+
+def run(normal_pages, dr_pages, links, title_to_id, id_to_title, is_reverse):
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s : %(module)s - %(levelname)s - %(message)s")
 
     logging.info("%d pages to process" % len(normal_pages))
     c = 0
@@ -144,8 +140,19 @@ def main():
 
         print
 
+def main():
+    page_ids_file = file(sys.argv[1])
+    links_file = file(sys.argv[2])
+    redirect_pages_file = file(sys.argv[3])
+    disambig_pages_file = file(sys.argv[4])
+    normal_pages_file = file(sys.argv[5])
+    is_reverse = (bool(int(sys.argv[6])) if len(sys.argv) > 6 else False)
+
+    normal_pages, dr_pages, links, (title_to_id, id_to_title) = read_all(redirect_pages_file, disambig_pages_file, normal_pages_file, page_ids_file, links_file, is_reverse)
+    import cProfile
+    cProfile.run("run(normal_pages, dr_pages, links, title_to_id, id_to_title, is_reverse)")
+    #run(normal_pages, dr_pages, links, title_to_id, id_to_title, is_reverse)
+
 if __name__ == "__main__":
-#    import cProfile
-#    cProfile.run("main()")
     main()
 
