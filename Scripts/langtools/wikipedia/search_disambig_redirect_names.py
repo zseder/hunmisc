@@ -81,8 +81,6 @@ def read_all(redirect_pages_file, disambig_pages_file, normal_pages_file, page_i
     return normal_pages, dr_pages, links, (title_to_id, id_to_title)
 
 def run(normal_pages, dr_pages, links, title_to_id, id_to_title, is_reverse):
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s : %(module)s - %(levelname)s - %(message)s")
-
     logging.info("%d pages to process" % len(normal_pages))
     c = 0
     for page in normal_pages:
@@ -149,10 +147,11 @@ def main():
     is_reverse = (bool(int(sys.argv[6])) if len(sys.argv) > 6 else False)
 
     normal_pages, dr_pages, links, (title_to_id, id_to_title) = read_all(redirect_pages_file, disambig_pages_file, normal_pages_file, page_ids_file, links_file, is_reverse)
-    import cProfile
-    cProfile.run("run(normal_pages, dr_pages, links, title_to_id, id_to_title, is_reverse)")
-    #run(normal_pages, dr_pages, links, title_to_id, id_to_title, is_reverse)
+    #import cProfile
+    #cProfile.run("run(normal_pages, dr_pages, links, title_to_id, id_to_title, is_reverse)")
+    run(normal_pages, dr_pages, links, title_to_id, id_to_title, is_reverse)
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s : %(module)s - %(levelname)s - %(message)s")
     main()
 
