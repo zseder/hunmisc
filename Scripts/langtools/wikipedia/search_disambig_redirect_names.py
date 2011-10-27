@@ -155,5 +155,6 @@ def main():
     run(normal_pages, dr_pages, links, title_to_id, id_to_title, is_reverse)
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s : %(module)s - %(levelname)s - %(message)s")
     main()
 
