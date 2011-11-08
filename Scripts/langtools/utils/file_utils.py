@@ -34,9 +34,9 @@ class StreamHandler(object):
             self.stream = None
 
 class StreamReader(StreamHandler):
-    def __init__(self, stream, encoding='utf-8', replace=False):
+    def __init__(self, stream, encoding='utf-8', error='ignore'):
         StreamHandler.__init__(self, stream, encoding)
-        self.uni_errors = 'replace' if replace else 'ignore'
+        self.uni_errors = error
     
     def __iter__(self):
         """Iterates through the lines in the stream."""
@@ -45,12 +45,13 @@ class StreamReader(StreamHandler):
         return
     
 class StreamWriter(StreamHandler):
-    def __init__(self, stream, encoding='utf-8'):
+    def __init__(self, stream, encoding='utf-8', error='ignore'):
         StreamHandler.__init__(self, stream, encoding)
+        self.uni_errors = error
     
     def write(self, text):
         """Writes C{text} to the file in the correct encoding."""
-        self.stream.write(text.encode(self.encoding))
+        self.stream.write(text.encode(self.encoding), self.uni_errors)
     
 class FileHandler(object):
     def __init__(self, file_name, file_mode='r'):
@@ -65,9 +66,9 @@ class FileHandler(object):
         return self
     
 class FileReader(StreamReader, FileHandler):
-    def __init__(self, file_name, encoding='utf-8', replace=False):
+    def __init__(self, file_name, encoding='utf-8', error='ignore'):
         """Guess."""
-        StreamReader.__init__(self, None, encoding, replace)
+        StreamReader.__init__(self, None, encoding, error)
         FileHandler.__init__(self, file_name, 'r')
         
 class FileWriter(StreamWriter, FileHandler):
