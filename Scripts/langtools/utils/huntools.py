@@ -9,22 +9,22 @@ class LineByLineTagger(AbstractSubprocessClass):
     def __init__(self, runnable, encoding):
         AbstractSubprocessClass.__init__(self, runnable, encoding)
 
-    def __send_line(self, line):
+    def send_line(self, line):
         self._process.stdin.write(line.encode(self._encoding) + "\n")
 
-    def __recv_line(self):
+    def recv_line(self):
         return self._process.stdout.readline().strip().decode(self._encoding)
 
-    def __send_and_recv_lines(self, lines):
+    def send_and_recv_lines(self, lines):
         for line in lines:
-            self.__send_line(line)
+            self.send_line(line)
             self._process.stdin.flush()
-            yield self.__recv_line()
+            yield self.recv_line()
 
     def tag(self, lines):
         if self._closed:
             self.start()
-        return self.__send_and_recv_lines(lines)
+        return self.send_and_recv_lines(lines)
 
 
 class SentenceTagger(AbstractSubprocessClass):
@@ -37,7 +37,7 @@ class SentenceTagger(AbstractSubprocessClass):
         AbstractSubprocessClass.__init__(self, runnable, encoding)
         self._tag_index = tag_index
 
-    def __send(self, tokens):
+    def send(self, tokens):
         """
         send tokens to _process.stdin after encoding
         excepts only one sentence
@@ -55,7 +55,7 @@ class SentenceTagger(AbstractSubprocessClass):
         self._process.stdin.write("\n")
         self._process.stdin.flush()
 
-    def __recv_and_append(self, tokens):
+    def recv_and_append(self, tokens):
         tagged_tokens = []
         for token in tokens:
             line = self._process.stdout.readline()
@@ -78,8 +78,8 @@ class SentenceTagger(AbstractSubprocessClass):
         if self._closed:
             self.start()
 
-        self.__send(tokens)
-        result = self.__recv_and_append(tokens)
+        self.send(tokens)
+        result = self.recv_and_append(tokens)
         return result
 
     def tag_sentences(self, sentences):
@@ -91,6 +91,10 @@ class Ocamorph(LineByLineTagger):
         LineByLineTagger.__init__(self, runnable, "latin-1")
         self._bin_model = bin_model
         self.__set_default_options()
+
+    def recv_line(self):
+        data = LineByLineTagger.recv_line(self)
+        return tuple(data.split("\t")[:2])
 
     def __set_default_options(self):
         o = []
@@ -112,7 +116,7 @@ class Ocamorph(LineByLineTagger):
             del self.options[8]
 
     def tag(self, tokens):
-        tokens = set(tokens)
+        #tokens = set(tokens)
         return LineByLineTagger.tag(self, tokens)
 
 class Hundisambig(SentenceTagger):
