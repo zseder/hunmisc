@@ -94,7 +94,7 @@ class Ocamorph(LineByLineTagger):
 
     def recv_line(self):
         data = LineByLineTagger.recv_line(self)
-        return tuple(data.split("\t")[:2])
+        return tuple(data.strip().split("\t"))
 
     def __set_default_options(self):
         o = []
@@ -152,9 +152,12 @@ class MorphAnalyzer:
         tokens = [tok for sen in data for tok in sen]
         tagged = self._ocamorph.tag(tokens)
         for l in tagged:
-            morphtable_file.write(l.encode(self._hundisambig._encoding) + "\n")
+            morphtable_file.write("\t".join(l).encode(self._hundisambig._encoding) + "\n")
         morphtable_file.flush()
+        if not self._hundisambig._closed:
+            self._hundisambig.stop()
         self._hundisambig.set_morphtable(morphtable_filename)
+        self._hundisambig.start()
         for sen in data:
             yield self._hundisambig.tag_sentence(sen)
         morphtable_file.close()
