@@ -17,7 +17,8 @@ class AbstractSubprocessClass:
         self._closed = False
 
     def stop(self):
-        self._process.communicate()
+        if not self._closed:
+            self._process.communicate()
         self._closed = True
 
     def __exit__(self, exc_type, exc_value, traceback):
