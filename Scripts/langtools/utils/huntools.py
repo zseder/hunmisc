@@ -26,7 +26,6 @@ class LineByLineTagger(AbstractSubprocessClass):
             self.start()
         return self.send_and_recv_lines(lines)
 
-
 class SentenceTagger(AbstractSubprocessClass):
     """
     Tags sentence by sentence in conll format
@@ -116,7 +115,7 @@ class Ocamorph(LineByLineTagger):
             del self.options[8]
 
     def tag(self, tokens):
-        #tokens = set(tokens)
+        tokens = set(tokens)
         return LineByLineTagger.tag(self, tokens)
 
 class Hundisambig(SentenceTagger):
@@ -147,20 +146,20 @@ class MorphAnalyzer:
 
     def analyze(self, data):
         from tempfile import NamedTemporaryFile
-        morphtable_file = NamedTemporaryFile()
-        morphtable_filename = morphtable_file.name
-        tokens = [tok for sen in data for tok in sen]
-        tagged = self._ocamorph.tag(tokens)
-        for l in tagged:
-            morphtable_file.write("\t".join(l).encode(self._hundisambig._encoding) + "\n")
-        morphtable_file.flush()
-        if not self._hundisambig._closed:
-            self._hundisambig.stop()
-        self._hundisambig.set_morphtable(morphtable_filename)
-        self._hundisambig.start()
-        for sen in data:
-            yield self._hundisambig.tag_sentence(sen)
-        morphtable_file.close()
+        with NamedTemporaryFile() as morphtable_file:
+            morphtable_filename = morphtable_file.name
+            tokens = [tok for sen in data for tok in sen]
+            tagged = self._ocamorph.tag(tokens)
+            for l in tagged:
+                morphtable_file.write("\t".join(l).encode(self._hundisambig._encoding) + "\n")
+            morphtable_file.flush()
+            if not self._hundisambig._closed:
+                self._hundisambig.stop()
+            self._hundisambig.set_morphtable(morphtable_filename)
+            self._hundisambig.start()
+
+            for sen in data:
+                yield self._hundisambig.tag_sentence(sen)
     
     def __exit__(self, exc_type, exc_value, traceback):
         self.__del__()
