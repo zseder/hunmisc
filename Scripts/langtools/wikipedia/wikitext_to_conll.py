@@ -118,6 +118,14 @@ def tokenize_part(tokens):
     inside_link = False
     for sen in text:
         actual_sentence = []
+        sen2 = []
+        for tok in sen:
+            if tok != ". . .":
+                sen2.append(tok)
+            else:
+                sen2 += [".", ".", "."]
+        sen = sen2
+        
         for tok in sen:
             done = False
             added = False
