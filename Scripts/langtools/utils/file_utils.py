@@ -51,7 +51,7 @@ class StreamWriter(StreamHandler):
     
     def write(self, text):
         """Writes C{text} to the file in the correct encoding."""
-        self.stream.write(text.encode(self.encoding), self.uni_errors)
+        self.stream.write(text.encode(self.encoding, self.uni_errors))
     
 class FileHandler(object):
     def __init__(self, file_name, file_mode='r'):
