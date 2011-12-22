@@ -393,6 +393,13 @@ def parse_actual_page(actual_page, actual_title, pages_f, templates_f):
     except ImportError, e:
         sys.stderr.write(u"ImportError problem({0}): {1}\n".format(e, actual_title).encode("utf-8"))
         return
+    except AttributeError, e:
+        excepted_error_message = "'ImageMap' object has no attribute 'imagelink'"
+        if str(e).strip() == excepted_error_message:
+            sys.stderr.write(u"imagemap/imagelink error: {0}\n".format(actual_title).encode("utf-8"))
+            return
+        else:
+            raise e
     
     try:
         nh = NodeHandler()
