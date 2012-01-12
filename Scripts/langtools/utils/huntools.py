@@ -29,12 +29,17 @@ class LineByLineTagger(AbstractSubprocessClass):
 class SentenceTagger(AbstractSubprocessClass):
     """
     Tags sentence by sentence in conll format
-    ie. one token per line, attributes separated by tab,
+    ie. one token per line, attributes separated by tab (or @sep),
     empty line on sentence end
     """
-    def __init__(self, runnable, encoding, tag_index=-1):
+    def __init__(self, runnable, encoding, tag_index=-1, sep="\t", isep="\t", osep="\t"):
         AbstractSubprocessClass.__init__(self, runnable, encoding)
         self._tag_index = tag_index
+        self.sep = sep
+        self.isep = sep
+        self.osep = sep
+        self.isep = isep
+        self.osep = osep
 
     def send(self, tokens):
         """
@@ -45,7 +50,7 @@ class SentenceTagger(AbstractSubprocessClass):
         for token in tokens:
             # differentiate between already tagged and raw tokens
             if self.tuple_mode:
-                token_str = "\t".join(token)
+                token_str = self.isep.join(token)
             else:
                 token_str = token
             token_to_send = token_str.encode(self._encoding)
@@ -59,7 +64,7 @@ class SentenceTagger(AbstractSubprocessClass):
         for token in tokens:
             line = self._process.stdout.readline()
             decoded = line.decode(self._encoding)
-            tagged = decoded.strip().split("\t")
+            tagged = decoded.strip().split(self.osep)
             if len(tagged) == 0:
                 continue
             tag = tagged[self._tag_index]
@@ -167,6 +172,26 @@ class MorphAnalyzer:
     def __del__(self):
         self._hundisambig.stop()
         self._ocamorph.stop()
+
+class Hunchunk(SentenceTagger):
+    def __init__(self, runnable, traincorpus, keptfeats, model, features):
+        SentenceTagger.__init__(self, "python", "latin-1", 2, osep=" ")
+        self.runnable = runnable
+        self.traincorpus = traincorpus
+        self.keptfeats = keptfeats
+        self.model = model
+        self.features = features
+        self.__set_default_options()
+
+    def __set_default_options(self):
+        o = ["-u", self.runnable]
+        o += ["-l 1"]
+        o += ["-t", self.traincorpus]
+        o += ["-k", self.keptfeats]
+        o += ["-m", self.model]
+        o += ["-f", self.features]
+        self.options = o
+
 
 if __name__ == "__main__":
     o = Ocamorph("/home/zseder/Proj/huntools/ocamorph-1.1-linux/ocamorph",
