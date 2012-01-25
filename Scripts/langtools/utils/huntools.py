@@ -91,8 +91,8 @@ class SentenceTagger(AbstractSubprocessClass):
             yield self.tag_sentence(sentence)
 
 class Ocamorph(LineByLineTagger):
-    def __init__(self, runnable, bin_model):
-        LineByLineTagger.__init__(self, runnable, "latin-1")
+    def __init__(self, runnable, bin_model, encoding="LATIN2"):
+        LineByLineTagger.__init__(self, runnable, encoding)
         self._bin_model = bin_model
         self.__set_default_options()
 
@@ -124,8 +124,8 @@ class Ocamorph(LineByLineTagger):
         return LineByLineTagger.tag(self, tokens)
 
 class Hundisambig(SentenceTagger):
-    def __init__(self, runnable, model, morphtable=None):
-        SentenceTagger.__init__(self, runnable, "latin-1", 1)
+    def __init__(self, runnable, model, morphtable=None, encoding="LATIN2"):
+        SentenceTagger.__init__(self, runnable, encoding, 1)
         self._model = model
         self._morphtable = morphtable
         self.__set_default_options()
@@ -174,8 +174,8 @@ class MorphAnalyzer:
         self._ocamorph.stop()
 
 class Hunchunk(SentenceTagger):
-    def __init__(self, runnable, traincorpus, keptfeats, model, features):
-        SentenceTagger.__init__(self, "python", "latin-1", 2, osep=" ")
+    def __init__(self, runnable, traincorpus, keptfeats, model, features, encoding="LATIN2"):
+        SentenceTagger.__init__(self, "python", encoding, 2, osep=" ")
         self.runnable = runnable
         self.traincorpus = traincorpus
         self.keptfeats = keptfeats
