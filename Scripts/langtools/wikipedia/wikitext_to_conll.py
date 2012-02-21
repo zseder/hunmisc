@@ -1,3 +1,6 @@
+# TODO: ' to separate token (currently it is not removed from the beginning of
+#       words).
+
 import re
 import sys
 
@@ -7,8 +10,8 @@ abbrevs = None
 if len(sys.argv) > 3:
     abbrevs = set((l.strip() for l in file(sys.argv[3])))
 
-from nltk_tools import NltkTools
-nt = NltkTools(tok=True, pos=True, stem=True, pos_model="/home/zseder/all.model", abbrev_set=abbrevs)
+from langtools.nltk.nltktools import NltkTools
+nt = NltkTools(tok=True, pos=True, stem=True, pos_model="/home/zseder/all2.model", abbrev_set=abbrevs)
 
 ws_stripper = re.compile(r"\s*", re.UNICODE)
 ws_replacer_in_link = re.compile(r"\s+", re.UNICODE)
@@ -115,6 +118,14 @@ def tokenize_part(tokens):
     inside_link = False
     for sen in text:
         actual_sentence = []
+        sen2 = []
+        for tok in sen:
+            if tok != ". . .":
+                sen2.append(tok)
+            else:
+                sen2 += [".", ".", "."]
+        sen = sen2
+        
         for tok in sen:
             done = False
             added = False
@@ -181,15 +192,17 @@ def add_pos_tags(tokens):
         for tok_i, tagged_tok in enumerate(tagged_sen):
             try:
                 tok, pos = tagged_tok
-            except ValueError, e:
+            except ValueError:
                 continue
             tokens[sen_i][tok_i].append(pos)
 
 def add_stems(tokens):
     for sen_i, sen in enumerate(tokens):
         stemmed = nt.stem(((tok[0], tok[3]) for tok in sen))
-        for tok_i, tok in enumerate(stemmed):
-            tokens[sen_i][tok_i].append(tok[2])
+        hard_stemmed = nt.stem((((tok[0][0].lower() + tok[0][1:] if tok[0][0].isupper() and tok[0][1:].islower() else tok[0]), tok[3]) for tok in sen))
+        for tok_i, (tok_stemmed, tok_hard_stemmed) in enumerate(zip(stemmed, hard_stemmed)):
+            tokens[sen_i][tok_i].append(tok_stemmed[2])
+            tokens[sen_i][tok_i].append(tok_hard_stemmed[2])
 
 from mwlib import parser
 class NodeHandler:
@@ -380,6 +393,13 @@ def parse_actual_page(actual_page, actual_title, pages_f, templates_f):
     except ImportError, e:
         sys.stderr.write(u"ImportError problem({0}): {1}\n".format(e, actual_title).encode("utf-8"))
         return
+    except AttributeError, e:
+        excepted_error_message = "'ImageMap' object has no attribute 'imagelink'"
+        if str(e).strip() == excepted_error_message:
+            sys.stderr.write(u"imagemap/imagelink error: {0}\n".format(actual_title).encode("utf-8"))
+            return
+        else:
+            raise e
     
     try:
         nh = NodeHandler()
