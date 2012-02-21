@@ -5,9 +5,6 @@ class AbstractSubprocessClass:
     """
     Simple abstract wrapper class for commands that need to be
     called with Popen and communicate with them
-
-    TODO
-    - move into a subprocesshelper file
     """
     def __init__(self, runnable, encoding="utf-8"):
         self._runnable = runnable
