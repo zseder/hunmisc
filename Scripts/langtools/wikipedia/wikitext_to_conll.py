@@ -3,15 +3,22 @@
 
 import re
 import sys
+from optparse import OptionParser
 
-pages_file = open(sys.argv[1], "w")
-templates_file = open(sys.argv[2], "w")
+parser = OptionParser()
+parser.add_option("-m", "--model", dest="model",
+                  help="the hunpos model file. Default is $HUNPOS/english.model",
+                  metavar="MODEL_FILE")
+options, args = parser.parse_args()
+
+pages_file = open(args[0], "w")
+templates_file = open(args[1], "w")
 abbrevs = None
-if len(sys.argv) > 3:
-    abbrevs = set((l.strip() for l in file(sys.argv[3])))
+if len(args) > 2:
+    abbrevs = set((l.strip() for l in file(args[3])))
 
 from langtools.nltk.nltktools import NltkTools
-nt = NltkTools(tok=True, pos=True, stem=True, pos_model="/home/zseder/all2.model", abbrev_set=abbrevs)
+nt = NltkTools(tok=True, pos=True, stem=True, pos_model=options.model, abbrev_set=abbrevs)
 
 ws_stripper = re.compile(r"\s*", re.UNICODE)
 ws_replacer_in_link = re.compile(r"\s+", re.UNICODE)

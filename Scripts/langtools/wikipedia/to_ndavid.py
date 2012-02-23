@@ -1,11 +1,18 @@
 import sys
+from optparse import OptionParser
 """
 This script reads normal parsed Wikipedia pages in Conll-like format
 and transforms it to format needed by ndavid
 """
 
+parser = OptionParser()
+parser.add_option("-m", "--model", dest="model",
+                  help="the hunpos model file. Default is $HUNPOS/english.model",
+                  metavar="MODEL_FILE")
+options, args = parser.parse_args()
+
 from langtools.nltk.nltktools import NltkTools
-nt = NltkTools(tok=True, pos=True, stem=True)
+nt = NltkTools(tok=True, pos=True, stem=True, pos_model=options.model)
 
 pageSep = "%%#PAGE"
 actPage = None
