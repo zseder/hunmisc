@@ -24,6 +24,8 @@ parser.add_option("--hundisambig_runnable", dest="hundisambig_runnable",
                   help="the hundisambig runnable.", metavar="RUNNABLE")
 parser.add_option("--hundisambig_model", dest="hundisambig_model",
                   help="the hundisambig model file.", metavar="MODEL_FILE")
+parser.add_option("-l", "--language", dest="language",
+                  help="the Wikipedia language code. Default is en.", default="en")
 options, args = parser.parse_args()
 
 pages_file = open(args[0], "w")
@@ -260,6 +262,7 @@ class NodeHandler:
         self.tokens = [[]]
     
     def handle(self, node):
+        print str(type(node)) + " " + str(node)
         if isinstance(node, parser.Chapter):
             self._handle_chapter(node)
         
@@ -333,6 +336,7 @@ class NodeHandler:
             caption = target
         else:
             caption = ws_replacer_in_link.sub(" ", caption, re.UNICODE)
+        print u"target={0} caption={1}".format(target, caption).encode('utf-8')
         self.tokens[-1].append((caption, "B-link", target))
             
     def _handle_category_link(self, link):
@@ -436,7 +440,7 @@ def parse_actual_page(actual_page, actual_title, pages_f, templates_f):
     try:
         #r=simpleparse(raw=s)
         #quit()
-        r=parseString(raw=s, title=actual_title)
+        r=parseString(raw=s, title=actual_title, lang=options.language)
     except AssertionError:
         sys.stderr.write(u"AssertionError problem: {0}\n".format(actual_title).encode("utf-8"))
         return

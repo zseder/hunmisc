@@ -9,6 +9,9 @@ parser = OptionParser()
 parser.add_option("-m", "--model", dest="model",
                   help="the hunpos model file. Default is $HUNPOS/english.model",
                   metavar="MODEL_FILE")
+parser.add_option("-e", "--encoding", dest="encoding",
+                  help="the encoding used by the hunpos model file. Default is utf-8",
+                  default='utf-8')
 options, args = parser.parse_args()
 
 from langtools.nltk.nltktools import NltkTools

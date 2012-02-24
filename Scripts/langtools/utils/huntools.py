@@ -180,7 +180,11 @@ class MorphAnalyzer:
         crappy = False
         lemmas = []
         for part in parts:
-            lemma, stuff, derivation = part.split('|')
+            try:
+                lemma, stuff, derivation = part.split('|')
+            except ValueError, ve:
+                print ve, part.encode('utf-8')
+                raise ve
             if len(derivation) == 0:
                 start = lemma.rfind('?') + 1
                 while not lemma[start].isalnum():

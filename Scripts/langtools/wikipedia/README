@@ -1,0 +1,27 @@
+wikitext_to_conll.py:
+--------------------
+
+Parses Wikipedia dumps in the MediaWiki format. Creates two files, one is the
+article in ConLL format; the other is the list of templates found in the files.
+This latter file is pretty useless right now.
+
+The most important parameter is -l/--language, the language of the markup.
+Always set it to match the language of the Wikipedia dump, lest the result
+become corrupt, or (much more likely) the script fails. Be sure to download
+the required siteinfo.json file in mwlib with the script
+mwlib*egg/mwlib/siteinfo/fetch_siteinfo.py.
+
+The script currently works in two ways:
+1. it can use ocamorph + hundisambig to lemmatize the words and determine their
+  POS tags, or
+2. it can fall back to hunpos + the WordNet lemmatizer in NLTK, which I think
+  can only handle English.
+If the ocamorph_runnable option is defined, the script will work as described
+in 1; otherwise, if will fall back to 2.
+
+For an example for the full parametrization, refer to wikitext_to_conll.sh.
+
+TODO:
+- refactor, it's a piece of shit
+- support other languages
+- unify it with to_ndavid.py
