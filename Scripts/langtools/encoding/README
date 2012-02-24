@@ -1,0 +1,9 @@
+UnicodeData.txt: ftp://ftp.unicode.org/Public/UNIDATA/UnicodeData.txt
+unicode_to_utf8.py: unicode codes to utf8 characters, one char per line
+utf8-to-hex.sh: from utf8 encoded chars (one per line) extracts its code in hex
+latin_capital_unicode: latin capital letters grepped from UnicodeData.txt, with unicode code
+latin_small_unicode: latin small letters grepped from UnicodeData.txt, with unicode code
+latin_capital_utf8: latin capital letters encoded in utf-8
+latin_small_utf8: latin small letters encoded in utf-8
+latin_capital_utf8_hex: latin capital letters in utf-8 hex code
+latin_small_utf8_hex: latin small letters encoded in utf8 hex code
