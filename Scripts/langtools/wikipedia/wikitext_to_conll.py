@@ -9,6 +9,9 @@ parser = OptionParser()
 parser.add_option("-m", "--model", dest="model",
                   help="the hunpos model file. Default is $HUNPOS/english.model",
                   metavar="MODEL_FILE")
+parser.add_option("-e", "--encoding", dest="encoding",
+                  help="the encoding used by the hunpos model file. Default is utf-8",
+                  default='utf-8')
 options, args = parser.parse_args()
 
 pages_file = open(args[0], "w")
@@ -195,10 +198,10 @@ def tokenize_all(tokens):
 
 def add_pos_tags(tokens):
     for sen_i, sen in enumerate(tokens):
-        tagged_sen = nt.pos_tag([tok[0] for tok in sen])
+        tagged_sen = nt.pos_tag([tok[0].encode(options.encoding) for tok in sen])
         for tok_i, tagged_tok in enumerate(tagged_sen):
             try:
-                tok, pos = tagged_tok
+                tok, pos = [x.decode(options.encoding) for x in tagged_tok]
             except ValueError:
                 continue
             tokens[sen_i][tok_i].append(pos)
@@ -427,7 +430,16 @@ def parse_actual_page(actual_page, actual_title, pages_f, templates_f):
     
     for sen in tokens:
         for t in sen:
-            pages_f.write("\t".join(t).encode("utf-8") + "\n")
+            try:
+                pages_f.write(u"\t".join(t).encode("utf-8") + "\n")
+            except UnicodeError, ue:
+                print "Trying to print: "
+                for w in t:
+                    if isinstance(w, unicode):
+                        print w.encode('utf-8')
+                    else:
+                        print w
+                raise ue
         pages_f.write("\n")
 
 actual_page = u""
