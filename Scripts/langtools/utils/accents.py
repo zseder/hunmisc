@@ -81,6 +81,6 @@ if __name__ == "__main__":
         if options.clean:
             l = clean_utf8_accents(l)
         if options.proszeky:
-            l = change_utf_to_proszeky(l)
+            l = utf_to_proszeky(l)
         print l.encode("utf-8"),
 
