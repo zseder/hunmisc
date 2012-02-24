@@ -10,7 +10,7 @@ class LineByLineTagger(AbstractSubprocessClass):
         AbstractSubprocessClass.__init__(self, runnable, encoding)
 
     def send_line(self, line):
-        self._process.stdin.write(line.encode(self._encoding) + "\n")
+        self._process.stdin.write(line.encode(self._encoding, 'replace') + "\n")
 
     def recv_line(self):
         return self._process.stdout.readline().strip().decode(self._encoding)
@@ -53,7 +53,7 @@ class SentenceTagger(AbstractSubprocessClass):
                 token_str = self.isep.join(token)
             else:
                 token_str = token
-            token_to_send = token_str.encode(self._encoding)
+            token_to_send = token_str.encode(self._encoding, 'replace')
             self._process.stdin.write(token_to_send)
             self._process.stdin.write("\n")
         self._process.stdin.write("\n")
@@ -156,7 +156,7 @@ class MorphAnalyzer:
             tokens = [tok for sen in data for tok in sen]
             tagged = self._ocamorph.tag(tokens)
             for l in tagged:
-                morphtable_file.write("\t".join(l).encode(self._hundisambig._encoding) + "\n")
+                morphtable_file.write(u"\t".join(l).encode(self._hundisambig._encoding, 'replace') + "\n")
             morphtable_file.flush()
             if not self._hundisambig._closed:
                 self._hundisambig.stop()
@@ -164,8 +164,40 @@ class MorphAnalyzer:
             self._hundisambig.start()
 
             for sen in data:
-                yield self._hundisambig.tag_sentence(sen)
-    
+                ret = self._hundisambig.tag_sentence(sen)
+                yield [self.correct(token) for token in ret]
+
+    def correct(self, analysis):
+        """Corrects the analysis returned by hundisambig, because it handles
+        unicode replacement poorly. More specifically, if the word
+        starts with the unicode character replacement ?, its derivation will be
+        empty, and if it starts with regular characters, but encounters ?s in
+        the word, the lemma will be the regular characters at the beginning of
+        the word, while the rest is placed to the derivation part. This method
+        tries to recover the word from these errors."""
+        word, crap = analysis
+        parts = crap.split('@')
+        crappy = False
+        lemmas = []
+        for part in parts:
+            lemma, stuff, derivation = part.split('|')
+            if len(derivation) == 0:
+                start = lemma.rfind('?') + 1
+                while not lemma[start].isalnum():
+                    start += 1
+                derivation = lemma[start:].upper()
+                crappy = True
+            elif not derivation[0].isalnum():
+                start = derivation.rfind('?') + 1
+                while not derivation[start].isalnum():
+                    start += 1
+                derivation = derivation[start:].upper()
+                crappy = True
+            else:
+                lemmas.append(lemma)
+        lemma = u''.join(lemmas) if not crappy else word
+        return (word, lemma + u'|' + stuff + u'|' + derivation)
+
     def __exit__(self, exc_type, exc_value, traceback):
         self.__del__()
 
