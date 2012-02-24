@@ -222,10 +222,10 @@ def tokenize_all(tokens):
 
 def add_pos_tags(tokens):
     for sen_i, sen in enumerate(tokens):
-        tagged_sen = nt.pos_tag([tok[0].encode(options.encoding) for tok in sen])
+        tagged_sen = nt.pos_tag([tok[0].encode(options.hunpos_encoding) for tok in sen])
         for tok_i, tagged_tok in enumerate(tagged_sen):
             try:
-                tok, pos = [x.decode(options.encoding) for x in tagged_tok]
+                tok, pos = [x.decode(options.hunpos_encoding) for x in tagged_tok]
             except ValueError:
                 continue
             tokens[sen_i][tok_i].append(pos)
@@ -243,6 +243,12 @@ def add_pos_and_stems(tokens):
     POS'ing and stemming, otherwise we fall back to the hunpos and the
     standard NLTK stemmer."""
     if morph_analyzer is not None:
+        ret = morph_analyzer.analyze(tokens)
+#        [[(tok[0], tok[1].split('|')[0], tok[1].split('|')[2]) for tok in sen] for sen in ret]
+        for sen_i, sen in enumerate(tokens):
+            for tok_i, _ in enumerate(sen):
+                tokens[sen_i][tok_i].append(ret[sen_i][tok_i][1].split('|')[2])
+                tokens[sen_i][tok_i].append(ret[sen_i][tok_i][1].split('|')[0])
     else:
         add_pos_tags(tokens)
         add_stems(tokens)
