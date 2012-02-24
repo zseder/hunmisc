@@ -26,7 +26,16 @@ parser.add_option("--hundisambig_model", dest="hundisambig_model",
                   help="the hundisambig model file.", metavar="MODEL_FILE")
 options, args = parser.parse_args()
 
+pages_file = open(args[0], "w")
+templates_file = open(args[1], "w")
+abbrevs = None
+if len(args) > 2:
+    abbrevs = set((l.strip() for l in file(args[3])))
+
+from langtools.nltk.nltktools import NltkTools
 if options.ocamorph_runnable is not None:
+    nt = NltkTools(tok=True, abbrev_set=abbrevs)
+
     # If specified, we use huntools instead of the NLTK stemmer
     from langtools.utils.huntools import Ocamorph, Hundisambig, MorphAnalyzer
     ocamorph = Ocamorph(options.ocamorph_runnable, options.ocamorph_model,
@@ -36,16 +45,8 @@ if options.ocamorph_runnable is not None:
                                    options.ocamorph_encoding)
     morph_analyzer = MorphAnalyzer(ocamorph, hundisambig)
 else:
+    nt = NltkTools(tok=True, pos=True, stem=True, pos_model=options.hunpos_model, abbrev_set=abbrevs)
     morph_analyzer = None
-
-pages_file = open(args[0], "w")
-templates_file = open(args[1], "w")
-abbrevs = None
-if len(args) > 2:
-    abbrevs = set((l.strip() for l in file(args[3])))
-
-from langtools.nltk.nltktools import NltkTools
-nt = NltkTools(tok=True, pos=True, stem=True, pos_model=options.hunpos_model, abbrev_set=abbrevs)
 
 ws_stripper = re.compile(r"\s*", re.UNICODE)
 ws_replacer_in_link = re.compile(r"\s+", re.UNICODE)
@@ -222,10 +223,10 @@ def tokenize_all(tokens):
 
 def add_pos_tags(tokens):
     for sen_i, sen in enumerate(tokens):
-        tagged_sen = nt.pos_tag([tok[0].encode(options.encoding) for tok in sen])
+        tagged_sen = nt.pos_tag([tok[0].encode(options.hunpos_encoding) for tok in sen])
         for tok_i, tagged_tok in enumerate(tagged_sen):
             try:
-                tok, pos = [x.decode(options.encoding) for x in tagged_tok]
+                tok, pos = [x.decode(options.hunpos_encoding) for x in tagged_tok]
             except ValueError:
                 continue
             tokens[sen_i][tok_i].append(pos)
@@ -243,6 +244,12 @@ def add_pos_and_stems(tokens):
     POS'ing and stemming, otherwise we fall back to the hunpos and the
     standard NLTK stemmer."""
     if morph_analyzer is not None:
+        for sen_i, sen in enumerate(tokens):
+            # The API expects [sentences+], but it can only handle one :(
+            ret = list(morph_analyzer.analyze([[word[0] for word in sen]]))[0]
+            for tok_i, _ in enumerate(sen):
+                tokens[sen_i][tok_i].append(ret[tok_i][1].split('|')[2])
+                tokens[sen_i][tok_i].append(ret[tok_i][1].split('|')[0])
     else:
         add_pos_tags(tokens)
         add_stems(tokens)
@@ -455,8 +462,7 @@ def parse_actual_page(actual_page, actual_title, pages_f, templates_f):
             sys.stderr.write(u"Maximum depth recursion at site: {0}\n".format(actual_title).encode("utf-8"))
             return
     tokens = tokenize_all(tokens)
-    add_pos_tags(tokens)
-    add_stems(tokens)
+    add_pos_and_stems(tokens)
     
     pages_f.write(u"{0} {1}\n".format(page_separator, actual_title).encode("utf-8"))
     pages_f.write(u"{0}\t{1}\n".format("Templates:", u",".join((t.strip().replace("\n", "") for t in templates))).encode("utf-8"))
