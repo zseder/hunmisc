@@ -6,13 +6,37 @@ import sys
 from optparse import OptionParser
 
 parser = OptionParser()
-parser.add_option("-m", "--model", dest="model",
+parser.add_option("--hunpos_model", dest="hunpos_model",
                   help="the hunpos model file. Default is $HUNPOS/english.model",
                   metavar="MODEL_FILE")
-parser.add_option("-e", "--encoding", dest="encoding",
+parser.add_option("--hunpos_encoding", dest="hunpos_encoding",
                   help="the encoding used by the hunpos model file. Default is utf-8",
                   default='utf-8')
+parser.add_option("--ocamorph_runnable", dest="ocamorph_runnable",
+                  help="the ocamorph runnable.", metavar="RUNNABLE")
+parser.add_option("--ocamorph_model", dest="ocamorph_model",
+                  help="the ocamorph model file.", metavar="MODEL_FILE")
+parser.add_option("--ocamorph_encoding", dest="ocamorph_encoding",
+                  help="the encoding used by the ocamorph and hundisambig " +
+                       "model files. Default is iso-8859-2",
+                  default='iso-8859-2')
+parser.add_option("--hundisambig_runnable", dest="hundisambig_runnable",
+                  help="the hundisambig runnable.", metavar="RUNNABLE")
+parser.add_option("--hundisambig_model", dest="hundisambig_model",
+                  help="the hundisambig model file.", metavar="MODEL_FILE")
 options, args = parser.parse_args()
+
+if options.ocamorph_runnable is not None:
+    # If specified, we use huntools instead of the NLTK stemmer
+    from langtools.utils.huntools import Ocamorph, Hundisambig, MorphAnalyzer
+    ocamorph = Ocamorph(options.ocamorph_runnable, options.ocamorph_model,
+                             options.ocamorph_encoding)
+    hundisambig = Hundisambig(options.hundisambig_runnable,
+                                   options.hundisambig_model,
+                                   options.ocamorph_encoding)
+    morph_analyzer = MorphAnalyzer(ocamorph, hundisambig)
+else:
+    morph_analyzer = None
 
 pages_file = open(args[0], "w")
 templates_file = open(args[1], "w")
@@ -21,7 +45,7 @@ if len(args) > 2:
     abbrevs = set((l.strip() for l in file(args[3])))
 
 from langtools.nltk.nltktools import NltkTools
-nt = NltkTools(tok=True, pos=True, stem=True, pos_model=options.model, abbrev_set=abbrevs)
+nt = NltkTools(tok=True, pos=True, stem=True, pos_model=options.hunpos_model, abbrev_set=abbrevs)
 
 ws_stripper = re.compile(r"\s*", re.UNICODE)
 ws_replacer_in_link = re.compile(r"\s+", re.UNICODE)
@@ -213,6 +237,15 @@ def add_stems(tokens):
         for tok_i, (tok_stemmed, tok_hard_stemmed) in enumerate(zip(stemmed, hard_stemmed)):
             tokens[sen_i][tok_i].append(tok_stemmed[2])
             tokens[sen_i][tok_i].append(tok_hard_stemmed[2])
+
+def add_pos_and_stems(tokens):
+    """If the ocamorph parameters are specified, the huntools are used for
+    POS'ing and stemming, otherwise we fall back to the hunpos and the
+    standard NLTK stemmer."""
+    if morph_analyzer is not None:
+    else:
+        add_pos_tags(tokens)
+        add_stems(tokens)
 
 from mwlib import parser
 class NodeHandler:
