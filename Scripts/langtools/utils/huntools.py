@@ -1,3 +1,4 @@
+import re
 from subprocess_wrapper import AbstractSubprocessClass
 
 """
@@ -10,7 +11,7 @@ class LineByLineTagger(AbstractSubprocessClass):
         AbstractSubprocessClass.__init__(self, runnable, encoding)
 
     def send_line(self, line):
-        self._process.stdin.write(line.encode(self._encoding, 'replace') + "\n")
+        self._process.stdin.write(line.encode(self._encoding, 'xmlcharrefreplace') + "\n")
 
     def recv_line(self):
         return self._process.stdout.readline().strip().decode(self._encoding)
@@ -46,6 +47,7 @@ class SentenceTagger(AbstractSubprocessClass):
         send tokens to _process.stdin after encoding
         excepts only one sentence
         """
+        print "SENDING " + unicode(tokens).encode('utf-8')
         self.tuple_mode = isinstance(tokens[0], tuple)
         for token in tokens:
             # differentiate between already tagged and raw tokens
@@ -53,7 +55,7 @@ class SentenceTagger(AbstractSubprocessClass):
                 token_str = self.isep.join(token)
             else:
                 token_str = token
-            token_to_send = token_str.encode(self._encoding, 'replace')
+            token_to_send = token_str.encode(self._encoding, 'xmlcharrefreplace')
             self._process.stdin.write(token_to_send)
             self._process.stdin.write("\n")
         self._process.stdin.write("\n")
@@ -63,10 +65,13 @@ class SentenceTagger(AbstractSubprocessClass):
         tagged_tokens = []
         for token in tokens:
             line = self._process.stdout.readline()
-            decoded = line.decode(self._encoding)
-            tagged = decoded.strip().split(self.osep)
-            if len(tagged) == 0:
+            decoded = line.decode(self._encoding).strip()
+            print "LINE: >" + decoded.encode('utf-8') + "<"
+            if len(decoded) == 0:
                 continue
+            tagged = decoded.split(self.osep)
+            print "TOKEN: " + unicode(token).encode('utf-8')
+            print "TAGGED: " + unicode(tagged).encode('utf-8')
             tag = tagged[self._tag_index]
             if self.tuple_mode:
                 tagged_tokens.append(token + (tag,))
@@ -80,6 +85,7 @@ class SentenceTagger(AbstractSubprocessClass):
     
     def tag_sentence(self, tokens):
         if self._closed:
+            print "OPTIONS: " + unicode(self.options).encode('utf-8')
             self.start()
 
         self.send(tokens)
@@ -134,6 +140,7 @@ class Hundisambig(SentenceTagger):
         o = []
         o += ["--morphtable", self._morphtable]
         o += ["--tagger-model", self._model]
+        o += ["--decompounding", "no"]  # Let's not bother with decompounding
 
         self.options = o
     
@@ -145,6 +152,8 @@ class Hundisambig(SentenceTagger):
         self.__set_default_options()
 
 class MorphAnalyzer:
+    UNICODE_PATTERN = re.compile(ur"&#(\d+);")
+
     def __init__(self, ocamorph, hundisambig):
         self._ocamorph = ocamorph
         self._hundisambig = hundisambig
@@ -156,10 +165,12 @@ class MorphAnalyzer:
             tokens = [tok for sen in data for tok in sen]
             tagged = self._ocamorph.tag(tokens)
             for l in tagged:
-                morphtable_file.write(u"\t".join(l).encode(self._hundisambig._encoding, 'replace') + "\n")
+                morphtable_file.write(u"\t".join(l).encode(self._hundisambig._encoding, 'xmlcharrefreplace') + "\n")
             morphtable_file.flush()
             if not self._hundisambig._closed:
                 self._hundisambig.stop()
+#            import shutil
+#            shutil.copy(morphtable_filename, './temp')
             self._hundisambig.set_morphtable(morphtable_filename)
             self._hundisambig.start()
 
@@ -168,39 +179,24 @@ class MorphAnalyzer:
                 yield [self.correct(token) for token in ret]
 
     def correct(self, analysis):
-        """Corrects the analysis returned by hundisambig, because it handles
-        unicode replacement poorly. More specifically, if the word
-        starts with the unicode character replacement ?, its derivation will be
-        empty, and if it starts with regular characters, but encounters ?s in
-        the word, the lemma will be the regular characters at the beginning of
-        the word, while the rest is placed to the derivation part. This method
-        tries to recover the word from these errors."""
+        """Inverts the xmlcharreplacements in the lemma."""
         word, crap = analysis
-        parts = crap.split('@')
-        crappy = False
-        lemmas = []
-        for part in parts:
-            try:
-                lemma, stuff, derivation = part.split('|')
-            except ValueError, ve:
-                print ve, part.encode('utf-8')
-                raise ve
-            if len(derivation) == 0:
-                start = lemma.rfind('?') + 1
-                while not lemma[start].isalnum():
-                    start += 1
-                derivation = lemma[start:].upper()
-                crappy = True
-            elif not derivation[0].isalnum():
-                start = derivation.rfind('?') + 1
-                while not derivation[start].isalnum():
-                    start += 1
-                derivation = derivation[start:].upper()
-                crappy = True
+
+        try:
+            lemma, stuff, derivation = crap.split('|')
+            pieces = MorphAnalyzer.UNICODE_PATTERN.split(lemma)
+            if len(pieces) == 1:
+                return analysis
             else:
-                lemmas.append(lemma)
-        lemma = u''.join(lemmas) if not crappy else word
-        return (word, lemma + u'|' + stuff + u'|' + derivation)
+                for i in xrange(1, len(pieces), 2):
+                    pieces[i] = unichr(int(pieces[i]))
+                lemma = u''.join(pieces)
+                return (word, lemma + u'|' + stuff + u'|' + derivation)
+        except ValueError, ve:
+            print ve, part.encode('utf-8')
+            import sys
+            sys.stdout.flush()
+            raise ve
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.__del__()
