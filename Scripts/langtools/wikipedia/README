@@ -22,7 +22,6 @@ in 1; otherwise, if will fall back to 2.
 For an example for the full parametrization, refer to wikitext_to_conll.sh.
 
 TODO:
-= strip "s from words (->nltktools)
 = handle unicode punctuation characters
 = fix mwlib parsing problems: items in enumerations (and I guess table cells
   too) to be handled as separate sentences.

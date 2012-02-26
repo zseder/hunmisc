@@ -105,6 +105,8 @@ class NltkTools:
         return tok in self.abbrev_set
 
     def word_tokenize(self, sen):
+        """Tokenizes the sentence to words and splits the sentence ending
+        punctuation mark from the last word and adds it as the last token."""
         tokens = self.wordTokenizer.tokenize(sen)
         if len(tokens) == 0:
             return []
