@@ -284,7 +284,7 @@ class NodeHandler:
             elif isinstance(node, parser.InterwikiLink):
                 self._handle_interwiki_link(node)
             elif isinstance(node, parser.LangLink):
-                self._handle_image_link(node)
+                self._handle_lang_link(node)
             elif isinstance(node, parser.NamespaceLink):
                 self._handle_namespace_link(node)
             else:
@@ -310,7 +310,16 @@ class NodeHandler:
         
         elif isinstance(node, parser.Cell):
             self._handle_cell(node)
-        
+ 
+        elif isinstance(node, parser.ItemList):
+            self._handle_itemlist(node)
+
+        elif isinstance(node, parser.Item):
+            self._handle_item(node)
+
+        elif isinstance(node, parser.Caption):
+            self._handle_caption(node)
+ 
         else:
             self._handle_default(node)
             
@@ -331,7 +340,10 @@ class NodeHandler:
         pass
 
     def _handle_image_link(self, link):
-        pass
+        for child in link.children:
+            if isinstance(child, parser.Text):
+                self.tokens.append([])
+                self.handle(child)
 
     def _handle_interwiki_link(self, link):
         self._handle_links_that_matter(link)
@@ -352,7 +364,7 @@ class NodeHandler:
                     if caption is not None:
                         return caption
             return None
-        
+
         target = ws_replacer_in_link.sub(" ", link.target, re.UNICODE)        
         caption = _search_for_caption(link)
         if caption is None:
@@ -384,6 +396,15 @@ class NodeHandler:
     
     def _handle_cell(self, cell):
         self._handle_with_sentence_split(cell)
+    
+    def _handle_itemlist(self, itemlist):
+        self._handle_with_sentence_split(itemlist)
+    
+    def _handle_item(self, item):
+        self._handle_with_sentence_split(item)
+    
+    def _handle_caption(self, caption):
+        self._handle_with_sentence_split(caption)
     
     def _handle_tagnode(self, tagnode):
         #print tagnode.__dict__

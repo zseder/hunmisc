@@ -31,7 +31,8 @@ class NltkTools:
             
         if wtok:
             self.wordTokenizer = PunktWordTokenizer()
-            self.punktSplitter = re.compile(r"^([\w\d]+)([.?,:;!])$", re.UNICODE)
+            #self.punktSplitter = re.compile(r"^([\w\d]+)([.?,:;!])$", re.UNICODE)
+            self.punktSplitter = re.compile(r"^(.+)([.?,:;!])$", re.UNICODE)
             # Bragantino,2006.In fix this shit
         if stok:
             self.senTokenizer = PunktSentenceTokenizer()
