@@ -5,7 +5,7 @@ import re
 import sys
 from optparse import OptionParser
 from itertools import chain
-from langtools.utils.misc import QuoteRemover
+from langtools.utils.misc import remove_quot_from_word
 
 parser = OptionParser()
 parser.add_option("--hunpos_model", dest="hunpos_model",
@@ -220,11 +220,10 @@ def tokenize_part(tokens):
     return new_tokens
 
 def tokenize_all(tokens):
-    qr = QuoteRemover()  # TODO: this whole shit should be an object!!!
     new_tokens = []
     for part in tokens:
         for dbl in tokenize_part(part):
-            dbl = list(chain.from_iterable([[w] + l[1:] for w in qr.remove(l[0])] for l in dbl))
+            dbl = list(chain.from_iterable([[w] + l[1:] for w in remove_quot_from_word(l[0])] for l in dbl))
             new_tokens.append(dbl)
 
     return new_tokens

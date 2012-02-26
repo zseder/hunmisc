@@ -1,5 +1,6 @@
 import re
 from subprocess_wrapper import AbstractSubprocessClass
+from langtools.utils.misc import ispunct, isquot
 
 """
 TODO
@@ -160,9 +161,10 @@ class MorphAnalyzer:
 
     def analyze(self, data):
         from tempfile import NamedTemporaryFile
+        safe_data = [[self.replace_punct(tok) for tok in sen] for sen in data]
         with NamedTemporaryFile() as morphtable_file:
             morphtable_filename = morphtable_file.name
-            tokens = [tok for sen in data for tok in sen]
+            tokens = [tok for sen in safe_data for tok in sen]
             tagged = self._ocamorph.tag(tokens)
             for l in tagged:
                 morphtable_file.write(u"\t".join(l).encode(self._hundisambig._encoding, 'xmlcharrefreplace') + "\n")
@@ -174,16 +176,33 @@ class MorphAnalyzer:
             self._hundisambig.set_morphtable(morphtable_filename)
             self._hundisambig.start()
 
-            for sen in data:
+            for sen_i, sen in enumerate(safe_data):
                 ret = self._hundisambig.tag_sentence(sen)
-                yield [self.correct(token) for token in ret]
+                yield [self.correct(token, data[sen_i][i]) for i, token in enumerate(ret)]
 
-    def correct(self, analysis):
-        """Inverts the xmlcharreplacements in the lemma."""
-        word, crap = analysis
-
+    def replace_punct(self, token):
+        """Replaces unicode punctuation marks with ones understood by
+        ocamorph."""
         try:
+            if ispunct(token):
+                token.encode(self._hundisambig._encoding)
+            return token
+        except UnicodeError:
+            if isquot(token):
+                return '"'
+            else:
+                return ','
+
+    def correct(self, analysis, original):
+        """Inverts the xmlcharreplacements in the lemma."""
+        try:
+            word, crap = analysis
             lemma, stuff, derivation = crap.split('|')
+
+            # If the original is a punctuation mark
+            if ispunct(original):
+                return (word, original + u'|' + stuff + u'|' + derivation)
+
             pieces = MorphAnalyzer.UNICODE_PATTERN.split(lemma)
             if len(pieces) == 1:
                 return analysis
