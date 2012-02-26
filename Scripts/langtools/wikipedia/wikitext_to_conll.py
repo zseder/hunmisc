@@ -320,6 +320,24 @@ class NodeHandler:
             self.handle(child)
     
     def _handle_article_link(self, link):
+        self._handle_links_that_matter(link)
+
+    def _handle_category_link(self, link):
+        pass
+
+    def _handle_image_link(self, link):
+        pass
+
+    def _handle_interwiki_link(self, link):
+        self._handle_links_that_matter(link)
+
+    def _handle_lang_link(self, link):
+        pass
+
+    def _handle_namespace_link(self, link):
+        pass
+
+    def _handle_links_that_matter(self, link):
         def _search_for_caption(node):
             for child in node.children:
                 if isinstance(child, parser.Text):
@@ -338,21 +356,6 @@ class NodeHandler:
             caption = ws_replacer_in_link.sub(" ", caption, re.UNICODE)
         print u"target={0} caption={1}".format(target, caption).encode('utf-8')
         self.tokens[-1].append((caption, "B-link", target))
-            
-    def _handle_category_link(self, link):
-        pass
-    
-    def _handle_image_link(self, link):
-        pass
-    
-    def _handle_interwiki_link(self, link):
-        pass
-    
-    def _handle_lang_link(self, link):
-        pass
-    
-    def _handle_namespace_link(self, link):
-        pass
         
     def _handle_paragraph(self, paragraph):
         self._handle_with_sentence_split(paragraph)
