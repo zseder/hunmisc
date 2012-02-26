@@ -23,7 +23,9 @@ For an example for the full parametrization, refer to wikitext_to_conll.sh.
 
 TODO:
 = strip "s from words (->nltktools)
+= handle unicode punctuation characters
 
+- test with hunpos?
+- unify it with to_ndavid.py
 - refactor, it's a piece of shit
 - support other languages
-- unify it with to_ndavid.py
