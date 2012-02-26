@@ -23,7 +23,6 @@ For an example for the full parametrization, refer to wikitext_to_conll.sh.
 
 TODO:
 = strip "s from words (->nltktools)
-= handle interwikilinks
 
 - refactor, it's a piece of shit
 - support other languages
