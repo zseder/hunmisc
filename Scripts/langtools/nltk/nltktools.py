@@ -19,6 +19,7 @@ penn_to_major_pos = defaultdict(lambda: NOUN)
 penn_to_major_pos.update(_penn_to_major_pos)
 
 class NltkTools:
+    # TODO: \d{4}
     _abbrevPattern = re.compile(r"([\w][\w]?[.]){2}$", re.UNICODE)
     _cleanerPattern = re.compile("(\w\w)([.?,:;!])(\w)(\w)", re.UNICODE)
 
@@ -48,6 +49,8 @@ class NltkTools:
             self.stemmer = WordNetLemmatizer()
 
     def tokenize(self, raw):
+        """Runs sentence and then word tokenization. Does some abbreviation-
+        detection to fix false sentence endings."""
         sentences = self.sen_tokenize(raw)
         tokens = [self.word_tokenize(sen) for sen in sentences]
         for i in reversed(xrange(len(tokens) - 1)):
@@ -60,6 +63,7 @@ class NltkTools:
         
 
     def sen_tokenize(self, raw):
+        """Tokenizes the raw text into sentences."""
         raw = NltkTools.cleanup_puncts(raw)
         return self.senTokenizer.tokenize(raw)
 
