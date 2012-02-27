@@ -5,7 +5,7 @@ import re
 import sys
 from optparse import OptionParser
 from itertools import chain
-from langtools.utils.misc import remove_quot_from_word
+from langtools.utils.misc import remove_quot_and_wiki_crap_from_word
 
 parser = OptionParser()
 parser.add_option("--hunpos_model", dest="hunpos_model",
@@ -223,7 +223,7 @@ def tokenize_all(tokens):
     new_tokens = []
     for part in tokens:
         for dbl in tokenize_part(part):
-            dbl = list(chain.from_iterable([[w] + l[1:] for w in remove_quot_from_word(l[0])] for l in dbl))
+            dbl = list(chain.from_iterable([[w] + l[1:] for w in remove_quot_and_wiki_crap_from_word(l[0])] for l in dbl))
             new_tokens.append(dbl)
 
     return new_tokens
@@ -255,8 +255,9 @@ def add_pos_and_stems(tokens):
             # The API expects [sentences+], but it can only handle one :(
             ret = list(morph_analyzer.analyze([[word[0] for word in sen]]))[0]
             for tok_i, _ in enumerate(sen):
-                tokens[sen_i][tok_i].append(ret[tok_i][1].split('|')[2])
-                tokens[sen_i][tok_i].append(ret[tok_i][1].split('|')[0])
+                spl = ret[tok_i][1].rsplit('|', 2)
+                tokens[sen_i][tok_i].append(spl[2])
+                tokens[sen_i][tok_i].append(spl[0])
     else:
         add_pos_tags(tokens)
         add_stems(tokens)
