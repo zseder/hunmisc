@@ -16,6 +16,16 @@ class LemmatizerWrapper(ToolWrapper):
         """Lemmatizes @p tokens."""
         pass
 
+class SentenceTokenizerWrapper(ToolWrapper):
+    def sen_tokenize(self, raw):
+        """Tokenizes the raw text into sentences."""
+        pass
+
+class WordTokenizerWrapper(ToolWrapper):
+    def word_tokenize(self, sen):
+        """Tokenizes the sentence into words."""
+        pass
+
 class OcamorphWrapper(PosTaggerWrapper, LemmatizerWrapper):
     """Wrapper class for ocamorph.
 

@@ -66,6 +66,16 @@ class LanguageTools(object):
         if self.lemmatizer is not None:
             self.lemmatizer.lemmatize(tokens)
 
+    def sen_tokenize(self, raw):
+        """Tokenizes the raw text into sentences."""
+        if self.sen_tokenizer is not None:
+            self.sen_tokenizer.sen_tokenize(tokens)
+
+    def word_tokenize(self, sen):
+        """Tokenizes the sentence into words."""
+        if self.word_tokenizer is not None:
+            self.word_tokenizer.word_tokenize(tokens)
+
 if __name__ == '__main__':
     import sys
     lt = LanguageTools(sys.argv[1], sys.argv[2])
