@@ -85,3 +85,25 @@ class HunposPosTagger(PosTaggerWrapper):
                     continue
                 tokens[sen_i][tok_i].append(pos)
 
+class NltkToolsStemmer(LemmatizerWrapper):
+    """
+    Wraps the NltkTools stemmer. It currently uses WordnetLemmatizer,
+    which is English only.
+
+    @warning This is the original implementation as used in our English
+             Wikipedia parser. No effort has been made to clean up the
+             code, or to fix the hardwired indexing, etc. The data must
+             be already POS tagged, and the POS field must be the last one.
+    """
+    def __init__(self, params):
+        self.nt = NltkTools(stem=True)
+
+    def lemmatize(self, tokens):
+        # HACK
+        for sen_i, sen in enumerate(tokens):
+            stemmed = self.nt.stem(((tok[0], tok[-1]) for tok in sen))
+            hard_stemmed = self.nt.stem((((tok[0][0].lower() + tok[0][1:] if tok[0][0].isupper() and tok[0][1:].islower() else tok[0]), tok[-1]) for tok in sen))
+            for tok_i, (tok_stemmed, tok_hard_stemmed) in enumerate(zip(stemmed, hard_stemmed)):
+                tokens[sen_i][tok_i].append(tok_stemmed[2])
+                tokens[sen_i][tok_i].append(tok_hard_stemmed[2])
+

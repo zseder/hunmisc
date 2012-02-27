@@ -24,13 +24,9 @@ templates_file = open(args[2], "w")
 abbrevs = None
 if options.abbrevs is not None:
     abbrevs = set((l.strip() for l in file(options.abbrevs)))
-options.ocamorph_runnable = 1
 
 from langtools.nltk.nltktools import NltkTools
-if options.ocamorph_runnable is not None:
-    nt = NltkTools(tok=True, abbrev_set=abbrevs)
-else:
-    nt = NltkTools(tok=True, pos=True, stem=True, pos_model=options.hunpos_model, abbrev_set=abbrevs)
+nt = NltkTools(tok=True, abbrev_set=abbrevs)
 
 ws_stripper = re.compile(r"\s*", re.UNICODE)
 ws_replacer_in_link = re.compile(r"\s+", re.UNICODE)
@@ -208,21 +204,12 @@ def tokenize_all(tokens):
 
     return new_tokens
 
-def add_stems(tokens):
-    for sen_i, sen in enumerate(tokens):
-        stemmed = nt.stem(((tok[0], tok[3]) for tok in sen))
-        hard_stemmed = nt.stem((((tok[0][0].lower() + tok[0][1:] if tok[0][0].isupper() and tok[0][1:].islower() else tok[0]), tok[3]) for tok in sen))
-        for tok_i, (tok_stemmed, tok_hard_stemmed) in enumerate(zip(stemmed, hard_stemmed)):
-            tokens[sen_i][tok_i].append(tok_stemmed[2])
-            tokens[sen_i][tok_i].append(tok_hard_stemmed[2])
-
 def add_pos_and_stems(tokens):
     """If the ocamorph parameters are specified, the huntools are used for
     POS'ing and stemming, otherwise we fall back to the hunpos and the
     standard NLTK stemmer."""
     lt.pos_tag(tokens)
-    if options.ocamorph_runnable is None:
-        add_stems(tokens)
+    lt.lemmatize(tokens)
 
 from mwlib import parser
 class NodeHandler:
