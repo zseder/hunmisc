@@ -1,11 +1,22 @@
 """Defines classes that handle the various tools."""
 
 from langtools.utils.huntools import Ocamorph, Hundisambig, MorphAnalyzer
+from langtools.nltk.nltktools import NltkTools
 
 class ToolWrapper(object):
     pass
 
-class OcamorphWrapper(object):
+class PosTaggerWrapper(ToolWrapper):
+    def pos_tag(self, tokens):
+        """POS tags @p tokens."""
+        pass
+
+class LemmatizerWrapper(ToolWrapper):
+    def lemmatize(self, tokens):
+        """Lemmatizes @p tokens."""
+        pass
+
+class OcamorphWrapper(PosTaggerWrapper, LemmatizerWrapper):
     """Wrapper class for ocamorph.
 
     This class requires the following parameters:
@@ -47,4 +58,30 @@ class OcamorphWrapper(object):
     def lemmatize(self, tokens):
         """POS tags AND lemmatizes @p tokens."""
         self.add_pos_and_stems(tokens)
+
+class HunposPosTagger(PosTaggerWrapper):
+    """
+    Wraps NltkTools, which wraps HunPos as a POS tagger :).
+    
+    In order for NLTK to find the hunpos executable, the $HUNPOS environment
+    variable must point to the directory with the hunpos-tag executable in it.
+
+    The following parameters are used:
+    - hunpos_model: the hunpos model file. Default is $HUNPOS/english.model;
+    - hunpos_encoding: the encoding used by the hunpos model file. Default is
+      iso-8859-1.
+    """
+    def __init__(self, params):
+        self.nt = NltkTools(pos=True, pos_model=params['hunpos_model'])
+        self.encoding = params.get('hunpos_encoding', 'iso-8859-1')
+
+    def pos_tag(self, tokens):
+        for sen_i, sen in enumerate(tokens):
+            tagged_sen = self.nt.pos_tag([tok[0].encode(self.encoding) for tok in sen])
+            for tok_i, tagged_tok in enumerate(tagged_sen):
+                try:
+                    tok, pos = [x.decode(self.encoding) for x in tagged_tok]
+                except ValueError:
+                    continue
+                tokens[sen_i][tok_i].append(pos)
 

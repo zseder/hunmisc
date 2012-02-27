@@ -11,12 +11,6 @@ from langtools.utils.misc import remove_quot_and_wiki_crap_from_word
 from langtools.utils.language_config import LanguageTools
 
 parser = OptionParser()
-parser.add_option("--hunpos_model", dest="hunpos_model",
-                  help="the hunpos model file. Default is $HUNPOS/english.model",
-                  metavar="MODEL_FILE")
-parser.add_option("--hunpos_encoding", dest="hunpos_encoding",
-                  help="the encoding used by the hunpos model file. Default is utf-8",
-                  default='utf-8')
 parser.add_option("-l", "--language", dest="language",
                   help="the Wikipedia language code. Default is en.", default="en")
 parser.add_option("-a", "--abbrevs", dest="abbrevs",
@@ -214,16 +208,6 @@ def tokenize_all(tokens):
 
     return new_tokens
 
-def add_pos_tags(tokens):
-    for sen_i, sen in enumerate(tokens):
-        tagged_sen = nt.pos_tag([tok[0].encode(options.hunpos_encoding) for tok in sen])
-        for tok_i, tagged_tok in enumerate(tagged_sen):
-            try:
-                tok, pos = [x.decode(options.hunpos_encoding) for x in tagged_tok]
-            except ValueError:
-                continue
-            tokens[sen_i][tok_i].append(pos)
-
 def add_stems(tokens):
     for sen_i, sen in enumerate(tokens):
         stemmed = nt.stem(((tok[0], tok[3]) for tok in sen))
@@ -236,10 +220,8 @@ def add_pos_and_stems(tokens):
     """If the ocamorph parameters are specified, the huntools are used for
     POS'ing and stemming, otherwise we fall back to the hunpos and the
     standard NLTK stemmer."""
-    if options.ocamorph_runnable is not None:
-        lt.pos_tag(tokens)
-    else:
-        add_pos_tags(tokens)
+    lt.pos_tag(tokens)
+    if options.ocamorph_runnable is None:
         add_stems(tokens)
 
 from mwlib import parser
