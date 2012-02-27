@@ -194,14 +194,17 @@ class MorphAnalyzer:
                 return ','
 
     def correct(self, analysis, original):
-        """Inverts the xmlcharreplacements in the lemma."""
+        """Inverts the xmlcharreplacements in the lemma, as well as
+        replace_punct for unicode punctuation marks."""
         try:
             word, crap = analysis
             lemma, stuff, derivation = crap.split('|')
 
-            # If the original is a punctuation mark
+            # If the original is a punctuation mark, tag it as such to avoid
+            # problems with |, etc. Also, we include the original character,
+            # not the one possibly replaced by replace_punct.
             if ispunct(original):
-                return (word, original + u'|' + stuff + u'|' + derivation)
+                return (word, original + u'|' + u'||' + 'PUNCT')
 
             pieces = MorphAnalyzer.UNICODE_PATTERN.split(lemma)
             if len(pieces) == 1:
@@ -212,7 +215,7 @@ class MorphAnalyzer:
                 lemma = u''.join(pieces)
                 return (word, lemma + u'|' + stuff + u'|' + derivation)
         except ValueError, ve:
-            print ve, part.encode('utf-8')
+            print ve, word.encode('utf-8'), crap.encode('utf-8')
             import sys
             sys.stdout.flush()
             raise ve
