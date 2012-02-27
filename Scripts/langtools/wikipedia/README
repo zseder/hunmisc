@@ -22,6 +22,9 @@ in 1; otherwise, if will fall back to 2.
 For an example for the full parametrization, refer to wikitext_to_conll.sh.
 
 TODO:
+= merge sentences
+
+- different cleansing steps by language
 - test with hunpos?
 - unify it with to_ndavid.py
 - refactor, it's a piece of shit
