@@ -202,7 +202,7 @@ class NodeHandler:
         self.tokens = [[]]
     
     def handle(self, node):
-        print str(type(node)) + " " + str(node)
+#        print str(type(node)) + " " + str(node)
         if isinstance(node, parser.Chapter):
             self._handle_chapter(node)
         
@@ -259,37 +259,44 @@ class NodeHandler:
             self._handle_default(node)
             
     def _handle_default(self, node):
+#        print "handle_default"
         for child in node.children:
             if child is not None:
                 self.handle(child)
     
     def _handle_with_sentence_split(self, node):
-        self.tokens.append([])
+#        print "_handle_with_sentence_split"
+        if len(self.tokens) > 0 and len(self.tokens[-1]) != 0:
+            self.tokens.append([])
         for child in node.children:
             self.handle(child)
-    
+        self.tokens.append([])
+
     def _handle_article_link(self, link):
+#        print "handle_article_link"
         self._handle_links_that_matter(link)
 
     def _handle_category_link(self, link):
+#        print "handle_category_link"
         pass
 
     def _handle_image_link(self, link):
-        for child in link.children:
-            if isinstance(child, parser.Text):
-                self.tokens.append([])
-                self.handle(child)
+        self._handle_with_sentence_split(link)
 
     def _handle_interwiki_link(self, link):
+#        print "handle_interwiki_link"
         self._handle_links_that_matter(link)
 
     def _handle_lang_link(self, link):
+#        print "handle_lang_link"
         pass
 
     def _handle_namespace_link(self, link):
+#        print "handle_namespace_link"
         pass
 
     def _handle_links_that_matter(self, link):
+#        print "_handle_links_that_matter"
         def _search_for_caption(node):
             for child in node.children:
                 if isinstance(child, parser.Text):
@@ -306,42 +313,53 @@ class NodeHandler:
             caption = target
         else:
             caption = ws_replacer_in_link.sub(" ", caption, re.UNICODE)
-        print u"target={0} caption={1}".format(target, caption).encode('utf-8')
+#        print u"target={0} caption={1}".format(target, caption).encode('utf-8')
         self.tokens[-1].append((caption, "B-link", target))
         
     def _handle_paragraph(self, paragraph):
+#        print "handle_paragraph"
         self._handle_with_sentence_split(paragraph)
 
     def _handle_section(self, section):
+#        print "handle_section"
         self._handle_with_sentence_split(section)
     
     def _handle_style(self, style):
+#        print "handle_style"
         self._handle_default(style)
     
     def _handle_text(self, text):
+#        print "handle_text: " + unicode(text.caption).encode('utf-8')
         #raise NotImplementedError("Remove tokenization.")
         t = text.caption
         self.tokens[-1].append((t, "text", "0"))
     
     def _handle_table(self, table):
+#        print "handle_table"
         self._handle_with_sentence_split(table)
     
     def _handle_row(self, row):
+#        print "handle_row"
         self._handle_with_sentence_split(row)
     
     def _handle_cell(self, cell):
+#        print "handle_cell"
         self._handle_with_sentence_split(cell)
     
     def _handle_itemlist(self, itemlist):
+#        print "handle_itemlist"
         self._handle_with_sentence_split(itemlist)
     
     def _handle_item(self, item):
+#        print "handle_item"
         self._handle_with_sentence_split(item)
     
     def _handle_caption(self, caption):
+#        print "handle_caption"
         self._handle_with_sentence_split(caption)
     
     def _handle_tagnode(self, tagnode):
+#        print "handle_tagnode"
         #print tagnode.__dict__
         if tagnode.caption == "br":
             self.tokens[-1].append(("\n", "text", "0"))
