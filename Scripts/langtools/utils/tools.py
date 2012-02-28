@@ -1,6 +1,9 @@
 """Defines classes that handle the various tools."""
 
+import os.path
+
 from langtools.utils.huntools import Ocamorph, Hundisambig, MorphAnalyzer
+from langtools.utils.huntools import LineByLineTagger
 from langtools.nltk.nltktools import NltkTools
 
 class ToolWrapper(object):
@@ -21,7 +24,7 @@ class LemmatizerWrapper(ToolWrapper):
 
 class SentenceTokenizerWrapper(ToolWrapper):
     def sen_tokenize(self, raw):
-        """Tokenizes the raw text into sentences."""
+        """Tokenizes the raw text into sentences. Returns a list of strings."""
         pass
 
 class WordTokenizerWrapper(ToolWrapper):
@@ -141,4 +144,46 @@ class NltkToolsTokenizer(SentenceTokenizerWrapper, WordTokenizerWrapper):
 
     def word_tokenize(self, sen):
         return self.nt.word_tokenize(sen)
+
+class HunknownSentenceTokenizer(SentenceTokenizerWrapper, LineByLineTagger):
+    """
+    The Java-based sentence tokenizer Eszter found in her hunpos directory.
+
+    This class uses a modified version of the Tokenizer.java file that only
+    performs sentence tokenization.
+
+    Parameters:
+    - hunknown_basedir: the directory of the hunknown "package";
+    - hunknown_conf: the configuration file for the hunknown sentece tokenizer.
+                     The default is ${hunknown_basedir}/huntools.conf;
+    - hunknown_encoding: the encoding used by the hunknown program. Must agree
+                         with the encoding parameter in the hunknown
+                         configuration file. The default is iso-8859-2.
+    """
+    def __init__(self, params):
+        basedir = params['hunknown_basedir']
+        runnable = os.path.join(basedir, 'bin', 'tokenize')
+        config  = params.get('hunknown_conf')
+        if config is None:
+            config = os.path.join(basedir, 'huntools.conf')
+        encoding = params.get('hunknown_encoding', 'iso-8859-2')
+
+        LineByLineTagger.__init__(self, runnable, encoding)
+        self.options = [config]
+
+    def sen_tokenize(self, raw):
+        raw = raw.strip()
+        if len(raw) == 0:
+            return []
+        # send_and_recv_lines puts a [] around the reply
+        return list(self.tag([raw + "\n"]))[0]
+
+    def recv_line(self):
+        """Receives lineS from the process. The first line is always the number
+        of consecutive lines."""
+        ret = []
+        num_lines = int(LineByLineTagger.recv_line(self))
+        for i in xrange(num_lines):
+            ret.append(LineByLineTagger.recv_line(self))
+        return ret
 
