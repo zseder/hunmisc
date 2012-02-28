@@ -55,24 +55,22 @@ class LanguageTools(object):
             return None
 
     def pos_tag(self, tokens):
-        """POS tags the text. @p tokens is a list^3: fields per words in
-        sentences. Adds the POS tag as a new field to each word."""
+        """@sa langtools.utils.tools.PosTaggerWrapper.pos_tag()."""
         if self.pos_tagger is not None:
             self.pos_tagger.pos_tag(tokens)
 
     def lemmatize(self, tokens):
-        """Lemmatizes tags the text. @p tokens is a list^3: fields per words in
-        sentences. Adds the lemma as a new field to each word."""
+        """@sa langtools.utils.tools.LemmatizerWrapper.lemmatize()."""
         if self.lemmatizer is not None:
             self.lemmatizer.lemmatize(tokens)
 
     def sen_tokenize(self, raw):
-        """Tokenizes the raw text into sentences."""
+        """@sa langtools.utils.tools.SentenceTokenizerWrapper.sen_tokenize()."""
         if self.sen_tokenizer is not None:
             self.sen_tokenizer.sen_tokenize(tokens)
 
     def word_tokenize(self, sen):
-        """Tokenizes the sentence into words."""
+        """@sa langtools.utils.tools.WordTokenizerWrapper.word_tokenize()."""
         if self.word_tokenizer is not None:
             self.word_tokenizer.word_tokenize(tokens)
 

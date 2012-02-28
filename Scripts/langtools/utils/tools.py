@@ -8,12 +8,14 @@ class ToolWrapper(object):
 
 class PosTaggerWrapper(ToolWrapper):
     def pos_tag(self, tokens):
-        """POS tags @p tokens."""
+        """POS tags the text. @p tokens is a list^3: fields per words in
+        sentences. Adds the POS tag as a new field to each word."""
         pass
 
 class LemmatizerWrapper(ToolWrapper):
     def lemmatize(self, tokens):
-        """Lemmatizes @p tokens."""
+        """Lemmatizes the text. @p tokens is a list^3: fields per words in
+        sentences. Adds the lemma as a new field to each word."""
         pass
 
 class SentenceTokenizerWrapper(ToolWrapper):
