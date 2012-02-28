@@ -4,7 +4,8 @@ from langtools.utils.huntools import Ocamorph, Hundisambig, MorphAnalyzer
 from langtools.nltk.nltktools import NltkTools
 
 class ToolWrapper(object):
-    pass
+    def __init__(self, params):
+        pass
 
 class PosTaggerWrapper(ToolWrapper):
     def pos_tag(self, tokens):
@@ -118,4 +119,26 @@ class NltkToolsStemmer(LemmatizerWrapper):
             for tok_i, (tok_stemmed, tok_hard_stemmed) in enumerate(zip(stemmed, hard_stemmed)):
                 tokens[sen_i][tok_i].append(tok_stemmed[2])
                 tokens[sen_i][tok_i].append(tok_hard_stemmed[2])
+
+class NltkToolsTokenizer(SentenceTokenizerWrapper, WordTokenizerWrapper):
+    """
+    Wraps the NltkTools sentence and word tokenizer.
+
+    The only parameter used is
+    - abbrevs: a file that lists abbreviations and other problematic tokens
+               that, because they include punctuation marks, can be  mistaken
+               for a sentence ending. Optional.
+    """
+    def __init__(self, params):
+        abbrevs = params.get('abbrevs')
+        if abbrevs is not None:
+            abbrevs = set(l.strip() for l in file(abbrevs))
+        self.nt = NltkTools(tok=True, abbrev_set=abbrevs)
+
+    def sen_tokenize(self, raw):
+        """@note Does not use the abbrev_set."""
+        return self.nt.sen_abbr_tokenize(raw)
+
+    def word_tokenize(self, sen):
+        return self.nt.word_tokenize(sen)
 

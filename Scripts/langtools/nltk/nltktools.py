@@ -74,8 +74,8 @@ class NltkTools:
         return ' '.join(filter(lambda x: len(x) <= length, re.split(r"\s+", raw)))
         
     def sen_abbr_tokenize(self, raw):
-        """Tokenizes the sentence, and tries to handle problems caused by
-        abbreviations and such."""
+        """Tokenizes the raw text into sentences, and tries to handle problems
+        caused by abbreviations and such."""
         sentences = self.sen_tokenize(raw)
         for i in reversed(xrange(len(sentences) - 1)):
             if (NltkTools._abbrevPattern.search(sentences[i]) is not None

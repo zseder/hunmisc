@@ -13,20 +13,12 @@ from langtools.utils.language_config import LanguageTools
 parser = OptionParser()
 parser.add_option("-l", "--language", dest="language",
                   help="the Wikipedia language code. Default is en.", default="en")
-parser.add_option("-a", "--abbrevs", dest="abbrevs",
-                  help="abbreviations file.")
 options, args = parser.parse_args()
 
 lt = LanguageTools(args[0], options.language)
 
 pages_file = open(args[1], "w")
 templates_file = open(args[2], "w")
-abbrevs = None
-if options.abbrevs is not None:
-    abbrevs = set((l.strip() for l in file(options.abbrevs)))
-
-from langtools.nltk.nltktools import NltkTools
-nt = NltkTools(tok=True, abbrev_set=abbrevs)
 
 ws_stripper = re.compile(r"\s*", re.UNICODE)
 ws_replacer_in_link = re.compile(r"\s+", re.UNICODE)
@@ -125,7 +117,7 @@ def tokenize_part(tokens):
     part_string = "".join((t[0] for t in tokens))
     #print tokens
     #print part_string.encode("utf-8")
-    text = nt.tokenize(part_string)
+    text = lt.tokenize(part_string)
     #print [s for s in text]
     new_tokens = []
     old_index = 0
@@ -203,13 +195,6 @@ def tokenize_all(tokens):
             new_tokens.append(dbl)
 
     return new_tokens
-
-def add_pos_and_stems(tokens):
-    """If the ocamorph parameters are specified, the huntools are used for
-    POS'ing and stemming, otherwise we fall back to the hunpos and the
-    standard NLTK stemmer."""
-    lt.pos_tag(tokens)
-    lt.lemmatize(tokens)
 
 from mwlib import parser
 class NodeHandler:
@@ -445,7 +430,8 @@ def parse_actual_page(actual_page, actual_title, pages_f, templates_f):
             sys.stderr.write(u"Maximum depth recursion at site: {0}\n".format(actual_title).encode("utf-8"))
             return
     tokens = tokenize_all(tokens)
-    add_pos_and_stems(tokens)
+    lt.pos_tag(tokens)
+    lt.lemmatize(tokens)
     
     pages_f.write(u"{0} {1}\n".format(page_separator, actual_title).encode("utf-8"))
     pages_f.write(u"{0}\t{1}\n".format("Templates:", u",".join((t.strip().replace("\n", "") for t in templates))).encode("utf-8"))

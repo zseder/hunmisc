@@ -15,6 +15,7 @@ class LanguageTools(object):
         - lemmatizer: the lemmatizer class.
         - sen_tokenizer: the sentence tokenizer.
         - word_tokenizer: the word tokenizer.
+        - tokenizer: word and sentence tokenizer.
 
     The classes the options refer to are responsible for initializing the
     resources. Their parameters must also be specified in the configuration
@@ -24,8 +25,13 @@ class LanguageTools(object):
         self.config = self.read_config_file(config_file, language)
         self.pos_tagger = self.initialize_tool('pos_tagger')
         self.lemmatizer = self.initialize_tool('lemmatizer')
-        self.sen_tokenizer = self.initialize_tool('sen_tokenizer')
-        self.word_tokenizer = self.initialize_tool('word_tokenizer')
+        tokenizer = self.initialize_tool('tokenizer')
+        if tokenizer is not None:
+            self.sen_tokenizer = tokenizer
+            self.word_tokenizer = tokenizer
+        else:
+            self.sen_tokenizer = self.initialize_tool('sen_tokenizer')
+            self.word_tokenizer = self.initialize_tool('word_tokenizer')
 
     def read_config_file(self, config_file, language):
         """Reads the section of the configuration file that corresponds to
@@ -67,12 +73,17 @@ class LanguageTools(object):
     def sen_tokenize(self, raw):
         """@sa langtools.utils.tools.SentenceTokenizerWrapper.sen_tokenize()."""
         if self.sen_tokenizer is not None:
-            self.sen_tokenizer.sen_tokenize(tokens)
+            return self.sen_tokenizer.sen_tokenize(raw)
 
     def word_tokenize(self, sen):
         """@sa langtools.utils.tools.WordTokenizerWrapper.word_tokenize()."""
         if self.word_tokenizer is not None:
-            self.word_tokenizer.word_tokenize(tokens)
+            return self.word_tokenizer.word_tokenize(sen)
+
+    def tokenize(self, raw):
+        """Runs sen_tokenize and the word_tokenize on the text."""
+        return [self.word_tokenize(sen) for sen in self.sen_tokenize(raw)]
+        
 
 if __name__ == '__main__':
     import sys
