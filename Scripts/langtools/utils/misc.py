@@ -63,7 +63,6 @@ def remove_unwanted_characters_from_word(token, unwanted_set, remove_set):
                 end = i + 1
                 break
 
-        print u'RET {0}[{1}:{2}]'.format(token, begin, end).encode('utf-8')
         ret.append(token[begin:end])
         after.reverse()
         ret += after

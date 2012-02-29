@@ -48,7 +48,6 @@ class SentenceTagger(AbstractSubprocessClass):
         send tokens to _process.stdin after encoding
         excepts only one sentence
         """
-        print "SENDING " + unicode(tokens).encode('utf-8')
         self.tuple_mode = isinstance(tokens[0], tuple)
         for token in tokens:
             # differentiate between already tagged and raw tokens
@@ -67,12 +66,12 @@ class SentenceTagger(AbstractSubprocessClass):
         for token in tokens:
             line = self._process.stdout.readline()
             decoded = line.decode(self._encoding).strip()
-            print "LINE: >" + decoded.encode('utf-8') + "<"
+#            print "LINE: >" + decoded.encode('utf-8') + "<"
             if len(decoded) == 0:
                 continue
             tagged = decoded.split(self.osep)
-            print "TOKEN: " + unicode(token).encode('utf-8')
-            print "TAGGED: " + unicode(tagged).encode('utf-8')
+#            print "TOKEN: " + unicode(token).encode('utf-8')
+#            print "TAGGED: " + unicode(tagged).encode('utf-8')
             tag = tagged[self._tag_index]
             if self.tuple_mode:
                 tagged_tokens.append(token + (tag,))
@@ -86,7 +85,6 @@ class SentenceTagger(AbstractSubprocessClass):
     
     def tag_sentence(self, tokens):
         if self._closed:
-            print "OPTIONS: " + unicode(self.options).encode('utf-8')
             self.start()
 
         self.send(tokens)
