@@ -183,6 +183,8 @@ class MorphAnalyzer:
         t = self.replace_punct(token)
         t = self.replace_num(token)
         t = self.remove_pipes(token)
+        if len(t) == 0:
+            t = u'/'
         return t
 
     def replace_punct(self, token):

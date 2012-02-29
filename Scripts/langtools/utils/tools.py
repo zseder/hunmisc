@@ -127,9 +127,13 @@ class OcamorphWrapper(PosTaggerWrapper, LemmatizerWrapper):
             # TODO The API expects [sentences+], but it can only handle one :(
             ret = list(self.morph_analyzer.analyze([[word[0] for word in sen]]))[0]
             for tok_i, _ in enumerate(sen):
-                spl = ret[tok_i][1].rsplit('|', 2)
-                tokens[sen_i][tok_i].append(spl[2])
-                tokens[sen_i][tok_i].append(spl[0])
+                try:
+                    spl = ret[tok_i][1].rsplit('|', 2)
+                    tokens[sen_i][tok_i].append(spl[2])
+                    tokens[sen_i][tok_i].append(spl[0])
+                except Exception, e:
+                    print "Exception:", str(e)
+                    print unicode(sen[tok_i]).encode('utf-8')
 
     def pos_tag(self, tokens):
         """POS tags AND lemmatizes @p tokens."""
