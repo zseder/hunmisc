@@ -23,9 +23,7 @@ For an example for all options, please refer to the tool documentations in
 ../utils/tools.py and ../utils/language_config.py.
 
 TODO:
-= sentence-ending dot: on/off the last word
 = 1999. -> NUM, not NOUN
-= handle -, & as a quotation mark
 
 - different cleansing steps by language
 - test with hunpos?

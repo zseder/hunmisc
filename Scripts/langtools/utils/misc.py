@@ -12,8 +12,11 @@ __quotationMarks = set(
         u'\u0022\u0027\u00AB\u00BB\u2018\u2019\u201A\u201B\u201C\u201D' +
         u'\u201E\u201F\u2039\u203A\u300C\u300D\u300E\u300F\u301D\u301E' +
         u'\u301F\uFE41\uFE42\uFE43\uFE44\uFF02\uFF07\uFF62\uFF63')
-__wikiGarbage = set(u'|[]{}<>-*=')
-__quotationWikiGarbage = __quotationMarks | __wikiGarbage
+# - and & are not quotation marks; nevertheless they have to be removed from the
+# word 
+__otherStickyCharacters = set(u'-&')
+__wikiGarbage = set(u'|[]{}<>*=')
+__quotationWikiGarbage = __quotationMarks | __otherStickyCharacters | __wikiGarbage
 __wikiRemove = set(u'|')
 
 def isquot(s):

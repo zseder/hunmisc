@@ -1,6 +1,7 @@
 """Defines classes that handle the various tools."""
 
 import os.path
+import re
 
 from langtools.utils.huntools import Ocamorph, Hundisambig, MorphAnalyzer
 from langtools.utils.huntools import LineByLineTagger
@@ -22,15 +23,78 @@ class LemmatizerWrapper(ToolWrapper):
         sentences. Adds the lemma as a new field to each word."""
         pass
 
-class SentenceTokenizerWrapper(ToolWrapper):
+class TokenizerBase(ToolWrapper):
+    """Base class for word and sentence tokenizers. It includes a few basic
+    tools that are likely to be useful for any tokenizer. Namely:
+    - a set of patterns that may cause problems at the end of a sentence
+    - an abbreviation pattern already in the set
+    - a set of abbreviations read from a file, the name of which is specified
+      as the 'abbrevs' property.
+    """
+    _abbrevPattern  = re.compile(r"(?:^|\s)([\w][\w]?[.]){2,}$", re.UNICODE)
+
+    def __init__(self, params):
+        abbrevs = params.get('abbrevs')
+        if abbrevs is not None:
+            self.abbrevs = set(l.strip().decode('utf-8') for l in file(abbrevs))
+        else:
+            self.abbrevs = set()
+        self.patterns = set([TokenizerBase._abbrevPattern])
+
+    def _match_patterns(self, token):
+        """Checks if @p token matches any of the dangerous patterns."""
+        for pattern in self.patterns:
+            if pattern.search(token) is not None:
+                return True
+        return False
+        
+class SentenceTokenizerWrapper(TokenizerBase):
+    """
+    Base class for sentence tokenizers. Above the helper fields and methods
+    in TokenizerBase, this class also defines the following method:
+    - the method _join_sentences used to correct tokenization for sentence
+      tokenizers that got a bit too carried away with their task. Uses the
+      items above to join parts of incorrectly split sentences together.
+    """
+    def __init__(self, params):
+        TokenizerBase.__init__(self, params)
+
     def sen_tokenize(self, raw):
         """Tokenizes the raw text into sentences. Returns a list of strings."""
         pass
 
-class WordTokenizerWrapper(ToolWrapper):
+    def _join_sentences(self, sentences):
+        """Joins parts of incorrectly split sentences if the first part ends
+        in an abbreviation or one of the 'dangerous' patterns and the next
+        starts with a lower-case letter."""
+        for i in reversed(xrange(len(sentences) - 1)):
+            if self._join_condition(sentences, i):
+                sentences[i] = ' '.join(sentences[i : i + 2])
+                sentences.pop(i + 1)
+
+    def _join_condition(self, sentences, current):
+        """If this method returns @c True, _join_sentences joins the two current
+        and the next sentence."""
+        return ((self._match_patterns(sentences[current]) or
+                self._end_in_abbrevs(sentences[current])) and
+                not NltkTools.starts_with_upper(sentences[current + 1]))
+
+    def _end_in_abbrevs(self, part):
+        last_word = part.rsplit(None, 1)[-1]
+        return last_word in self.abbrevs
+
+class WordTokenizerWrapper(TokenizerBase):
+    def __init__(self, params):
+        TokenizerBase.__init__(self, params)
+
     def word_tokenize(self, sen):
         """Tokenizes the sentence into words."""
         pass
+
+    def _is_abbrev(self, token):
+        """Returns true if @p token is abbreviation."""
+        return (token in self.abbrevs or
+                TokenizerBase._abbrevPattern.search(token) is not None)
 
 class OcamorphWrapper(PosTaggerWrapper, LemmatizerWrapper):
     """Wrapper class for ocamorph.
@@ -133,17 +197,24 @@ class NltkToolsTokenizer(SentenceTokenizerWrapper, WordTokenizerWrapper):
                for a sentence ending. Optional.
     """
     def __init__(self, params):
-        abbrevs = params.get('abbrevs')
-        if abbrevs is not None:
-            abbrevs = set(l.strip() for l in file(abbrevs))
-        self.nt = NltkTools(tok=True, abbrev_set=abbrevs)
+        SentenceTokenizerWrapper.__init__(self, params)
+        WordTokenizerWrapper.__init__(self, params)
+        self.nt = NltkTools(tok=True, abbrev_set=self.abbrevs)
 
     def sen_tokenize(self, raw):
         """@note Does not use the abbrev_set."""
-        return self.nt.sen_abbr_tokenize(raw)
+        sentences = self.nt.sen_tokenize(raw)
+        self._join_sentences(sentences)
+        return sentences
 
     def word_tokenize(self, sen):
-        return self.nt.word_tokenize(sen)
+        tokens = self.nt.wordTokenizer.tokenize(sen)
+        if len(tokens) == 0:
+            return []
+        punktMatchObject = self.nt.punktSplitter.match(tokens[-1])
+        if punktMatchObject is not None and not self._is_abbrev(tokens[-1]):
+            tokens = tokens[:-1] + list(punktMatchObject.groups())
+        return tokens
 
 class HunknownSentenceTokenizer(SentenceTokenizerWrapper, LineByLineTagger):
     """
@@ -160,7 +231,15 @@ class HunknownSentenceTokenizer(SentenceTokenizerWrapper, LineByLineTagger):
                          with the encoding parameter in the hunknown
                          configuration file. The default is iso-8859-2.
     """
+    _datePattern = re.compile(r"(?:^|\s)(?:[\d]{2}){1,2}[.]$", re.UNICODE)
+    _romanNumberPattern = re.compile(r"(?:^|\s)[IVXLCDM]+[.]$",
+                                     re.UNICODE | re.IGNORECASE)
+
     def __init__(self, params):
+        SentenceTokenizerWrapper.__init__(self, params)
+        self.patterns.add(HunknownSentenceTokenizer._datePattern)
+        self.patterns.add(HunknownSentenceTokenizer._romanNumberPattern)
+
         basedir = params['hunknown_basedir']
         runnable = os.path.join(basedir, 'bin', 'tokenize')
         config  = params.get('hunknown_conf')
@@ -176,7 +255,15 @@ class HunknownSentenceTokenizer(SentenceTokenizerWrapper, LineByLineTagger):
         if len(raw) == 0:
             return []
         # send_and_recv_lines puts a [] around the reply
-        return list(self.tag([raw + "\n"]))[0]
+        sentences = list(self.tag([raw + "\n"]))[0]
+        self._join_sentences(sentences)
+        return sentences
+
+    def _join_condition(self, sentences, current):
+        b = super(HunknownSentenceTokenizer, self)._join_condition(
+                sentences, current)
+        return b or HunknownSentenceTokenizer._romanNumberPattern.search(
+                sentences[current]) is not None
 
     def recv_line(self):
         """Receives lineS from the process. The first line is always the number
