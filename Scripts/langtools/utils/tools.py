@@ -234,6 +234,7 @@ class HunknownSentenceTokenizer(SentenceTokenizerWrapper, LineByLineTagger):
     _datePattern = re.compile(r"(?:^|\s)(?:[\d]{2}){1,2}[.]$", re.UNICODE)
     _romanNumberPattern = re.compile(r"(?:^|\s)[IVXLCDM]+[.]$",
                                      re.UNICODE | re.IGNORECASE)
+    _emptyLines = re.compile(ur"[\n\r]+")
 
     def __init__(self, params):
         SentenceTokenizerWrapper.__init__(self, params)
@@ -251,7 +252,7 @@ class HunknownSentenceTokenizer(SentenceTokenizerWrapper, LineByLineTagger):
         self.options = [config]
 
     def sen_tokenize(self, raw):
-        raw = raw.strip()
+        raw = HunknownSentenceTokenizer._emptyLines.sub("\n", raw.strip())
         if len(raw) == 0:
             return []
         # send_and_recv_lines puts a [] around the reply
