@@ -154,6 +154,7 @@ class Hundisambig(SentenceTagger):
 
 class MorphAnalyzer:
     UNICODE_PATTERN = re.compile(ur"&#(\d+);")
+    NUMBER_PATTERN = re.compile(ur"(\d+|[IVXLCDM]+)[.]", re.IGNORECASE)
 
     def __init__(self, ocamorph, hundisambig):
         self._ocamorph = ocamorph
@@ -161,7 +162,7 @@ class MorphAnalyzer:
 
     def analyze(self, data):
         from tempfile import NamedTemporaryFile
-        safe_data = [[self.replace_punct(tok) for tok in sen] for sen in data]
+        safe_data = [[self.replace_stuff(tok) for tok in sen] for sen in data]
         with NamedTemporaryFile() as morphtable_file:
             morphtable_filename = morphtable_file.name
             tokens = [tok for sen in safe_data for tok in sen]
@@ -180,6 +181,11 @@ class MorphAnalyzer:
                 ret = self._hundisambig.tag_sentence(sen)
                 yield [self.correct(token, data[sen_i][i]) for i, token in enumerate(ret)]
 
+    def replace_stuff(self, token):
+        t = self.replace_punct(token)
+        t = self.replace_num(token)
+        return t
+
     def replace_punct(self, token):
         """Replaces unicode punctuation marks with ones understood by
         ocamorph."""
@@ -192,6 +198,12 @@ class MorphAnalyzer:
                 return '"'
             else:
                 return ','
+
+    def replace_num(self, token):
+        """Strips the '.' from the end of a number token, so that ocamorph
+        correctly tags it as NUM."""
+        m = MorphAnalyzer.NUMBER_PATTERN.match(token)
+        return m.group(1) if m is not None else token
 
     def correct(self, analysis, original):
         """Inverts the xmlcharreplacements in the lemma, as well as
