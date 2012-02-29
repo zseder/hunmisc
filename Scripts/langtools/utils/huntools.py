@@ -182,6 +182,7 @@ class MorphAnalyzer:
     def replace_stuff(self, token):
         t = self.replace_punct(token)
         t = self.replace_num(token)
+        t = self.remove_pipes(token)
         return t
 
     def replace_punct(self, token):
@@ -202,6 +203,9 @@ class MorphAnalyzer:
         correctly tags it as NUM."""
         m = MorphAnalyzer.NUMBER_PATTERN.match(token)
         return m.group(1) if m is not None else token
+
+    def remove_pipes(self, token):
+        return token.replace(u'|', u'')
 
     def correct(self, analysis, original):
         """Inverts the xmlcharreplacements in the lemma, as well as
