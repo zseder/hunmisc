@@ -19,8 +19,8 @@ penn_to_major_pos = defaultdict(lambda: NOUN)
 penn_to_major_pos.update(_penn_to_major_pos)
 
 class NltkTools:
-    # TODO: \d{4}
-    _abbrevPattern = re.compile(r"([\w][\w]?[.]){2}$", re.UNICODE)
+    _abbrevPattern  = re.compile(r"([\w][\w]?[.]){2,}$", re.UNICODE)
+    _datePattern    = re.compile(r"(^|\s)(?:[\d]{2}){1,2}[.]$", re.UNICODE)
     _cleanerPattern = re.compile("(\w\w)([.?,:;!])(\w)(\w)", re.UNICODE)
 
     def __init__(self, tok=False, wtok=False, stok=False, pos=False, stem=False,
