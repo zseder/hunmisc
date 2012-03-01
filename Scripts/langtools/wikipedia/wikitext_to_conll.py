@@ -115,14 +115,17 @@ class WikipediaParser(object):
                 sys.stderr.write(u"Maximum depth recursion at site: {0}\n".format(
                                  actual_title).encode("utf-8"))
                 return
-        tokens = self.tokenize_all(tokens)
-        self.process_tokens(actual_title, tokens, templates)
+        tokens_to_process = self.tokens_from_title(actual_title)
+        tokens_to_process += self.tokenize_all(tokens)
+        self.process_tokens(actual_title, tokens_to_process, templates)
 
     def process_tokens(self, actual_title, tokens, templates):
         """
         Processes the tokens. Called after parse_actual_page splits the
         content of the page into tokens. Subclasses must override this method
         to process the tokens. This default implementation is a no-op.
+
+        The first entry in @p tokens is the title; the body starts at index 1.
         @param actual_title the title of the page being processed.
         @param tokens the tokens.
         @param templates the templates found on the page.
@@ -136,6 +139,13 @@ class WikipediaParser(object):
         @param s the page text.
         """
         pass
+
+    def tokens_from_title(self, actual_title):
+        """Tokenizes the title in the same way as the page text."""
+        title_tokens = []
+        for token in self.lt.word_tokenize(actual_title):
+            title_tokens.append([token, "text", "0"])
+        return [title_tokens]
 
     def remove_xml_comments(self, text):
         """Removes xml-style comments, I guess."""
@@ -321,11 +331,22 @@ class WikitextToConll(WikipediaParser):
         self.lt.lemmatize(tokens)
 
         # Print the tagged tokens
-        self.pages_f.write(u"{0} {1}\n".format(
-                WikipediaParser.page_separator, actual_title).encode("utf-8"))
         self.pages_f.write(u"{0}\t{1}\n".format(
-                "Templates:", u",".join((t.strip().replace("\n", "") for t in templates))).encode("utf-8"))
+                WikipediaParser.page_separator, actual_title).encode("utf-8"))
 
+        self.pages_f.write(u"%%#Field\tTitle\n")
+        self.print_tokens([tokens[0]])
+
+        # TODO: redirect.
+        # elif starter and l.startswith("REDIRECT"):
+        #   print "%%#Redirect"
+        self.pages_f.write(u"%%#Templates\t{0}\n".format(
+                u",".join((t.strip().replace("\n", "") for t in templates))).encode("utf-8"))
+        self.pages_f.write(u"%%#Field\tBody\n")
+        self.print_tokens(tokens[1:])
+
+    def print_tokens(self, tokens):
+        """Prints @p tokens to the page content file."""
         for sen in tokens:
             for t in sen:
                 try:

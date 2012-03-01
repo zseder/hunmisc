@@ -23,7 +23,10 @@ For an example for all options, please refer to the tool documentations in
 ../utils/tools.py and ../utils/language_config.py.
 
 TODO:
+= create_morphtable
+
+- create the skiplist
+- how to handle redirects (in Hungarian esp)?
 - different cleansing steps by language
 - test with hunpos?
-- unify it with to_ndavid.py
 - refactor, it's a piece of shit
