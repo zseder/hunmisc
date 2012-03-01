@@ -86,7 +86,7 @@ class WikipediaParser(object):
         try:
             #r=simpleparse(raw=s)
             #quit()
-            r=parseString(raw=s, title=actual_title, lang=options.language)
+            r=parseString(raw=s, title=actual_title, lang=self.lt.language)
         except AssertionError:
             sys.stderr.write(u"AssertionError problem: {0}\n".format(
                     actual_title).encode("utf-8"))
