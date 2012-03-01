@@ -34,12 +34,10 @@ class WikipediaParser(object):
     def process_file(self, input_file):
         """Processes input_file, which is a file stream. Calls the
         parse_actual_page method per page."""
-        print "PF"
         actual_page = u""
         actual_title = u""
         skip = False
         for line in input_file:
-            print "LINE", line
             line = line.decode("utf-8")
             if line.startswith(WikipediaParser.page_separator):
                 if actual_page != u"" and not skip:
@@ -69,7 +67,6 @@ class WikipediaParser(object):
     def parse_actual_page(self, actual_page, actual_title):
         from mwlib.uparser import parseString, simpleparse
 
-        print "ITT"
         s = self.remove_xml_comments(actual_page)
         try:
             s = self.remove_open_close(s, "<math>", "</math>")
