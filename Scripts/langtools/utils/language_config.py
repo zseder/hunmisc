@@ -22,6 +22,7 @@ class LanguageTools(object):
     file.
     """
     def __init__(self, config_file, language='en'):
+        self.language = language
         self.config = self.read_config_file(config_file, language)
         self.pos_tagger = self.initialize_tool('pos_tagger')
         self.lemmatizer = self.initialize_tool('lemmatizer')
@@ -83,7 +84,6 @@ class LanguageTools(object):
     def tokenize(self, raw):
         """Runs sen_tokenize and the word_tokenize on the text."""
         return [self.word_tokenize(sen) for sen in self.sen_tokenize(raw)]
-        
 
 if __name__ == '__main__':
     import sys
