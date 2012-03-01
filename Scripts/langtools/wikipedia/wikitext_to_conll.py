@@ -1,5 +1,5 @@
-"""Parameters: the configuration file, the two outputs: the pages and the
-templates files."""
+"""Parameters: the configuration file, the input file, the two outputs: the
+pages and the templates files."""
 # TODO: ' to separate token (currently it is not removed from the beginning of
 #       words).
 
@@ -10,18 +10,381 @@ from itertools import chain
 from langtools.utils.misc import remove_quot_and_wiki_crap_from_word
 from langtools.utils.language_config import LanguageTools
 
-parser = OptionParser()
-parser.add_option("-l", "--language", dest="language",
-                  help="the Wikipedia language code. Default is en.", default="en")
-options, args = parser.parse_args()
+class WikipediaParser(object):
+    page_separator = "%%#PAGE"
+    ws_stripper = re.compile(r"\s*", re.UNICODE)
 
-lt = LanguageTools(args[0], options.language)
+    def __init__(self, lt, skiplist_file=None):
+        """
+        @param lt the LanguageTools object.
+        @param skiplist_file the name of the file that contains the titles of
+                             pages to skip.
+        """
+        self.lt = lt
+        skiplist = []
+        if skiplist_file is not None:
+            try:
+                skiplist_file = file(skiplist_file)
+                for line in skiplist_file:
+                    skiplist.append(line.strip())
+            except:
+                pass
+        self.skiplist = set(skiplist)
 
-pages_file = open(args[1], "w")
-templates_file = open(args[2], "w")
+    def process_file(self, input_file):
+        """Processes input_file, which is a file stream. Calls the
+        parse_actual_page method per page."""
+        print "PF"
+        actual_page = u""
+        actual_title = u""
+        skip = False
+        for line in input_file:
+            print "LINE", line
+            line = line.decode("utf-8")
+            if line.startswith(WikipediaParser.page_separator):
+                if actual_page != u"" and not skip:
+                    self.parse_actual_page(actual_page, actual_title)
+                actual_page = u""
+                try:
+                    actual_title = line.strip().split(" ", 1)[1]
+                except IndexError:
+                    sys.stderr.write("Page title contains only whitespace\n")
+                    skip = True
+                skip = self.filter_page(actual_title)
+            else:
+                actual_page += line
 
-ws_stripper = re.compile(r"\s*", re.UNICODE)
-ws_replacer_in_link = re.compile(r"\s+", re.UNICODE)
+        if len(actual_page) > 0:
+            self.parse_actual_page(actual_page, actual_title)
+
+    def filter_page(self, title):
+        """
+        If True, the current page is SKIPPED.
+        
+        This default implementation skips all titles specified in the 
+        skiplist file.
+        """
+        return title in self.skiplist
+
+    def parse_actual_page(self, actual_page, actual_title):
+        from mwlib.uparser import parseString, simpleparse
+
+        print "ITT"
+        s = self.remove_xml_comments(actual_page)
+        try:
+            s = self.remove_open_close(s, "<math>", "</math>")
+        except SyntaxException, se:
+            s = self.remove_open_close_lame(s, "<math>", "</math>")
+            sys.stderr.write(u"Problems with <math>: {0}\n".format(
+                actual_title).encode("utf-8"))
+ 
+        templates = self.process_templates(actual_title, s)
+
+        try:
+            s = self.remove_open_close(s, "{{", "}}")
+        except SyntaxException:
+            s = self.remove_open_close_lame(s, "{{", "}}")
+            sys.stderr.write(u"Problems with braces: {0}\n".format(
+                    actual_title).encode("utf-8"))
+        try:
+            #r=simpleparse(raw=s)
+            #quit()
+            r=parseString(raw=s, title=actual_title, lang=options.language)
+        except AssertionError:
+            sys.stderr.write(u"AssertionError problem: {0}\n".format(
+                    actual_title).encode("utf-8"))
+            return
+        except ImportError, e:
+            sys.stderr.write(u"ImportError problem({0}): {1}\n".format(
+                             e, actual_title).encode("utf-8"))
+            return
+        except AttributeError, e:
+            excepted_error_message = "'ImageMap' object has no attribute 'imagelink'"
+            if str(e).strip() == excepted_error_message:
+                sys.stderr.write(u"imagemap/imagelink error: {0}\n".format(
+                                 actual_title).encode("utf-8"))
+                return
+            else:
+                raise e
+
+        try:
+            nh = NodeHandler()
+            nh.handle(r)
+            tokens = nh.tokens
+        except RuntimeError, rte:
+            print rte
+            s = "maximum recursion depth exceeded"
+            if str(rte).find(s) >= 0:
+                sys.stderr.write(u"Maximum depth recursion at site: {0}\n".format(
+                                 actual_title).encode("utf-8"))
+                return
+        tokens = self.tokenize_all(tokens)
+        self.process_tokens(actual_title, tokens, templates)
+
+    def process_tokens(self, actual_title, tokens, templates):
+        """
+        Processes the tokens. Called after parse_actual_page splits the
+        content of the page into tokens. Subclasses must override this method
+        to process the tokens. This default implementation is a no-op.
+        @param actual_title the title of the page being processed.
+        @param tokens the tokens.
+        @param templates the templates found on the page.
+        """
+        pass
+
+    def process_templates(self, actual_title, s):
+        """
+        Processes the templates found on the page.
+        @param actual title the title of the page.
+        @param s the page text.
+        """
+        pass
+
+    def remove_xml_comments(self, text):
+        """Removes xml-style comments, I guess."""
+        start = text.find("<!--")
+        end = text.find("-->")
+        #sys.stderr.write("%d %d\n" % (start, end))
+        position = start
+        while start >= 0 and end >= 0:
+            if end < start:
+                position = end + 1
+            else:
+                text = text[0:start] + text[end+3:]
+            start = text.find("<!--", position)
+            end = text.find("-->", position)
+            #sys.stderr.write("%d %d\n" % (start, end))
+        return text
+
+    def remove_open_close(self, text, openstr, closestr):
+        """@todo: docstring"""
+        done = []
+        depth = 0
+        position = 0
+        start = None
+        while True:
+            open = text.lower().find(openstr, position)
+            close = text.lower().find(closestr, position)
+            if depth == 0:
+                if open < 0:
+                    done.append(text[start:])
+                    break
+                else:
+                    done.append(text[start:open])
+                    start = open
+                    depth += 1
+                    position = open + len(openstr)
+            else:
+                if open > -1:
+                    if close > -1:
+                        if open < close:
+                            depth += 1
+                            position = open + len(openstr)
+                        else:
+                            depth -= 1
+                            position = close + len(closestr)
+                    else:
+                        raise SyntaxException("Open without closing")
+                else:
+                    if close > -1:
+                        depth -= 1
+                        position = close + len(closestr)
+                    else:
+                        raise SyntaxException("No more braces in depth %d" % depth)
+                if depth == 0:
+                    start = position
+        return " ".join(done)
+
+    def remove_open_close_lame(self, text, openstr, closestr):
+        """@todo: docstring"""
+        while True:
+            open = text.find(openstr)
+            close = text.find(closestr, open)
+            if open > -1 and close > -1:
+                text = text[:open] + text[close + len(closestr):]        
+            else:
+                break
+        return text
+
+    def tokenize_part(self, tokens):
+        """Here be dragons."""
+        def __search_for_right_index(old_index, index_inside_old_token):
+            good = False
+            while not good:
+                my_token = tokens[old_index][0][index_inside_old_token:]
+                index_inside_old_token += len(WikipediaParser.ws_stripper.match(my_token).group(0))
+                if index_inside_old_token == len(tokens[old_index][0]):
+                    old_index += 1
+                    index_inside_old_token = 0
+                else:
+                    good = True
+            
+            return old_index, index_inside_old_token
+        
+        part_string = "".join((t[0] for t in tokens))
+        #print tokens
+        #print part_string.encode("utf-8")
+        text = self.lt.tokenize(part_string)
+        #print [s for s in text]
+        new_tokens = []
+        old_index = 0
+        index_inside_old_token = 0
+        inside_link = False
+        for sen in text:
+            actual_sentence = []
+            sen2 = []
+            for tok in sen:
+                if tok != ". . .":
+                    sen2.append(tok)
+                else:
+                    sen2 += [".", ".", "."]
+            sen = sen2
+            
+            for tok in sen:
+                done = False
+                added = False
+                index_inside_new_token = 0
+                while not done:
+                    previous_old_index = old_index
+                    old_index, index_inside_old_token = __search_for_right_index(old_index, index_inside_old_token)
+                    if previous_old_index != old_index:
+                        inside_link = False
+                    
+                    if not inside_link:
+                        new_link_tag = tokens[old_index][1]
+                    
+                    if not added:
+                        actual_sentence.append([tok, new_link_tag, tokens[old_index][2]])
+                        added = True
+                    
+                    # new token is at the beginning of the actual old token
+                    if tokens[old_index][0][index_inside_old_token:index_inside_old_token+(len(tok) - index_inside_new_token)] == tok[index_inside_new_token:]:
+                        done = True
+                        index_inside_old_token += len(tok) - index_inside_new_token
+                        if len(tokens[old_index][0]) >= index_inside_old_token:
+                            if tokens[old_index][1] == "B-link":
+                                new_link_tag = "I-link"
+                                inside_link = True
+                        
+                    # new token is longer than the rest of the actual old token
+                    # example: [[Brazil]]ian
+                    elif ( len(tok[index_inside_new_token:]) >= len(tokens[old_index][0][index_inside_old_token:]) and
+                           ( tok[index_inside_new_token:index_inside_new_token + len(tokens[old_index][0][index_inside_old_token:])]
+                             == tokens[old_index][0][index_inside_old_token:]) ):
+                        index_inside_new_token += len(tokens[old_index][0][index_inside_old_token:])
+                        old_index += 1
+                        inside_link = False
+                        index_inside_old_token = 0
+                        if index_inside_new_token == len(tok) + 1:
+                            done = True
+                        
+                        if not done and tokens[old_index][1] == "B-link":
+                            new_link_tag = "I-link"
+                            inside_link = True
+                        
+                    else:
+                        print tok.encode("utf-8")
+                        print tokens[old_index][0].encode("utf-8")
+                        print tokens[old_index][0][index_inside_old_token:index_inside_old_token+(len(tok))].encode("utf-8")
+                        raise Exception("New token is longer than old one!")
+            
+            if len(actual_sentence) > 0:
+                new_tokens.append(actual_sentence)
+        return new_tokens
+
+    def tokenize_all(self, tokens):
+        """
+        Tokenizes the page contents.
+        @param tokens the WikiMedia text tokens
+        @return sentence and word tokens
+        """
+        new_tokens = []
+        for part in tokens:
+            for dbl in self.tokenize_part(part):
+                dbl = list(chain.from_iterable([[w] + l[1:] for w in remove_quot_and_wiki_crap_from_word(l[0])] for l in dbl))
+                new_tokens.append(dbl)
+
+        return new_tokens
+
+class WikitextToConll(WikipediaParser):
+    def __init__(self, lt, pages_file, templates_file, skiplist_file=None):
+        """
+        @param pages_file the output file stream to which the page text is written.
+        @param templates_file templates are written to this file stream.
+        """
+        WikipediaParser.__init__(self, lt, skiplist_file)
+        self.pages_f     = pages_file
+        self.templates_f = templates_file
+
+    def process_tokens(self, actual_title, tokens, templates):
+        """Tags and lemmatizes the tokens, then prints the result into the
+        first output file."""
+        # POS tag and lemmatize the data
+        self.lt.pos_tag(tokens)
+        self.lt.lemmatize(tokens)
+
+        # Print the tagged tokens
+        self.pages_f.write(u"{0} {1}\n".format(
+                WikipediaParser.page_separator, actual_title).encode("utf-8"))
+        self.pages_f.write(u"{0}\t{1}\n".format(
+                "Templates:", u",".join((t.strip().replace("\n", "") for t in templates))).encode("utf-8"))
+
+        for sen in tokens:
+            for t in sen:
+                try:
+                    self.pages_f.write(u"\t".join(t).encode("utf-8") + "\n")
+                except UnicodeError, ue:
+                    print "Trying to print: "
+                    for w in t:
+                        if isinstance(w, unicode):
+                            print w.encode('utf-8')
+                        else:
+                            print w
+                    raise ue
+            self.pages_f.write("\n")
+
+    def process_templates(self, actual_title, s):
+        """Prints the templates into the second output file."""
+        from mwlib.expander import get_templates
+
+        self.templates_f.write(u"{0} {1}\n".format(
+                WikipediaParser.page_separator, actual_title).encode("utf-8"))
+        if not WikitextToConll.write_templates_into_f(s, self.templates_f):
+            sys.stderr.write(u"Problems with templates and mwparser: {0}\n".format(
+                             actual_title).encode("utf-8"))
+        return get_templates(s)
+
+    @staticmethod
+    def write_templates_into_f(raw, f):
+        """Extracts the templates from the raw text and writes them to the file @p f."""
+        from mwlib.templ.misc import DictDB
+        from mwlib.expander import get_template_args
+        from mwlib.templ.evaluate import Expander
+        from mwlib.templ.parser import parse
+        from mwlib.templ.nodes import Template
+        
+        e=Expander('', wikidb=DictDB())  
+        todo = [parse(raw, replace_tags=e.replace_tags)]
+        result = True
+        while todo:
+            n = todo.pop()
+            if isinstance(n, basestring):
+                continue
+
+            if isinstance(n, Template) and isinstance(n[0], basestring):
+                d = get_template_args(n, e)
+                f.write(u"Template\t{0}\n".format(unicode(n[0]).strip().replace("\n", "")).encode("utf-8"))
+                for i in range(len(d)):
+                    try:
+                        f.write(unicode(d[i]).encode("utf-8") + "\n")
+                    except TypeError:
+                        result = False
+                    except AttributeError:
+                        # handling some mwlib bug. it raises this exception somehow
+                        result = False
+                f.write("\n")
+            todo.extend(n)
+        return result
 
 class MyStopException(Exception):
     pass
@@ -29,175 +392,10 @@ class MyStopException(Exception):
 class SyntaxException(Exception):
     pass
 
-skiplist = []
-try:
-    skiplist_file = file(sys.argv[1])
-    for line in skiplist_file:
-        skiplist.append(line.strip())
-except:
-    pass
-
-def remove_xml_comments(text):
-    start = text.find("<!--")
-    end = text.find("-->")
-    #sys.stderr.write("%d %d\n" % (start, end))
-    position = start
-    while start >= 0 and end >= 0:
-        if end < start:
-            position = end + 1
-        else:
-            text = text[0:start] + text[end+3:]
-        start = text.find("<!--", position)
-        end = text.find("-->", position)
-        #sys.stderr.write("%d %d\n" % (start, end))
-    return text
-
-def remove_open_close(text, openstr, closestr):
-    done = []
-    depth = 0
-    position = 0
-    start = None
-    while True:
-        open = text.lower().find(openstr, position)
-        close = text.lower().find(closestr, position)
-        if depth == 0:
-            if open < 0:
-                done.append(text[start:])
-                break
-            else:
-                done.append(text[start:open])
-                start = open
-                depth += 1
-                position = open + len(openstr)
-        else:
-            if open > -1:
-                if close > -1:
-                    if open < close:
-                        depth += 1
-                        position = open + len(openstr)
-                    else:
-                        depth -= 1
-                        position = close + len(closestr)
-                else:
-                    raise SyntaxException("Open without closing")
-            else:
-                if close > -1:
-                    depth -= 1
-                    position = close + len(closestr)
-                else:
-                    raise SyntaxException("No more braces in depth %d" % depth)
-            if depth == 0:
-                start = position
-    return " ".join(done)
-
-def remove_open_close_lame(text, openstr, closestr):
-    while True:
-        open = text.find(openstr)
-        close = text.find(closestr, open)
-        if open > -1 and close > -1:
-            text = text[:open] + text[close + len(closestr):]        
-        else:
-            break
-    return text
-
-def tokenize_part(tokens):
-    def __search_for_right_index(old_index, index_inside_old_token):
-        good = False
-        while not good:
-            my_token = tokens[old_index][0][index_inside_old_token:]
-            index_inside_old_token += len(ws_stripper.match(my_token).group(0))
-            if index_inside_old_token == len(tokens[old_index][0]):
-                old_index += 1
-                index_inside_old_token = 0
-            else:
-                good = True
-        
-        return old_index, index_inside_old_token
-    
-    part_string = "".join((t[0] for t in tokens))
-    #print tokens
-    #print part_string.encode("utf-8")
-    text = lt.tokenize(part_string)
-    #print [s for s in text]
-    new_tokens = []
-    old_index = 0
-    index_inside_old_token = 0
-    inside_link = False
-    for sen in text:
-        actual_sentence = []
-        sen2 = []
-        for tok in sen:
-            if tok != ". . .":
-                sen2.append(tok)
-            else:
-                sen2 += [".", ".", "."]
-        sen = sen2
-        
-        for tok in sen:
-            done = False
-            added = False
-            index_inside_new_token = 0
-            while not done:
-                
-                previous_old_index = old_index
-                old_index, index_inside_old_token = __search_for_right_index(old_index, index_inside_old_token)
-                if previous_old_index != old_index:
-                    inside_link = False
-                
-                if not inside_link:
-                    new_link_tag = tokens[old_index][1]
-                
-                if not added:
-                    actual_sentence.append([tok, new_link_tag, tokens[old_index][2]])
-                    added = True
-                
-                # new token is at the beginning of the actual old token
-                if tokens[old_index][0][index_inside_old_token:index_inside_old_token+(len(tok) - index_inside_new_token)] == tok[index_inside_new_token:]:
-                    done = True
-                    index_inside_old_token += len(tok) - index_inside_new_token
-                    if len(tokens[old_index][0]) >= index_inside_old_token:
-                        if tokens[old_index][1] == "B-link":
-                            new_link_tag = "I-link"
-                            inside_link = True
-                    
-                    
-                # new token is longer than the rest of the actual old token
-                # example: [[Brazil]]ian
-                elif ( len(tok[index_inside_new_token:]) >= len(tokens[old_index][0][index_inside_old_token:]) and
-                       ( tok[index_inside_new_token:index_inside_new_token + len(tokens[old_index][0][index_inside_old_token:])]
-                         == tokens[old_index][0][index_inside_old_token:]) ):
-                    index_inside_new_token += len(tokens[old_index][0][index_inside_old_token:])
-                    old_index += 1
-                    inside_link = False
-                    index_inside_old_token = 0
-                    if index_inside_new_token == len(tok) + 1:
-                        done = True
-                    
-                    if not done and tokens[old_index][1] == "B-link":
-                        new_link_tag = "I-link"
-                        inside_link = True
-                    
-                else:
-                    print tok.encode("utf-8")
-                    print tokens[old_index][0].encode("utf-8")
-                    print tokens[old_index][0][index_inside_old_token:index_inside_old_token+(len(tok))].encode("utf-8")
-                    raise Exception("New token is longer than old one!")
-        
-        if len(actual_sentence) > 0:
-            new_tokens.append(actual_sentence)
-    return new_tokens
-
-def tokenize_all(tokens):
-    new_tokens = []
-    for part in tokens:
-        for dbl in tokenize_part(part):
-            dbl = list(chain.from_iterable([[w] + l[1:] for w in remove_quot_and_wiki_crap_from_word(l[0])] for l in dbl))
-            new_tokens.append(dbl)
-
-    return new_tokens
-
 from mwlib import parser
 class NodeHandler:
+    ws_replacer_in_link = re.compile(r"\s+", re.UNICODE)
+
     def __init__(self):
         self.tokens = [[]]
     
@@ -307,12 +505,12 @@ class NodeHandler:
                         return caption
             return None
 
-        target = ws_replacer_in_link.sub(" ", link.target, re.UNICODE)        
+        target = NodeHandler.ws_replacer_in_link.sub(" ", link.target, re.UNICODE)        
         caption = _search_for_caption(link)
         if caption is None:
             caption = target
         else:
-            caption = ws_replacer_in_link.sub(" ", caption, re.UNICODE)
+            caption = NodeHandler.ws_replacer_in_link.sub(" ", caption, re.UNICODE)
 #        print u"target={0} caption={1}".format(target, caption).encode('utf-8')
         self.tokens[-1].append((caption, "B-link", target))
         
@@ -366,129 +564,22 @@ class NodeHandler:
             return
         self._handle_default(tagnode)
 
-page_separator = "%%#PAGE"
+if __name__ == '__main__':
+    option_parser = OptionParser()
+    option_parser.add_option("-l", "--language", dest="language",
+            help="the Wikipedia language code. Default is en.", default="en")
+    option_parser.add_option("-s", "--skiplist", dest="skiplist",
+            help="the file that lists the page to skip. Optional.", default=None)
+    options, args = option_parser.parse_args()
 
-def write_templates_into_f(raw, f):
-    from mwlib.templ.misc import DictDB
-    from mwlib.expander import get_template_args
-    from mwlib.templ.evaluate import Expander
-    from mwlib.templ.parser import parse
-    from mwlib.templ.nodes import Template
-    
-    e=Expander('', wikidb=DictDB())  
-    todo = [parse(raw, replace_tags=e.replace_tags)]
-    result = True
-    while todo:
-        n = todo.pop()
-        if isinstance(n, basestring):
-            continue
+    lt = LanguageTools(args[0], options.language)
+    input_file = open(args[1], "r")
+    pages_file = open(args[2], "w")
+    templates_file = open(args[3], "w")
 
-        if isinstance(n, Template) and isinstance(n[0], basestring):
-            d = get_template_args(n, e)
-            f.write(u"Template\t{0}\n".format(unicode(n[0]).strip().replace("\n", "")).encode("utf-8"))
-            for i in range(len(d)):
-                try:
-                    f.write(unicode(d[i]).encode("utf-8") + "\n")
-                except TypeError:
-                    result = False
-                except AttributeError:
-                    # handling some mwlib bug. it raises this exception somehow
-                    result = False
-            f.write("\n")
-        todo.extend(n)
-    return result
+    w = WikitextToConll(lt, pages_file, templates_file, options.skiplist)
+    w.process_file(input_file)
 
-def parse_actual_page(actual_page, actual_title, pages_f, templates_f):
-    from mwlib.uparser import parseString, simpleparse
-    from mwlib.expander import get_templates
-
-    s = remove_xml_comments(actual_page)
-    try:
-        s = remove_open_close(s, "<math>", "</math>")
-    except SyntaxException, se:
-        s = remove_open_close_lame(s, "<math>", "</math>")
-        sys.stderr.write(u"Problems with <math>: {0}\n".format(actual_title).encode("utf-8"))
-    
-    templates = get_templates(s)
-    templates_f.write(u"{0} {1}\n".format(page_separator, actual_title).encode("utf-8"))
-    if not write_templates_into_f(s, templates_f):
-        sys.stderr.write(u"Problems with templates and mwparser: {0}\n".format(actual_title).encode("utf-8"))
-    
-    try:
-        s = remove_open_close(s, "{{", "}}")
-    except SyntaxException:
-        s = remove_open_close_lame(s, "{{", "}}")
-        sys.stderr.write(u"Problems with braces: {0}\n".format(actual_title).encode("utf-8"))
-    try:
-        #r=simpleparse(raw=s)
-        #quit()
-        r=parseString(raw=s, title=actual_title, lang=options.language)
-    except AssertionError:
-        sys.stderr.write(u"AssertionError problem: {0}\n".format(actual_title).encode("utf-8"))
-        return
-    except ImportError, e:
-        sys.stderr.write(u"ImportError problem({0}): {1}\n".format(e, actual_title).encode("utf-8"))
-        return
-    except AttributeError, e:
-        excepted_error_message = "'ImageMap' object has no attribute 'imagelink'"
-        if str(e).strip() == excepted_error_message:
-            sys.stderr.write(u"imagemap/imagelink error: {0}\n".format(actual_title).encode("utf-8"))
-            return
-        else:
-            raise e
-    
-    try:
-        nh = NodeHandler()
-        nh.handle(r)
-        tokens = nh.tokens
-    except RuntimeError, rte:
-        print rte
-        s = "maximum recursion depth exceeded"
-        if str(rte).find(s) >= 0:
-            sys.stderr.write(u"Maximum depth recursion at site: {0}\n".format(actual_title).encode("utf-8"))
-            return
-    tokens = tokenize_all(tokens)
-    lt.pos_tag(tokens)
-    lt.lemmatize(tokens)
-    
-    pages_f.write(u"{0} {1}\n".format(page_separator, actual_title).encode("utf-8"))
-    pages_f.write(u"{0}\t{1}\n".format("Templates:", u",".join((t.strip().replace("\n", "") for t in templates))).encode("utf-8"))
-    
-    for sen in tokens:
-        for t in sen:
-            try:
-                pages_f.write(u"\t".join(t).encode("utf-8") + "\n")
-            except UnicodeError, ue:
-                print "Trying to print: "
-                for w in t:
-                    if isinstance(w, unicode):
-                        print w.encode('utf-8')
-                    else:
-                        print w
-                raise ue
-        pages_f.write("\n")
-
-actual_page = u""
-actual_title = u""
-skip = False
-for line in sys.stdin:
-    line = line.decode("utf-8")
-    if line.startswith(page_separator):
-        if actual_page != u"" and not skip:
-            parse_actual_page(actual_page, actual_title, pages_file, templates_file)
-        actual_page = u""
-        try:
-            actual_title = line.strip().split(" ", 1)[1]
-        except IndexError:
-            sys.stderr.write("Page title contains only whitespace\n")
-            skip = True
-        if  actual_title.find(":") >= 0 or actual_title in skiplist:
-            skip = True
-        else:
-            skip = False
-    else:
-        actual_page += line
-
-if len(actual_page) > 0:
-    parse_actual_page(actual_page, actual_title, pages_file, templates_file)
+    #import cProfile
+    #cProfile.run("main()")
 
