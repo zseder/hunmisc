@@ -27,6 +27,7 @@ class WikipediaParser(object):
                 skiplist_file = file(skiplist_file)
                 for line in skiplist_file:
                     skiplist.append(line.strip())
+                skiplist_file.close()
             except:
                 pass
         self.skiplist = set(skiplist)
@@ -241,10 +242,16 @@ class WikipediaParser(object):
             actual_sentence = []
             sen2 = []
             for tok in sen:
-                if tok != ". . .":
-                    sen2.append(tok)
+                tok = tok.strip()
+                tps = tok.split()
+                if len(tps) > 0:
+                    for tp in tps:
+                        sen2.append(tp)
+#                if tok != ". . .":
+#                    sen2.append(tok)
                 else:
-                    sen2 += [".", ".", "."]
+                    sen2.append(tok)
+#                    sen2 += [".", ".", "."]
             sen = sen2
             
             for tok in sen:
@@ -290,9 +297,10 @@ class WikipediaParser(object):
                             inside_link = True
                         
                     else:
-                        print tok.encode("utf-8")
-                        print tokens[old_index][0].encode("utf-8")
-                        print tokens[old_index][0][index_inside_old_token:index_inside_old_token+(len(tok))].encode("utf-8")
+                        print "TOKEN", tok.encode("utf-8")
+                        print "TOKENS[old_index]", tokens[old_index][0].encode("utf-8")
+                        print "TOKENS/2", tokens[old_index][0][index_inside_old_token:index_inside_old_token+(len(tok))].encode("utf-8")
+                        print "New token is longer than old one!"
                         raise Exception("New token is longer than old one!")
             
             if len(actual_sentence) > 0:
@@ -312,6 +320,10 @@ class WikipediaParser(object):
                 new_tokens.append(dbl)
 
         return new_tokens
+
+    def __del__(self):
+        #del self.lt
+        pass
 
 class WikitextToConll(WikipediaParser):
     def __init__(self, lt, pages_file, templates_file, skiplist_file=None):
@@ -403,6 +415,17 @@ class WikitextToConll(WikipediaParser):
                 f.write("\n")
             todo.extend(n)
         return result
+
+    def close(self):
+        if self.pages_f is not None:
+            self.pages_f.close()
+            self.templates_f.close()
+            self.pages_f = None
+            self.templates_f = None
+
+    def __del__(self):
+        #WikipediaParser.__del__(self)  # Doesn't work
+        self.close()
 
 class MyStopException(Exception):
     pass
