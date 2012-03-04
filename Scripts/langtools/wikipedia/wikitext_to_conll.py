@@ -7,30 +7,47 @@ import re
 import sys
 from optparse import OptionParser
 from itertools import chain
+import ConfigParser
+
 from langtools.utils.misc import remove_quot_and_wiki_crap_from_word
 from langtools.utils.language_config import LanguageTools
+from langtools.utils.file_utils import read_file_into_set
 
 class WikipediaParser(object):
+    """Base class for Wikipedia dump parsers."""
     page_separator = "%%#PAGE"
     ws_stripper = re.compile(r"\s*", re.UNICODE)
 
-    def __init__(self, lt, skiplist_file=None):
+    # TODO: not from file!
+    def __init__(self, lt, config_file):
         """
+        Uses the section <tt>self.lt.language</tt>-wikimedia.
+
+        The following parameters are used:
+        - whitelist: the file that contains the list of pages to retain.
+        - blacklist: the file that contains the list of pages to discard.
+
+        The two parameters whitelist and blacklist can be used to specify which
+        pages will be kept and which pages will be thrown out. It is enough
+        to specify only one of these two parameters, as the presence of either
+        will trigger a filtering based on that list alone.
+
         @param lt the LanguageTools object.
-        @param skiplist_file the name of the file that contains the titles of
-                             pages to skip.
         """
         self.lt = lt
-        skiplist = []
-        if skiplist_file is not None:
-            try:
-                skiplist_file = file(skiplist_file)
-                for line in skiplist_file:
-                    skiplist.append(line.strip())
-                skiplist_file.close()
-            except:
-                pass
-        self.skiplist = set(skiplist)
+
+        config_parser = ConfigParser.SafeConfigParser()
+        config_parser.read(config_file)
+        config = dict(config_parser.items(self.lt.language + '-wikimedia'))
+
+        self.whitelist = None
+        self.blacklist = None
+        whitelist_file = config.get('whitelist', None)
+        blacklist_file = config.get('blacklist', None)
+        if whitelist_file is not None:
+            self.whitelist = read_file_into_set(whitelist_file, 'utf-8')
+        if blacklist_file is not None:
+            self.blacklist = read_file_into_set(blacklist_file, 'utf-8')
 
     def process_file(self, input_file):
         """Processes input_file, which is a file stream. Calls the
@@ -61,9 +78,15 @@ class WikipediaParser(object):
         If True, the current page is SKIPPED.
         
         This default implementation skips all titles specified in the 
-        skiplist file.
+        blacklist file and retain all others, or retain all titles in
+        the whitelist file and drop all others.
         """
-        return title in self.skiplist
+        if self.whitelist is not None:
+            return title not in self.whitelist
+        elif self.blacklist is not None:
+            return title in self.blacklist
+        else:
+            return False
 
     def parse_actual_page(self, actual_page, actual_title):
         from mwlib.uparser import parseString, simpleparse
@@ -326,12 +349,12 @@ class WikipediaParser(object):
         pass
 
 class WikitextToConll(WikipediaParser):
-    def __init__(self, lt, pages_file, templates_file, skiplist_file=None):
+    def __init__(self, lt, config_file, pages_file, templates_file):
         """
         @param pages_file the output file stream to which the page text is written.
         @param templates_file templates are written to this file stream.
         """
-        WikipediaParser.__init__(self, lt, skiplist_file)
+        WikipediaParser.__init__(self, lt, config_file)
         self.pages_f     = pages_file
         self.templates_f = templates_file
 
@@ -609,8 +632,6 @@ if __name__ == '__main__':
     option_parser = OptionParser()
     option_parser.add_option("-l", "--language", dest="language",
             help="the Wikipedia language code. Default is en.", default="en")
-    option_parser.add_option("-s", "--skiplist", dest="skiplist",
-            help="the file that lists the page to skip. Optional.", default=None)
     options, args = option_parser.parse_args()
 
     lt = LanguageTools(args[0], options.language)
@@ -618,7 +639,7 @@ if __name__ == '__main__':
     pages_file = open(args[2], "w")
     templates_file = open(args[3], "w")
 
-    w = WikitextToConll(lt, pages_file, templates_file, options.skiplist)
+    w = WikitextToConll(lt, args[0], pages_file, templates_file)
     w.process_file(input_file)
 
     #import cProfile

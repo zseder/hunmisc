@@ -9,15 +9,18 @@ from langtools.utils.language_config import LanguageTools
 
 class WikitextToMorphTable(WikipediaParser):
     """Parses Wikipedia files and creates a morphtable from them."""
-    def __init__(self, lt, table_file, skiplist_file=None):
+    def __init__(self, lt, config_file, table_file):
         """
         @param table_file an open output stream.
         """
-        WikipediaParser.__init__(self, lt, skiplist_file)
+        WikipediaParser.__init__(self, lt, config_file)
         self.table_file = table_file
         self.morph_set = set()
 
     def process_tokens(self, actual_title, tokens, templates):
+        print "TITLE", actual_title.encode('utf-8')
+        import sys
+        sys.stdout.flush()
         for sentence in tokens:
             for token in sentence:
                 # Well, that's it for loose coupling
@@ -48,7 +51,7 @@ if __name__ == '__main__':
     lt = LanguageTools(args[0], options.language)
     output = file(args[1], 'w')
 
-    w = WikitextToMorphTable(lt, output)
+    w = WikitextToMorphTable(lt, args[0], output)
     for input_file in args[2:]:
         w.process_file(file(input_file, 'r'))
     w.print_tokens()
