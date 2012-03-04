@@ -3,6 +3,14 @@
 import os
 import os.path
 
+def read_into_set(file_name):
+    """Reads the lines of the file denoted by @p file_name to a set."""
+    ret = set()
+    with open(file_name, 'r') as infile:
+        for line in infile:
+            ret.add(line.strip())
+    return ret
+
 def ensure_dir(dir_name):
     """Checks if C{dir_name} directory exists, and if not, creates it.
     @return C{True} on success; C{False} otherwise."""
