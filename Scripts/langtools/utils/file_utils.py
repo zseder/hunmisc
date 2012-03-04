@@ -3,10 +3,17 @@
 import os
 import os.path
 
-def read_file_into_set(file_name):
-    """Reads the lines of the file denoted by @p file_name into a set."""
-    with open(file_name, 'r') as infile:
-        return read_stream_into_set(infile)
+def read_file_into_set(file_name, encoding=None, error='ignore'):
+    """
+    Reads the lines of the file denoted by @p file_name into a set.
+    If @p encoding is specified, the tokens will be converted to unicode.
+    """
+    if encoding is not None:
+        with FileReader(file_name, encoding, error).open() as infile:
+            return read_stream_into_set(infile)
+    else:
+        with open(file_name, 'r') as infile:
+            return read_stream_into_set(infile)
 
 def read_stream_into_set(file_stream):
     """Reads the lines of an open stream into a set."""

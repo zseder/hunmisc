@@ -242,8 +242,24 @@ class MorphAnalyzer:
         self.__del__()
 
     def __del__(self):
-        self._hundisambig.stop()
-        self._ocamorph.stop()
+        if self._hundisambig is not None:
+            self._hundisambig.stop()
+            self._hundisambig = None
+        if self._ocamorph is not None:
+            self._ocamorph.stop()
+            self._ocamorph = None
+
+class HundisambigAnalyzer(MorphAnalyzer):
+    """"""
+    def __init__(self, ocamorph, hundisambig):
+        MorphAnalyzer.__init__(self, None, hundisambig)
+        self._hundisambig.start()
+
+    def analyze(self, data):
+        safe_data = [[self.replace_stuff(tok) for tok in sen] for sen in data]
+        for sen_i, sen in enumerate(safe_data):
+            ret = self._hundisambig.tag_sentence(sen)
+            yield [self.correct(token, data[sen_i][i]) for i, token in enumerate(ret)]
 
 class Hunchunk(SentenceTagger):
     def __init__(self, runnable, traincorpus, keptfeats, model, features, encoding="LATIN2"):

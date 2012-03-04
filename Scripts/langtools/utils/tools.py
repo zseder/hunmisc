@@ -96,6 +96,36 @@ class WordTokenizerWrapper(TokenizerBase):
         return (token in self.abbrevs or
                 TokenizerBase._abbrevPattern.search(token) is not None)
 
+class HundisambigWrapper(PosTaggerWrapper, LemmatizerWrapper):
+    def __init__(self, params):
+        hundisambig = Hundisambig(params['hundisambig_runnable'],
+                                  params['hundisambig_model'],
+                                  params.get('ocamorph_encoding', 'iso-8859-2'))
+        hundisambig.set_morphtable(params['hundisambig_morphtable'])
+        self.morph_analyzer = HundisambigAnalyzer(hundisambig)
+
+    def add_pos_and_stems(self, tokens):
+        """Adds POS tags and lemmatizes the words in @c tokens."""
+        for sen_i, sen in enumerate(tokens):
+            # TODO The API expects [sentences+], but it can only handle one :(
+            ret = list(self.morph_analyzer.analyze([[word[0] for word in sen]]))[0]
+            for tok_i, _ in enumerate(sen):
+                try:
+                    spl = ret[tok_i][1].rsplit('|', 2)
+                    tokens[sen_i][tok_i].append(spl[2])
+                    tokens[sen_i][tok_i].append(spl[0])
+                except Exception, e:
+                    print "Exception:", str(e)
+                    print unicode(sen[tok_i]).encode('utf-8')
+
+    def pos_tag(self, tokens):
+        """POS tags AND lemmatizes @p tokens."""
+        self.add_pos_and_stems(tokens)
+
+    def lemmatize(self, tokens):
+        """POS tags AND lemmatizes @p tokens."""
+        self.add_pos_and_stems(tokens)
+
 class OcamorphWrapper(PosTaggerWrapper, LemmatizerWrapper):
     """Wrapper class for ocamorph.
 
