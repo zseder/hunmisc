@@ -2,6 +2,8 @@ import sys
 from collections import defaultdict
 import logging
 
+from langtools.utils.file_utils import read_stream_into_set
+
 """
 This scripts collects all incoming paths that are built of only redirect and
 disambiguation pages
@@ -17,14 +19,6 @@ Formats (description of what a line should contain)(TAB separated inputs):
   normal_pages:
     title
 """
-
-
-def read_to_set(f):
-    s = set()
-    for l in f:
-        l = l.strip()
-        s.add(l)
-    return s
 
 def read_links(f, title_to_id, id_to_title, reverse=False):
     links = defaultdict(set)
@@ -65,9 +59,9 @@ def read_ids(f):
     return title_to_id, id_to_title
 
 def read_all(redirect_pages_file, disambig_pages_file, normal_pages_file, page_ids_file, links_file, is_reverse):
-    redirect_pages = read_to_set(redirect_pages_file)
-    disambig_pages = read_to_set(disambig_pages_file)
-    normal_pages = read_to_set(normal_pages_file)
+    redirect_pages = read_stream_into_set(redirect_pages_file)
+    disambig_pages = read_stream_into_set(disambig_pages_file)
+    normal_pages = read_stream_into_set(normal_pages_file)
 
     import gc
     gc.disable()
