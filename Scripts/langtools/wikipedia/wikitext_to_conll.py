@@ -37,7 +37,7 @@ class WikipediaParser(object):
         self.lt = lt
 
         config_parser = CascadingConfigParser(config_file)
-        config = dict(config_parser.items(self.lt.language.split('.')[0] + '-wikimedia'))
+        config = dict(config_parser.items(self.lt.language + '-wikimedia'))
 
         self.whitelist = None
         self.blacklist = None
@@ -534,30 +534,31 @@ class NodeHandler:
         self.tokens.append([])
 
     def _handle_article_link(self, link):
-#        print "handle_article_link"
+#        print "handle_article_link", link
         self._handle_links_that_matter(link)
 
     def _handle_category_link(self, link):
-#        print "handle_category_link"
+#        print "handle_category_link", link
         pass
 
     def _handle_image_link(self, link):
+#        print "handle_image_link", link
         self._handle_with_sentence_split(link)
 
     def _handle_interwiki_link(self, link):
-#        print "handle_interwiki_link"
+#        print "handle_interwiki_link", link
         self._handle_links_that_matter(link)
 
     def _handle_lang_link(self, link):
-#        print "handle_lang_link"
+#        print "handle_lang_link", link
         pass
 
     def _handle_namespace_link(self, link):
-#        print "handle_namespace_link"
+#        print "handle_namespace_link", link
         pass
 
     def _handle_links_that_matter(self, link):
-#        print "_handle_links_that_matter"
+#        print "_handle_links_that_matter", link
         def _search_for_caption(node):
             for child in node.children:
                 if isinstance(child, parser.Text):
@@ -578,15 +579,15 @@ class NodeHandler:
         self.tokens[-1].append((caption, "B-link", target))
         
     def _handle_paragraph(self, paragraph):
-#        print "handle_paragraph"
+#        print "handle_paragraph", paragraph
         self._handle_with_sentence_split(paragraph)
 
     def _handle_section(self, section):
-#        print "handle_section"
+#        print "handle_section", section
         self._handle_with_sentence_split(section)
     
     def _handle_style(self, style):
-#        print "handle_style"
+#        print "handle_style", style
         self._handle_default(style)
     
     def _handle_text(self, text):
@@ -596,31 +597,31 @@ class NodeHandler:
         self.tokens[-1].append((t, "text", "0"))
     
     def _handle_table(self, table):
-#        print "handle_table"
+#        print "handle_table", table
         self._handle_with_sentence_split(table)
     
     def _handle_row(self, row):
-#        print "handle_row"
+#        print "handle_row", row
         self._handle_with_sentence_split(row)
     
     def _handle_cell(self, cell):
-#        print "handle_cell"
+#        print "handle_cell", cell
         self._handle_with_sentence_split(cell)
     
     def _handle_itemlist(self, itemlist):
-#        print "handle_itemlist"
+#        print "handle_itemlist", itemlist
         self._handle_with_sentence_split(itemlist)
     
     def _handle_item(self, item):
-#        print "handle_item"
+#        print "handle_item", item
         self._handle_with_sentence_split(item)
     
     def _handle_caption(self, caption):
-#        print "handle_caption"
+#        print "handle_caption", caption
         self._handle_with_sentence_split(caption)
     
     def _handle_tagnode(self, tagnode):
-#        print "handle_tagnode"
+#        print "handle_tagnode", tagnode
         #print tagnode.__dict__
         if tagnode.caption == "br":
             self.tokens[-1].append(("\n", "text", "0"))

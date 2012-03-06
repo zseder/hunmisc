@@ -21,9 +21,15 @@ class LanguageTools(object):
     resources. Their parameters must also be specified in the configuration
     file.
     """
-    def __init__(self, config_file, language='en'):
-        self.language = language
-        self.config = self.read_config_file(config_file, language)
+    def __init__(self, config_file, lang_config ='en'):
+        """
+        @param lang_config a section in the configuration file. Must either
+                           be valid as a language code, or be a language code
+                           followed by a '.' and an arbitrary string.
+        """                   
+        self.lang_config = lang_config
+        self.language = lang_config.split('.', 1)[0]
+        self.config = self.read_config_file(config_file)
         self.pos_tagger = self.initialize_tool('pos_tagger')
         self.lemmatizer = self.initialize_tool('lemmatizer')
         tokenizer = self.initialize_tool('tokenizer')
@@ -34,11 +40,11 @@ class LanguageTools(object):
             self.sen_tokenizer = self.initialize_tool('sen_tokenizer')
             self.word_tokenizer = self.initialize_tool('word_tokenizer')
 
-    def read_config_file(self, config_file, language):
+    def read_config_file(self, config_file):
         """Reads the section of the configuration file that corresponds to
         @p language to a dict."""
         config_parser = CascadingConfigParser(config_file)
-        config = config_parser.items(language)
+        config = config_parser.items(self.lang_config)
         return dict(config)
 
     def initialize_tool(self, tool_name):
