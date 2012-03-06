@@ -626,7 +626,10 @@ class NodeHandler:
         if tagnode.caption == "br":
             self.tokens[-1].append(("\n", "text", "0"))
             return
-        self._handle_default(tagnode)
+        else:
+            self.tokens[-1].append((" ", "text", "0"))
+            self._handle_default(tagnode)
+            self.tokens[-1].append((" ", "text", "0"))
 
 if __name__ == '__main__':
     option_parser = OptionParser()
