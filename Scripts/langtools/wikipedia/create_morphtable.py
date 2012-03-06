@@ -30,7 +30,7 @@ class WikitextToMorphTable(WikipediaParser):
         sorted_words = sorted(self.morph_set)
         for i in xrange(0, len(sorted_words), 25):
             analyzed = self.lt.pos_tagger.morph_analyzer._ocamorph.tag(sorted_words[i : i + 25])
-            self.table_file.write(u"\n".join("\t".join(token) for token in analyzed).encode('utf-8'))
+            self.table_file.write(u"\n".join("\t".join(token) for token in analyzed).encode(self.lt.pos_tagger.morph_analyzer._hundisambig._encoding))
             self.table_file.write("\n")
         self.table_file.flush()
 
