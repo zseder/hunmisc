@@ -7,7 +7,7 @@ import re
 import sys
 from optparse import OptionParser
 from itertools import chain
-import ConfigParser
+from langtools.utils.cascading_config import CascadingConfigParser
 
 from langtools.utils.misc import remove_quot_and_wiki_crap_from_word
 from langtools.utils.language_config import LanguageTools
@@ -18,7 +18,7 @@ class WikipediaParser(object):
     page_separator = "%%#PAGE"
     ws_stripper = re.compile(r"\s*", re.UNICODE)
 
-    # TODO: not from file!
+    # TODO: from ConfigParser
     def __init__(self, lt, config_file):
         """
         Uses the section <tt>self.lt.language</tt>-wikimedia.
@@ -36,8 +36,7 @@ class WikipediaParser(object):
         """
         self.lt = lt
 
-        config_parser = ConfigParser.SafeConfigParser()
-        config_parser.read(config_file)
+        config_parser = CascadingConfigParser(config_file)
         config = dict(config_parser.items(self.lt.language + '-wikimedia'))
 
         self.whitelist = None

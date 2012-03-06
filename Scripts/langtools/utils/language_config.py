@@ -1,7 +1,7 @@
 """Reads the configuration file and sets up the tools necessary to parse
 the selected language."""
 
-import ConfigParser
+from langtools.utils.cascading_config import CascadingConfigParser
 
 class LanguageTools(object):
     """Instantiates the tools necessary to handle a language.
@@ -37,18 +37,9 @@ class LanguageTools(object):
     def read_config_file(self, config_file, language):
         """Reads the section of the configuration file that corresponds to
         @p language to a dict."""
-        config_parser = ConfigParser.SafeConfigParser()
-        config_parser.read(config_file)
-        config = {}
-        try:
-            config.update(dict(config_parser.items('tools')))
-        except ConfigParser.NoSectionError:
-            pass # TODO: log
-        try:
-            config.update(dict(config_parser.items(language)))
-        except ConfigParser.NoSectionError:
-            pass # TODO: log
-        return config
+        config_parser = CascadingConfigParser(config_file)
+        config = config_parser.items(language)
+        return dict(config)
 
     def initialize_tool(self, tool_name):
         """Instantiates the specified tool. The format of @p tool_name is
