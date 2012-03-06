@@ -23,13 +23,28 @@ class CascadingConfigParser(SafeConfigParser):
         tree are included in the result.
         """
         nodes = section.split('.')
-        config = {}
-        path = ''
-        for node in nodes:
+        config = dict(SafeConfigParser.items(self, nodes[0], raw, vars))
+        path = nodes[0]
+
+        # Now this is a pain. We have to clear the DEFAULT section, lest the
+        # code below overwrites the options that have defaults. The reason is
+        # that crappy ConfigParser does not have a method that enumerates only
+        # the keys defined in particular section; the keys in the DEFAULT
+        # section are always included.
+        tmp_defaults = self._defaults
+        self._defaults = {}
+
+        for node in nodes[1:]:
             path = node if len(path) == 0 else path + '.' + node
             try:
-                config.update(SafeConfigParser.items(self, path, raw, vars))
+                next_config = dict(SafeConfigParser.items(self, path, raw, vars))
+                for key in self.options(path):
+                    # Overwrite only the keys defined in the child section
+                    config[key] = next_config[key]
             except ConfigParser.NoSectionError:
                 pass
-        return config
+
+        self._defaults = tmp_defaults
+
+        return config.iteritems()
 
