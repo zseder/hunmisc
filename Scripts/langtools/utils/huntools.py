@@ -56,6 +56,9 @@ class SentenceTagger(AbstractSubprocessClass):
             else:
                 token_str = token
             token_to_send = token_str.encode(self._encoding, 'xmlcharrefreplace')
+#            print "WRITING", token_str.encode('utf-8')
+#            import sys
+#            sys.stdout.flush()
             self._process.stdin.write(token_to_send)
             self._process.stdin.write("\n")
         self._process.stdin.write("\n")
@@ -66,7 +69,9 @@ class SentenceTagger(AbstractSubprocessClass):
         for token in tokens:
             line = self._process.stdout.readline()
             decoded = line.decode(self._encoding).strip()
-#            print "LINE: >" + decoded.encode('utf-8') + "<"
+#            print "LINE: " + token.encode('utf-8') + " >" + decoded.encode('utf-8') + "<"
+#            import sys
+#            sys.stdout.flush()
             if len(decoded) == 0:
                 continue
             tagged = decoded.split(self.osep)
@@ -181,8 +186,8 @@ class MorphAnalyzer:
 
     def replace_stuff(self, token):
         t = self.replace_punct(token)
-        t = self.replace_num(token)
-        t = self.remove_pipes(token)
+        t = self.replace_num(t)
+        t = self.remove_pipes(t)
         if len(t) == 0:
             t = u'/'
         return t
@@ -251,7 +256,7 @@ class MorphAnalyzer:
 
 class HundisambigAnalyzer(MorphAnalyzer):
     """"""
-    def __init__(self, ocamorph, hundisambig):
+    def __init__(self, hundisambig):
         MorphAnalyzer.__init__(self, None, hundisambig)
         self._hundisambig.start()
 

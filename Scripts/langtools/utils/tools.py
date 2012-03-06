@@ -3,7 +3,8 @@
 import os.path
 import re
 
-from langtools.utils.huntools import Ocamorph, Hundisambig, MorphAnalyzer
+from langtools.utils.huntools import Ocamorph, Hundisambig
+from langtools.utils.huntools import MorphAnalyzer, HundisambigAnalyzer
 from langtools.utils.huntools import LineByLineTagger
 from langtools.nltk.nltktools import NltkTools
 
