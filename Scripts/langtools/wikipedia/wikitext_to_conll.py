@@ -37,7 +37,7 @@ class WikipediaParser(object):
         self.lt = lt
 
         config_parser = CascadingConfigParser(config_file)
-        config = dict(config_parser.items(self.lt.language + '-wikimedia'))
+        config = dict(config_parser.items(self.lt.language.split('.')[0] + '-wikimedia'))
 
         self.whitelist = None
         self.blacklist = None
