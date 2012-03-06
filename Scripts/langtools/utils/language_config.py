@@ -53,6 +53,7 @@ class LanguageTools(object):
         print "Initializing", tool_name
         try:
             tool_package, tool_class = self.config[tool_name].rsplit('.', 1)
+            print "Class", tool_package + '.' + tool_class
             tool_module = __import__(tool_package, fromlist=[tool_class])
             tool_object = getattr(tool_module, tool_class)(self.config)
             return tool_object
