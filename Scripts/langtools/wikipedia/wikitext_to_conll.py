@@ -626,6 +626,14 @@ class NodeHandler:
         if tagnode.caption == "br":
             self.tokens[-1].append(("\n", "text", "0"))
             return
+        elif tagnode.caption == "ref":
+            # Referential tagnodes may contain dynamically assigned ids, which
+            # of course cause problems for two-pass parsing (e.g. ocamorph).
+#            print "REF!"
+#            for child in tagnode.children:
+#                if child is not None:
+#                    print "CHILD", child
+            return
         else:
             self.tokens[-1].append((" ", "text", "0"))
             self._handle_default(tagnode)
