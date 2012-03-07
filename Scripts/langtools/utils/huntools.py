@@ -49,20 +49,27 @@ class SentenceTagger(AbstractSubprocessClass):
         excepts only one sentence
         """
         self.tuple_mode = isinstance(tokens[0], tuple)
-        for token in tokens:
-            # differentiate between already tagged and raw tokens
-            if self.tuple_mode:
-                token_str = self.isep.join(token)
-            else:
-                token_str = token
-            token_to_send = token_str.encode(self._encoding, 'xmlcharrefreplace')
-#            print "WRITING", token_str.encode('utf-8')
-#            import sys
-#            sys.stdout.flush()
-            self._process.stdin.write(token_to_send)
+        try:
+            for token in tokens:
+                # differentiate between already tagged and raw tokens
+                if self.tuple_mode:
+                    token_str = self.isep.join(token)
+                else:
+                    token_str = token
+                token_to_send = token_str.encode(self._encoding, 'xmlcharrefreplace')
+#                print "WRITING", token_str.encode('utf-8')
+#                import sys
+#                sys.stdout.flush()
+                self._process.stdin.write(token_to_send)
+                self._process.stdin.write("\n")
             self._process.stdin.write("\n")
-        self._process.stdin.write("\n")
-        self._process.stdin.flush()
+            self._process.stdin.flush()
+        except IOError, ioe:
+            print "ERROR: ", str(ioe)
+            err = os.read(self._process.stderr, 10000)
+            if len(err) > 0:
+                print err
+            raise ioe
 
     def recv_and_append(self, tokens):
         tagged_tokens = []
