@@ -15,7 +15,7 @@ __quotationMarks = set(
 # - and & are not quotation marks; nevertheless they have to be removed from the
 # word 
 __otherStickyCharacters = set(u'-&')
-__wikiGarbage = set(u'|[]{}<>*=')
+__wikiGarbage = set(u'|[]{}<>()*=')
 __quotationWikiGarbage = __quotationMarks | __otherStickyCharacters | __wikiGarbage
 __wikiRemove = set(u'|')
 
@@ -23,6 +23,14 @@ def isquot(s):
     """Returns @c True if all characters in @p s are quotation marks."""
     for c in s:
         if not c in __quotationMarks:
+            return False
+    return True
+
+def is_quote_or_garbage(s):
+    """Returns @c True if all characters in @p s are quotation marks or wiki
+    garbage."""
+    for c in s:
+        if not c in __quotationWikiGarbage:
             return False
     return True
 
