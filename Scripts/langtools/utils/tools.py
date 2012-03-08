@@ -111,6 +111,8 @@ class HundisambigWrapper(PosTaggerWrapper, LemmatizerWrapper):
     def add_pos_and_stems(self, tokens):
         """Adds POS tags and lemmatizes the words in @c tokens."""
         for sen_i, sen in enumerate(tokens):
+            if sen == []:
+                continue
             # TODO The API expects [sentences+], but it can only handle one :(
             ret = list(self.morph_analyzer.analyze([[word[0] for word in sen]]))[0]
             for tok_i, _ in enumerate(sen):
