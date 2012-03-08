@@ -7,6 +7,9 @@ from langtools.utils.huntools import Ocamorph, Hundisambig
 from langtools.utils.huntools import MorphAnalyzer, HundisambigAnalyzer
 from langtools.utils.huntools import LineByLineTagger
 from langtools.nltk.nltktools import NltkTools
+from langtools.utils.misc import *
+
+from itertools import chain
 
 class ToolWrapper(object):
     def __init__(self, params):
@@ -246,10 +249,21 @@ class NltkToolsTokenizer(SentenceTokenizerWrapper, WordTokenizerWrapper):
         tokens = self.nt.wordTokenizer.tokenize(sen)
         if len(tokens) == 0:
             return []
-        punktMatchObject = self.nt.punktSplitter.match(tokens[-1])
-        if punktMatchObject is not None and not self._is_abbrev(tokens[-1]):
-            tokens = tokens[:-1] + list(punktMatchObject.groups())
+
+        # Punctuation handling
+        tokens = list(chain.from_iterable([w for w in remove_quot_and_wiki_crap_from_word(token)] for token in tokens))
+        last_token, read_last = self.__get_last_token(tokens)
+        punktMatchObject = self.nt.punktSplitter.match(tokens[last_token])
+        if punktMatchObject is not None and not self._is_abbrev(tokens[last_token]):
+            tokens = tokens[:last_token] + list(punktMatchObject.groups()) + read_last
         return tokens
+
+    def __get_last_token(self, tokens):
+        last_token = -1
+        while len(tokens) > last_token * -1 and is_quote_or_garbage(tokens[last_token]):
+            last_token -= 1
+        read_last = tokens[last_token + 1:] if last_token != -1 else []
+        return last_token, read_last
 
 class HunknownSentenceTokenizer(SentenceTokenizerWrapper, LineByLineTagger):
     """
