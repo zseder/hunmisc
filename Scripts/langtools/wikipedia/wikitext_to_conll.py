@@ -8,7 +8,7 @@ import sys
 from optparse import OptionParser
 from langtools.utils.cascading_config import CascadingConfigParser
 
-from langtools.utils.misc import remove_quot_and_wiki_crap_from_word
+from langtools.utils.misc import wikiRemove
 from langtools.utils.language_config import LanguageTools
 from langtools.utils.file_utils import read_file_into_set
 
@@ -322,9 +322,11 @@ class WikipediaParser(object):
                         print "TOKENS[old_index]", tokens[old_index][0].encode("utf-8")
                         print "TOKENS/2", tokens[old_index][0][index_inside_old_token:index_inside_old_token+(len(tok))].encode("utf-8")
                         print "New token is longer than old one!"
+                        sys.stdout.flush()
                         raise Exception("New token is longer than old one!")
             
             if len(actual_sentence) > 0:
+                actual_sentence = [word for word in actual_sentence if word[0] not in wikiRemove]
                 new_tokens.append(actual_sentence)
         return new_tokens
 

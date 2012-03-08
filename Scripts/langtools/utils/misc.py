@@ -17,7 +17,9 @@ __quotationMarks = set(
 __otherStickyCharacters = set(u'-&')
 __wikiGarbage = set(u'|[]{}<>()*=')
 __quotationWikiGarbage = __quotationMarks | __otherStickyCharacters | __wikiGarbage
-__wikiRemove = set(u'|')
+__empty_set = set()
+
+wikiRemove = set(u'|')
 
 def isquot(s):
     """Returns @c True if all characters in @p s are quotation marks."""
@@ -44,15 +46,17 @@ def remove_quot_and_wiki_crap_from_word(token):
     returns both the word and the removed characters as separate tokens in a
     list."""
     return remove_unwanted_characters_from_word(
-            token, __quotationWikiGarbage, __wikiRemove)
+            token, __quotationWikiGarbage) #, __wikiRemove)
 
-def remove_unwanted_characters_from_word(token, unwanted_set, remove_set):
+def remove_unwanted_characters_from_word(token, unwanted_set, remove_set=None):
     """Removes the characters @p unwanted_set from around the word and
     returns both the word and the removed characters as separate tokens in a
     list."""
     if ispunct(token):
         return [token]
     else:
+        if remove_set is None:
+            remove_set = __empty_set
         ret, after = [], []
         begin, end = 0, 0
         for i in xrange(0, len(token)):
