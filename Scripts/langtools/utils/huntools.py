@@ -66,10 +66,7 @@ class SentenceTagger(AbstractSubprocessClass):
             self._process.stdin.flush()
         except IOError, ioe:
             print "ERROR: ", str(ioe)
-            import os
-            err = os.read(self._process.stderr, 10000)
-            if len(err) > 0:
-                print err
+            print self._process.stderr.readline()
             raise ioe
 
     def recv_and_append(self, tokens):
