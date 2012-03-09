@@ -1,6 +1,6 @@
 import re
 from subprocess_wrapper import AbstractSubprocessClass
-from langtools.utils.misc import ispunct, isquot
+from langtools.utils.misc import ispunct, isquot, print_logging
 
 """
 TODO
@@ -56,7 +56,7 @@ class SentenceTagger(AbstractSubprocessClass):
                     token_str = self.isep.join(token)
                 else:
                     token_str = token
-                token_to_send = token_str.encode(self._encoding, 'xmlcharrefreplace')
+                token_to_send = self.encode(token_str)
 #                print "WRITING", token_str.encode('utf-8')
 #                import sys
 #                sys.stdout.flush()
@@ -73,7 +73,7 @@ class SentenceTagger(AbstractSubprocessClass):
         tagged_tokens = []
         for token in tokens:
             line = self._process.stdout.readline()
-            decoded = line.decode(self._encoding).strip()
+            decoded = self.decode(line)
 #            print "LINE: " + token.encode('utf-8') + " >" + decoded.encode('utf-8') + "<"
 #            import sys
 #            sys.stdout.flush()
@@ -92,6 +92,14 @@ class SentenceTagger(AbstractSubprocessClass):
         self._process.stdout.readline()
 
         return tagged_tokens
+
+    def encode(self, token):
+        """Encodes @p token before it is sent to the tagger."""
+        return token.encode(self._encoding, 'xmlcharrefreplace')
+    
+    def decode(self, line):
+        """Decodes @p line before it is returned."""
+        return line.decode(self._encoding).strip()
     
     def tag_sentence(self, tokens):
         if self._closed:
@@ -139,10 +147,13 @@ class Ocamorph(LineByLineTagger):
         return LineByLineTagger.tag(self, tokens)
 
 class Hundisambig(SentenceTagger):
-    def __init__(self, runnable, model, morphtable=None, encoding="LATIN2"):
+    def __init__(self, runnable, model, morphtable=None, encoding="LATIN2", load=False):
         SentenceTagger.__init__(self, runnable, encoding, 1)
         self._model = model
-        self._morphtable = morphtable
+        self._morph_set = None
+        self._unknown = None
+        self._noun = None
+        self.set_morphtable(morphtable, load)
         self.__set_default_options()
 
     def __set_default_options(self):
@@ -153,13 +164,44 @@ class Hundisambig(SentenceTagger):
 
         self.options = o
     
-    def set_morphtable(self, mt):
+    def set_morphtable(self, mt, load=False):
         if self._closed:
             self._morphtable = mt
+            if mt is None or not load:
+                self._morph_set = None
+            else:
+                self._morph_set = set()
+                with open(self._morphtable) as infile:
+                    for line in infile:
+                        try:
+                            token, analysis = line.strip().split("\t", 1)
+                        except ValueError:
+                            continue
+                        self._morph_set.add(token)
+                        if self._unknown is None and 'UNKNOWN' in analysis:
+                                self._unknown = token
+                        if self._noun is None and 'NOUN' in analysis:
+                                self._noun = token
         else:
             raise Exception("morphtable can be changed only while not running")
         self.__set_default_options()
 
+    def encode(self, token):
+        """Encodes @p token before it is sent to the tagger. Note: this encoding
+        cannot be undone via decode(); if the original tokens are still needed,
+        the caller must ensure that they are retained."""
+        token_to_send = token.encode(self._encoding, 'xmlcharrefreplace')
+        if self._morph_set is not None:
+            if token_to_send not in self._morph_set:
+                if self._unknown is not None:
+                    token_to_send = self._unknown
+                    print_logging(u"REPLACED " + token + u" WITH UNK " + token_to_send.decode(self._encoding))
+                elif self._noun is not None:
+                    token_to_send = self._noun
+                    print_logging(u"REPLACED " + token + u" WITH NOUN " + token_to_send.decode(self._encoding))
+                # else: no noun; the morphtable must be unusable anyway
+        return token_to_send
+    
 class MorphAnalyzer:
     UNICODE_PATTERN = re.compile(ur"&#(\d+);")
     NUMBER_PATTERN = re.compile(ur"(\d+|[IVXLCDM]+)[.]", re.IGNORECASE)

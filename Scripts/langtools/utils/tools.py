@@ -104,8 +104,9 @@ class HundisambigWrapper(PosTaggerWrapper, LemmatizerWrapper):
     def __init__(self, params):
         hundisambig = Hundisambig(params['hundisambig_runnable'],
                                   params['hundisambig_model'],
-                                  params.get('ocamorph_encoding', 'iso-8859-2'))
-        hundisambig.set_morphtable(params['hundisambig_morphtable'])
+                                  params['hundisambig_morphtable'],
+                                  params.get('ocamorph_encoding', 'iso-8859-2'),
+                                  True)
         self.morph_analyzer = HundisambigAnalyzer(hundisambig)
 
     def add_pos_and_stems(self, tokens):
