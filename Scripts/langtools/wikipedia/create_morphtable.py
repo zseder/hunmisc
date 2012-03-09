@@ -6,6 +6,7 @@ Parameters: the configuration file, the output file and the input files.
 from optparse import OptionParser
 from langtools.wikipedia.wikitext_to_conll import WikipediaParser
 from langtools.utils.language_config import LanguageTools
+from langtools.utils.misc import print_logging
 
 class WikitextToMorphTable(WikipediaParser):
     """Parses Wikipedia files and creates a morphtable from them."""
@@ -18,9 +19,7 @@ class WikitextToMorphTable(WikipediaParser):
         self.morph_set = set()
 
     def process_tokens(self, actual_title, tokens, templates):
-        print "TITLE", actual_title.encode('utf-8')
-        import sys
-        sys.stdout.flush()
+        print_logging("TITLE " + actual_title)
         for sentence in tokens:
             for token in sentence:
                 # Well, that's it for loose coupling

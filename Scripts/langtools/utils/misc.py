@@ -82,10 +82,11 @@ def remove_unwanted_characters_from_word(token, unwanted_set, remove_set=None):
 
         return ret
 
-def print_logging(text, stream=sys.stderr):
+def print_logging(text, stream=sys.stderr, encoding='utf-8'):
     """
     Prints @p text to and then flushes the stream. A newline is automatically
     appended to the output, as in print.
     """
-    stream.write(text + "\n")
+    stream.write((unicode(text) + u"\n").encode(encoding))
     stream.flush()
+

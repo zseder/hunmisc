@@ -8,7 +8,7 @@ import sys
 from optparse import OptionParser
 from langtools.utils.cascading_config import CascadingConfigParser
 
-from langtools.utils.misc import wikiRemove
+from langtools.utils.misc import wikiRemove, print_logging
 from langtools.utils.language_config import LanguageTools
 from langtools.utils.file_utils import read_file_into_set
 
@@ -361,6 +361,7 @@ class WikitextToConll(WikipediaParser):
     def process_tokens(self, actual_title, tokens, templates):
         """Tags and lemmatizes the tokens, then prints the result into the
         first output file."""
+        print_logging("TITLE " + actual_title)
         # POS tag and lemmatize the data
         self.lt.pos_tag(tokens)
         self.lt.lemmatize(tokens)
@@ -522,7 +523,7 @@ class NodeHandler:
             self._handle_default(node)
             
     def _handle_default(self, node):
-#        print "handle_default"
+#        print "handle_default", node
         for child in node.children:
             if child is not None:
                 self.handle(child)
