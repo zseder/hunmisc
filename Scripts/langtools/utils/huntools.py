@@ -276,18 +276,20 @@ class MorphAnalyzer:
             if ispunct(original):
                 return (word, original + u'||PUNCT')
 
+            # Word not in the morphtable, or POS tag could not be determined.
+            if crap == u'unknown||':
+                lemma = word
+                derivation = u'UNKNOWN'
+
             pieces = MorphAnalyzer.UNICODE_PATTERN.split(lemma)
-            if len(pieces) == 1:
-                return analysis
-            else:
+            if len(pieces) > 1:
                 for i in xrange(1, len(pieces), 2):
                     pieces[i] = unichr(int(pieces[i]))
                 lemma = u''.join(pieces)
-                return (word, lemma + u'|' + stuff + u'|' + derivation)
+            return (word, lemma + u'|' + stuff + u'|' + derivation)
         except ValueError, ve:
-            print ve, word.encode('utf-8'), crap.encode('utf-8')
-            import sys
-            sys.stdout.flush()
+            print_logging(ve)
+            print_logging(word + u" // " + crap)
             raise ve
 
     def __exit__(self, exc_type, exc_value, traceback):
