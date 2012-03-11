@@ -22,10 +22,27 @@ hundisambig.
 For an example for all options, please refer to the tool documentations in
 ../utils/tools.py and ../utils/language_config.py.
 
+create_morphtable.py:
+--------------------
+
+Because of how ocamorph and hundisambig interact (i.e. the former has to create
+a morphtable file for the latter, in addition of passing the sentence text),
+it would be very inefficient to parse the corpus sentence-by-sentence, or even
+page-by-page. The solution to this problem is two-pass parsing. The first pass,
+implemented in this script, runs only ocamorph and outputs a morphtable. Then,
+in the second pass, wikitext_to_conll.py can be run with the hundisambig-based
+POS tagger/lemmatizer.
+
+There are some gotchas with two-pass parsing:
+- tagnodes may introduce a UNIQ identifier, which changes each time the page is
+  read. Since hundisambig cannot handle a word that is not in the morphtable,
+  these identifiers (pattern is UNIQ-.+-QINU) must be discarded;
+- mwlib is buggy, and its behavior is undeterministic on ill-formatted pages.
+  Therefore, the hundisambig-based POS tagger/lemmatizer must read the
+  morphtable into a set, and check each word to see whether it is safe to send
+  it to hundisambig or not, and replace it with a safe (preferrably UNKNOWN)
+  token.
+
 TODO:
-- ocamorph and del
-- create the skiplist
 - how to handle redirects (in Hungarian esp)?
-- different cleansing steps by language
 - test with hunpos?
-- refactor, it's a piece of shit
