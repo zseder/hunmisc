@@ -35,7 +35,7 @@ class FieldedDocument(object):
         except KeyError:
             return False
 
-    def __str__(self):
+    def __unicode__(self):
         """The page as a string."""
         import StringIO
         buff = StringIO.StringIO()
