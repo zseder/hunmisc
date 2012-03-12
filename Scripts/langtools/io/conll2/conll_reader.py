@@ -165,7 +165,7 @@ class ConllReader(object):
         """Registers the specified callbacks. Callbacks will be notified in the
         same order as they are registered."""
         self.callbacks = list(callbacks)
-        self.state = ConllReader.NONE
+        self.state = [ConllReader.NONE]
     
     def read(self, fileName, charset='utf-8'):
         """Reads the specified file and notifies all registered callbacks.
@@ -186,37 +186,44 @@ class ConllReader(object):
                         self.__fieldStart(line.split("\t")[1])
                         self.__startState(ConllReader.FIELD)
                     elif line.startswith(ConllReader.TEMPLATE_LABEL, ConllReader.META_LEN):
-                        self.__templates(line.split("\t")[1].split(","))
+                        try:
+                            self.__templates(line.split("\t")[1].split(","))
+                        except IndexError:
+                            # If the templates line is empty (workaround for a bug)
+                            pass 
                     elif line.startswith(ConllReader.REDIRECT_LABEL, ConllReader.META_LEN):
                         self.__redirect()
                 elif len(line) == 0:
                     self.__endState(ConllReader.SENTENCE)
                 else:
-                    if self.state == ConllReader.FIELD:
+                    if self.state[-1] < ConllReader.SENTENCE:
                         self.__sentenceStart()
                         self.__startState(ConllReader.SENTENCE)
-                    if self.state == ConllReader.SENTENCE:
+                    if self.state[-1] == ConllReader.SENTENCE:
                         self.__word(line.split("\t"))
             self.__endState(ConllReader.PAGE)
         self.__fileEnd()
     
     def __startState(self, what):
         """"Starts" the specific state."""
-        self.state = what
-    
+        self.state.append(what)
+
     def __endState(self, what):
         """Removes the specific state, as well as all states above it."""
-        while self.state >= what:
-            if self.state == ConllReader.SENTENCE:
-                self.__sentenceEnd()
-            elif self.state == ConllReader.FIELD:
-                self.__fieldEnd()
-            elif self.state == ConllReader.PAGE:
-                self.__documentEnd()
-            self.state -= 1
-    
-    # Callback registration
-    
+        for _ in xrange(len(self.state)):
+            if self.state[-1] >= what:
+                if self.state[-1] == ConllReader.SENTENCE:
+                    self.__sentenceEnd()
+                elif self.state[-1] == ConllReader.FIELD:
+                    self.__fieldEnd()
+                elif self.state[-1] == ConllReader.PAGE:
+                    self.__documentEnd()
+                self.state.pop()
+            else:
+                break
+     
+        # Callback registration
+
     def addCallback(self, callback):
         """ Adds C{callback} to the list of callbacks, if it is not already
 	registered."""

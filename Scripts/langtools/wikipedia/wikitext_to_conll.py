@@ -376,8 +376,9 @@ class WikitextToConll(WikipediaParser):
         # TODO: redirect.
         # elif starter and l.startswith("REDIRECT"):
         #   print "%%#Redirect"
-        self.pages_f.write(u"%%#Templates\t{0}\n".format(
-                u",".join((t.strip().replace("\n", "") for t in templates))).encode("utf-8"))
+        if len(templates) > 0:
+            self.pages_f.write(u"%%#Templates\t{0}\n".format(
+                    u",".join((t.strip().replace("\n", "") for t in templates))).encode("utf-8"))
         self.pages_f.write(u"%%#Field\tBody\n")
         self.print_tokens(tokens[1:])
 
