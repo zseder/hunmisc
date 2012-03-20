@@ -1,203 +1,131 @@
+## Hungarian abbreviations
+## Format is: <word>[\t1]
+## If the line contains the optional part, the abbreviation will join sentence
+## chunks even if the second one starts with an uppercase letter.
 a.
-A.
-é.
+á. é.
 áll.
 ált.
-m.
+Ált.	1
+a. m.
 ápr.
 aug.
-bar.
-Bp.
-bp.-i.
+Bp.	1
 B. ú. é. k.
 B.ú.é.k.
-°C.
 c.
-cm.
-cm2.
-cm3.
 csüt.
-D.
-db.
 de.
 dec.
-DK.
-dkg.
-v.
-dag.
-dl.
-dm.
-DNy.
-Dr.
-dr.
+Dr.	1
+dr.	1
 du.
-EFt.
-Ft.
-ft.
-É.
-ÉK.
 ell.
 em.
-ÉNy.
 érk.
 évf.
-f.
-f.
-é.
-év.
+f. é.
 febr.
 fej.
 felv.
-f.
-h.
-hó.
-ford.
+f. h.
+ford.	1
 fszla.
-fszt.
-Ft.
-g.
+fszt.	1
 gimn.
 h.
-h.
 hiv.
-hl.
 honv.
-Id.
-id.
-i.e.
-e.
-i.
-Ifj.
-ifj.
+Id.	1
+id.	1
+i. e.	1
+Ifj.	1
+ifj.	1
 ig.
 igh.
-h.
-ill.
-m.
+ill.	1
+i. m.	1
 ind.
 isk.
-i.sz.
-sz.
-J.
+Isk.
+i.sz.	1
 jan.
 jegyz.
 júl.
 jún.
-K.
-K.
 k.
-kb.
+kb.	1
 ker.
-kg.
 kk.
-km.
-km2.
 K.m.f.
-K.
-m.
+K. m. f.
 köv.
 krt.
 l.
 ltp.
-M.
 m.
-MFt.
-mft.
-eft.
-m2.
-m3.
 máj.
 márc.
 mb.
-m.
-é.
+m. é.
 megh.
 min.
-min.
-mm.
-Mrd.
-mrd.
-N.
+N. N.
 NB.
 nov.
 ny.
-Ny.
 o.
-okl.
+okl.	1
 okt.
 olv.
-Özv.
-özv.
+Özv.	1
+özv.	1
 p.
-Pa.
-pl.
+pl.	1
 pu.
 r.
-s.
-k.
+s. k.
 stb.
 sz.
-sz.
 szept.
-szerk.
-Szt.
-szül.
-t.
-t.
+szerk.	1
+Szt.	1
+szül.	1
+t.	1
 tc.
-ti.
+ti.	1
 tvr.
 u.
 ua.
-ui.
+ui.	1
 Ui.
-úm.
-ún.
+úm.	1
+ún.	1
 uo.
-v.
-V.
-vö.
+v.	1
+vö.	1
 vsz.
-W.
-XY.
-a/c.
-AGM.
-a.m.
-a/o.
-AOB.
-ASAP.
-ATM.
+X. Y.
+a/c
+a/o
 attn.
 approx.
 cc.
-CEO.
-c/o.
+c/o
 Co.
-cm.
-COD.
 Corp.
 dept.
-e.g.
-EGM.
-ETA.
+e.g.	1
 etc.
-GDP.
-GNP.
-GMT.
-i.e.
+i.e.	1
 Inc.
-IOU.
-IPO.
 Jr.
-K.
 lb.
-£.
+Lb.
+Lbs.
 Ltd.
 mo.
-N/A.
-NB.
 no.
-PA.
 p.a.
 Plc.
 pls.
@@ -205,13 +133,12 @@ p.m.
 p.p.
 PR.
 p.s.
+ps.
+Ps.
+PS.
 pto.
 p.w.
 qty.
-R & D.
+R & D
 re.
-ROI.
-RSVP.
 s.a.e.
-VAT.
-VIP.

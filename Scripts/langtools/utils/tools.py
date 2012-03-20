@@ -39,10 +39,15 @@ class TokenizerBase(ToolWrapper):
 
     def __init__(self, params):
         abbrevs = params.get('abbrevs')
+        self.abbrevs = {}
         if abbrevs is not None:
-            self.abbrevs = set(l.strip().decode('utf-8') for l in file(abbrevs))
-        else:
-            self.abbrevs = set()
+            for l in file(abbrevs):
+                hashmark = l.find('#')
+                if hashmark != -1:
+                    l = l[0:hashmark]
+                parts = l.strip().decode('utf-8').split("\t")
+                if len(parts[0]) > 0:
+                   self.abbrevs[parts[0]] = True if len(parts) > 1 else False
         self.patterns = set([TokenizerBase._abbrevPattern])
 
     def _match_patterns(self, token):
@@ -79,13 +84,25 @@ class SentenceTokenizerWrapper(TokenizerBase):
     def _join_condition(self, sentences, current):
         """If this method returns @c True, _join_sentences joins the two current
         and the next sentence."""
-        return ((self._match_patterns(sentences[current]) or
-                self._end_in_abbrevs(sentences[current])) and
-                not NltkTools.starts_with_upper(sentences[current + 1]))
+        end_with_abbrev = self._end_in_abbrev(sentences[current])
+        if end_with_abbrev is not None:
+            if end_with_abbrev or not NltkTools.starts_with_upper(sentences[current + 1]):
+                return True
+            return False
+        else:
+            return (self._match_patterns(sentences[current]) and
+                    NltkTools.starts_with_upper(sentences[current + 1]))
 
-    def _end_in_abbrevs(self, part):
+    def _end_in_abbrev(self, part):
+        """
+        Returns the abbreviation type:
+        - None, if the word is not an abbreviation;
+        - True/False, depending on whether the abbreviation joins sentence
+          chunks even if the second chunk starts with an uppercase letter.
+        """
         last_word = part.rsplit(None, 1)[-1]
-        return last_word in self.abbrevs
+        abbrev_type = self.abbrevs.get(last_word, None)
+        return abbrev_type
 
 class WordTokenizerWrapper(TokenizerBase):
     def __init__(self, params):
