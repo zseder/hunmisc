@@ -3,6 +3,7 @@ import re
 import sys
 from collections import defaultdict
 
+import nltk
 from nltk.tokenize.punkt import PunktSentenceTokenizer
 from nltk.tokenize.punkt import PunktWordTokenizer
 from nltk.tag.hunpos import HunposTagger
@@ -36,7 +37,12 @@ class NltkTools:
             self.punktSplitter = re.compile(r"^(.+)([.?,:;!])$", re.UNICODE)
             # Bragantino,2006.In fix this shit
         if stok:
-            self.senTokenizer = PunktSentenceTokenizer()
+            try:
+                self.senTokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+            except LookupError:
+                sys.stderr.write("WARNING: english tokenizer cannot be loaded, nltk.data does not contain in!")
+                sys.stderr.write("WARNING: using an untrained sen_tokenizer")
+                self.senTokenizer = PunktSentenceTokenizer()
         
         self.abbrev_set = (set(abbrev_set) if abbrev_set is not None else set())
         
@@ -141,7 +147,6 @@ class NltkTools:
         return
     
 if __name__ == "__main__":
-    import sys
     nt = NltkTools(pos=True, stem=True, tok=True)
     
     for l in sys.stdin:
