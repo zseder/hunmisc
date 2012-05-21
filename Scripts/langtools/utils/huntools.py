@@ -292,7 +292,7 @@ class MorphAnalyzer:
                 parts = lemma.rsplit('?', 1)
                 if len(parts) >= 2:
                     lemma = parts[0]
-                    derivation = parts[1].upper()
+                    derivation = parts[1].rsplit('/', 1)[-1].upper()
             return (word, lemma + u'|' + stuff + u'|' + derivation)
         except ValueError, ve:
             print_logging(ve)
