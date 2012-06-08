@@ -265,6 +265,7 @@ class MorphAnalyzer:
         """Inverts the xmlcharreplacements in the lemma, as well as
         replace_punct for unicode punctuation marks."""
         word, crap = analysis
+#        print "AAA", original.encode('utf-8'), word.encode('utf-8'), crap.encode('utf-8')
         if original == u'|':
             return (word, original + u'||PUNCT')
         try:
@@ -286,6 +287,12 @@ class MorphAnalyzer:
                 for i in xrange(1, len(pieces), 2):
                     pieces[i] = unichr(int(pieces[i]))
                 lemma = u''.join(pieces)
+
+            if len(derivation) == 0:
+                parts = lemma.rsplit('?', 1)
+                if len(parts) >= 2:
+                    lemma = parts[0]
+                    derivation = parts[1].rsplit('/', 1)[-1].upper()
             return (word, lemma + u'|' + stuff + u'|' + derivation)
         except ValueError, ve:
             print_logging(ve)

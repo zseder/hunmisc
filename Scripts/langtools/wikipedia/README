@@ -43,6 +43,15 @@ There are some gotchas with two-pass parsing:
   it to hundisambig or not, and replace it with a safe (preferrably UNKNOWN)
   token.
 
+../utils/tools.py:
+-----------------
+
+Contains the tools used by the two scripts above.
+
+extract_langlinks.py:
+--------------------
+Extracts interlanguage links between two languages.
+
 TODO:
 - how to handle redirects (in Hungarian esp)?
 - test with hunpos?
