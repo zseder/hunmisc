@@ -21,6 +21,39 @@ class FieldedDocument(object):
         self.redirect = False
         self.templates = None
 
+    def __write_field(self, field, stream):
+        """
+        Writes the content of @p field to @p stream. Returns @c True, if the
+        document has such a field; @c False otherwise.
+        """
+        try:
+            contents = self.fields[field]
+            stream.write(u"%%#Field\t{0}\n".format(field))
+            for line in contents:
+                stream.write(u"{0}\n".format(u"\t".join(line)))
+            return True
+        except KeyError:
+            return False
+
+    def __unicode__(self):
+        """The page as a string."""
+        import StringIO
+        buff = StringIO.StringIO()
+        buff.write(u"{0}{1}\t{2}\n".format(
+            ConllReader.META_HEAD, ConllReader.PAGE_LABEL, self.title))
+        self.__write_field(u'Title', buff)
+
+        if self.templates is not None and len(self.templates) > 0:
+            buff.write(u"%%#Templates\t{0}\n".format(u",".join(self.templates)))
+
+        for field in self.fields:
+            if field != u'Title':
+                self.__write_field(field, buff)
+
+        ret = buff.getvalue()
+        buff.close()
+        return ret
+
 class ConllDocumentConverter(DefaultConllCallback):
     """A C{ConllCallback} that puts C{FieldedDocument} objects in a queue."""
     def __init__(self, queue):
@@ -121,4 +154,5 @@ if __name__ == '__main__':
     it = ConllIter(reader, 'utf-8')
     it.read(sys.argv[1:])
     for page in it:
-        print page.title
+        print page.__str__().encode('utf-8')
+

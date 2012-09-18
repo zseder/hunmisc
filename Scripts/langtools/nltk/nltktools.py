@@ -3,6 +3,7 @@ import re
 import sys
 from collections import defaultdict
 
+import nltk
 from nltk.tokenize.punkt import PunktSentenceTokenizer
 from nltk.tokenize.punkt import PunktWordTokenizer
 from nltk.tag.hunpos import HunposTagger
@@ -19,7 +20,8 @@ penn_to_major_pos = defaultdict(lambda: NOUN)
 penn_to_major_pos.update(_penn_to_major_pos)
 
 class NltkTools:
-    _abbrevPattern = re.compile(r"([\w][\w]?[.]){2}$", re.UNICODE)
+    _abbrevPattern  = re.compile(r"([\w][\w]?[.]){2,}$", re.UNICODE)
+    _datePattern    = re.compile(r"(^|\s)(?:[\d]{2}){1,2}[.]$", re.UNICODE)
     _cleanerPattern = re.compile("(\w\w)([.?,:;!])(\w)(\w)", re.UNICODE)
 
     def __init__(self, tok=False, wtok=False, stok=False, pos=False, stem=False,
@@ -31,10 +33,16 @@ class NltkTools:
             
         if wtok:
             self.wordTokenizer = PunktWordTokenizer()
-            self.punktSplitter = re.compile(r"^([\w\d]+)([.?,:;!])$", re.UNICODE)
+            #self.punktSplitter = re.compile(r"^([\w\d]+)([.?,:;!])$", re.UNICODE)
+            self.punktSplitter = re.compile(r"^(.+)([.?,:;!])$", re.UNICODE)
             # Bragantino,2006.In fix this shit
         if stok:
-            self.senTokenizer = PunktSentenceTokenizer()
+            try:
+                self.senTokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+            except LookupError:
+                sys.stderr.write("WARNING: english tokenizer cannot be loaded, nltk.data does not contain in!")
+                sys.stderr.write("WARNING: using an untrained sen_tokenizer")
+                self.senTokenizer = PunktSentenceTokenizer()
         
         self.abbrev_set = (set(abbrev_set) if abbrev_set is not None else set())
         
@@ -47,6 +55,8 @@ class NltkTools:
             self.stemmer = WordNetLemmatizer()
 
     def tokenize(self, raw):
+        """Runs sentence and then word tokenization. Does some abbreviation-
+        detection to fix false sentence endings."""
         sentences = self.sen_tokenize(raw)
         tokens = [self.word_tokenize(sen) for sen in sentences]
         for i in reversed(xrange(len(tokens) - 1)):
@@ -59,6 +69,7 @@ class NltkTools:
         
 
     def sen_tokenize(self, raw):
+        """Tokenizes the raw text into sentences."""
         raw = NltkTools.cleanup_puncts(raw)
         return self.senTokenizer.tokenize(raw)
 
@@ -69,8 +80,8 @@ class NltkTools:
         return ' '.join(filter(lambda x: len(x) <= length, re.split(r"\s+", raw)))
         
     def sen_abbr_tokenize(self, raw):
-        """Tokenizes the sentence, and tries to handle problems caused by
-        abbreviations and such."""
+        """Tokenizes the raw text into sentences, and tries to handle problems
+        caused by abbreviations and such."""
         sentences = self.sen_tokenize(raw)
         for i in reversed(xrange(len(sentences) - 1)):
             if (NltkTools._abbrevPattern.search(sentences[i]) is not None
@@ -105,6 +116,8 @@ class NltkTools:
         return tok in self.abbrev_set
 
     def word_tokenize(self, sen):
+        """Tokenizes the sentence to words and splits the sentence ending
+        punctuation mark from the last word and adds it as the last token."""
         tokens = self.wordTokenizer.tokenize(sen)
         if len(tokens) == 0:
             return []
@@ -134,7 +147,6 @@ class NltkTools:
         return
     
 if __name__ == "__main__":
-    import sys
     nt = NltkTools(pos=True, stem=True, tok=True)
     
     for l in sys.stdin:

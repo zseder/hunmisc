@@ -1,0 +1,57 @@
+wikitext_to_conll.py:
+--------------------
+
+Parses Wikipedia dumps in the MediaWiki format. Creates two files, one is the
+article in ConLL format; the other is the list of templates found in the files.
+This latter file is pretty useless right now.
+
+The most important parameter is -l/--language, the language of the markup.
+Always set it to match the language of the Wikipedia dump, lest the result
+become corrupt, or (much more likely) the script fails. Be sure to download
+the required siteinfo.json file in mwlib with the script
+mwlib*egg/mwlib/siteinfo/fetch_siteinfo.py.
+
+The tools to use for each language can be specified in a configuration file.
+A general section, named 'tools' is used to specify the default tools.
+
+See wiki.conf for an example. In this setup, English text is tokenized, POS
+tagged and lemmatized via NltkTools; Hungarian text is tokenized into sentences
+with a ME-based chunker, and POS tagged and lemmatized by ocamorph and
+hundisambig.
+
+For an example for all options, please refer to the tool documentations in
+../utils/tools.py and ../utils/language_config.py.
+
+create_morphtable.py:
+--------------------
+
+Because of how ocamorph and hundisambig interact (i.e. the former has to create
+a morphtable file for the latter, in addition of passing the sentence text),
+it would be very inefficient to parse the corpus sentence-by-sentence, or even
+page-by-page. The solution to this problem is two-pass parsing. The first pass,
+implemented in this script, runs only ocamorph and outputs a morphtable. Then,
+in the second pass, wikitext_to_conll.py can be run with the hundisambig-based
+POS tagger/lemmatizer.
+
+There are some gotchas with two-pass parsing:
+- tagnodes may introduce a UNIQ identifier, which changes each time the page is
+  read. Since hundisambig cannot handle a word that is not in the morphtable,
+  these identifiers (pattern is UNIQ-.+-QINU) must be discarded;
+- mwlib is buggy, and its behavior is undeterministic on ill-formatted pages.
+  Therefore, the hundisambig-based POS tagger/lemmatizer must read the
+  morphtable into a set, and check each word to see whether it is safe to send
+  it to hundisambig or not, and replace it with a safe (preferrably UNKNOWN)
+  token.
+
+../utils/tools.py:
+-----------------
+
+Contains the tools used by the two scripts above.
+
+extract_langlinks.py:
+--------------------
+Extracts interlanguage links between two languages.
+
+TODO:
+- how to handle redirects (in Hungarian esp)?
+- test with hunpos?
