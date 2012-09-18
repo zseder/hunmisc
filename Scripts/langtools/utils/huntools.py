@@ -40,7 +40,7 @@ class SentenceTagger(AbstractSubprocessClass):
         self.osep = sep
         self.isep = isep
         self.osep = osep
-
+        
     def send(self, tokens):
         """
         send tokens to _process.stdin after encoding
@@ -53,20 +53,30 @@ class SentenceTagger(AbstractSubprocessClass):
                 token_str = self.isep.join(token)
             else:
                 token_str = token
+            #print token_str
             token_to_send = token_str.encode(self._encoding)
             self._process.stdin.write(token_to_send)
             self._process.stdin.write("\n")
         self._process.stdin.write("\n")
         self._process.stdin.flush()
 
+    def getStdErr(self):
+        print self._process.stderr.readlines()
+    
     def recv_and_append(self, tokens):
         tagged_tokens = []
         for token in tokens:
             line = self._process.stdout.readline()
+            if line.startswith('Accuracy ='):
+                line = self._process.stdout.readline()
+            #print list(line)
+            if line == '\n' or line == '':
+                continue
             decoded = line.decode(self._encoding)
             tagged = decoded.strip().split(self.osep)
             if len(tagged) == 0:
                 continue
+            #print tagged
             tag = tagged[self._tag_index]
             if self.tuple_mode:
                 tagged_tokens.append(token + (tag,))
@@ -174,22 +184,22 @@ class MorphAnalyzer:
         self._ocamorph.stop()
 
 class Hunchunk(SentenceTagger):
-    def __init__(self, runnable, traincorpus, keptfeats, model, features, encoding="LATIN2"):
-        SentenceTagger.__init__(self, "python", encoding, 2, osep=" ")
-        self.runnable = runnable
-        self.traincorpus = traincorpus
-        self.keptfeats = keptfeats
-        self.model = model
-        self.features = features
+    def __init__(self, huntag, modelName, bigramModel, configFile, encoding="LATIN2"):
+        SentenceTagger.__init__(self, "python", encoding, 2)
+        self.huntag = huntag
+        self.modelName = modelName
+        self.bigramModel = bigramModel
+        self.configFile = configFile
         self.__set_default_options()
+        self.start()
 
     def __set_default_options(self):
-        o = ["-u", self.runnable]
+        o = [self.huntag]
+        o += ["tag"]
+        o += ["-m", self.modelName]
+        o += ["-b", self.bigramModel]
         o += ["-l 1"]
-        o += ["-t", self.traincorpus]
-        o += ["-k", self.keptfeats]
-        o += ["-m", self.model]
-        o += ["-f", self.features]
+        o += ["-c", self.configFile]
         self.options = o
 
 

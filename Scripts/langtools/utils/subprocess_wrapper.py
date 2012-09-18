@@ -12,6 +12,8 @@ class AbstractSubprocessClass:
         self._closed = True
 
     def start(self):
+        #print self._runnable
+        #print self.options
         self._process = Popen([self._runnable] + self.options,
                               stdin=PIPE, stdout=PIPE, stderr=PIPE)
         self._closed = False
