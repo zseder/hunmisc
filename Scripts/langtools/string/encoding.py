@@ -1,5 +1,5 @@
 #unicode-proszeky map
-upm = {
+upm = unicode_proszeky_map = {
     u"\u00C1": u"A1",
     u"\u00C9": u"E1",
     u"\u00CD": u"I1",
@@ -21,9 +21,11 @@ upm = {
 }
 
 #proszeky-unicode map
-pum = dict([(i[1], i[0]) for i in upm.items()])
+pum = proszeky_unicode_map = dict([(i[1], i[0]) for i in upm.items()])
 
 def clean_unicode_accents(s):
+    """Changing not proper accents (tildes and umlauts) to the proper
+    hungarian accents in unicode strings"""
     #o3
     s = s.replace(u"\u00F4" , u"\u0151")
     s = s.replace(u"\u00F5" , u"\u0151")
@@ -43,6 +45,7 @@ def clean_unicode_accents(s):
     return s
 
 def encode_to_proszeky(s, cleaning=False):
+    """unicode 2 proszeky"""
     # accent cleaning (umlauts, tildes and more)
     if cleaning:
         s = clean_unicode_accents(s)
@@ -60,6 +63,7 @@ def encode_to_proszeky(s, cleaning=False):
     return s
 
 def decode_from_proszeky(s):
+    """proszeky 2 unicode"""
     for k in pum.keys():
         s = s.replace(k, pum[k])
     return s
