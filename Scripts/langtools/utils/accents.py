@@ -1,28 +1,29 @@
+#unicode-proszeky map
+upm = {
+    u"\u00C1": u"A1",
+    u"\u00C9": u"E1",
+    u"\u00CD": u"I1",
+    u"\u00D3": u"O1",
+    u"\u00D6": u"O2",
+    u"\u0150": u"O3",
+    u"\u00DA": u"U1",
+    u"\u00DC": u"U2",
+    u"\u0170": u"U3",
+    u"\u00E1": u"a1",
+    u"\u00E9": u"e1",
+    u"\u00ED": u"i1",
+    u"\u00F3": u"o1",
+    u"\u00F6": u"o2",
+    u"\u0151": u"o3",
+    u"\u00FA": u"u1",
+    u"\u00FC": u"u2",
+    u"\u0171": u"u3"
+}
 
-def create_utf_proszeky_map():
-    upm = {}
-    upm[u"\u00C1"] = u"A1"
-    upm[u"\u00C9"] = u"E1"
-    upm[u"\u00CD"] = u"I1"
-    upm[u"\u00D3"] = u"O1"
-    upm[u"\u00D6"] = u"O2"
-    upm[u"\u0150"] = u"O3"
-    upm[u"\u00DA"] = u"U1"
-    upm[u"\u00DC"] = u"U2"
-    upm[u"\u0170"] = u"U3"
-    
-    upm[u"\u00E1"] = u"a1"
-    upm[u"\u00E9"] = u"e1"
-    upm[u"\u00ED"] = u"i1"
-    upm[u"\u00F3"] = u"o1"
-    upm[u"\u00F6"] = u"o2"
-    upm[u"\u0151"] = u"o3"
-    upm[u"\u00FA"] = u"u1"
-    upm[u"\u00FC"] = u"u2"
-    upm[u"\u0171"] = u"u3"
-    return upm
+#proszeky-unicode map
+pum = dict([(i[1], i[0]) for i in upm.items()])
 
-def clean_utf8_accents(s):
+def clean_unicode_accents(s):
     #o3
     s = s.replace(u"\u00F4" , u"\u0151")
     s = s.replace(u"\u00F5" , u"\u0151")
@@ -41,30 +42,27 @@ def clean_utf8_accents(s):
     
     return s
 
-def utf_to_proszeky(s):
-    upm = create_utf_proszeky_map()
+def encode_to_proszeky(s, cleaning=False):
+    # accent cleaning (umlauts, tildes and more)
+    if cleaning:
+        s = clean_unicode_accents(s)
+
+    # escaping bigrams already in proszeky
+    for k in pum.keys():
+        s = s.replace(k, k[0] + "%uniq_proszeky_string%" + k[1])
+
+    # proszeky replacing
     for k in upm.keys():
         s = s.replace(k, upm[k])
+
+    # remove escapes
+    s = s.replace("%uniq_proszeky_string%", "")
     return s
 
-def proszeky_to_utf(s):
-    upm = create_utf_proszeky_map()
-    pum = dict([(i[1], i[0]) for i in upm.items()])
+def decode_from_proszeky(s):
     for k in pum.keys():
         s = s.replace(k, pum[k])
     return s
-
-def any_encoding_to_proszeky(s, encoding):
-    decoded = s.decode(encoding)
-    utf = decoded.encode("utf-8")
-    result = utf_to_proszeky(utf)
-    return result
-
-def proszeky_to_any_encoding(s, encoding):
-    utf = proszeky_to_utf(s)
-    decoded = utf.decode("utf-8")
-    result = decoded.encode(encoding)
-    return result
 
 if __name__ == "__main__":
     from optparse import OptionParser
@@ -79,8 +77,8 @@ if __name__ == "__main__":
     for l in sys.stdin:
         l = l.decode("utf-8")
         if options.clean:
-            l = clean_utf8_accents(l)
+            l = clean_unicode_accents(l)
         if options.proszeky:
-            l = utf_to_proszeky(l)
+            l = encode_to_proszeky(l)
         print l.encode("utf-8"),
 
