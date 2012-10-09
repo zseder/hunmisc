@@ -1,4 +1,4 @@
-"""Contains useful miscellaneous methods."""
+"""Contains methods that in a better world should be in the itertools module."""
 
 def all_partitions(lst):
     """Returns all possible partitionings of a list."""
@@ -21,7 +21,7 @@ def split_list(lst, splits):
                 ret.extend(rest)
                 yield ret
 
-def split_length(length, splits):
+def __split_length(length, splits):
     """
     Splits an integer length all possible ways with the specified number
     of splits.
@@ -33,7 +33,7 @@ def split_length(length, splits):
         yield [length]
     else:
         for i in xrange(length - splits, 0, -1):
-            for rest in split_length(length - i, splits - 1):
+            for rest in __split_length(length - i, splits - 1):
                 ret = [i]
                 ret.extend(rest)
                 yield ret

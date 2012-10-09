@@ -226,14 +226,16 @@ class MorphAnalyzer:
             morphtable_file.flush()
             if not self._hundisambig._closed:
                 self._hundisambig.stop()
-#            import shutil
-#            shutil.copy(morphtable_filename, './temp')
             self._hundisambig.set_morphtable(morphtable_filename)
             self._hundisambig.start()
 
             for sen_i, sen in enumerate(safe_data):
                 ret = self._hundisambig.tag_sentence(sen)
                 yield [self.correct(token, data[sen_i][i]) for i, token in enumerate(ret)]
+
+            # BUGTEST
+            import shutil
+            shutil.copy(morphtable_file.name, 'aa')
 
     def replace_stuff(self, token):
         t = self.replace_punct(token)
