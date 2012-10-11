@@ -233,9 +233,9 @@ class MorphAnalyzer:
                 ret = self._hundisambig.tag_sentence(sen)
                 yield [self.correct(token, data[sen_i][i]) for i, token in enumerate(ret)]
 
-            # BUGTEST
-            import shutil
-            shutil.copy(morphtable_file.name, 'aa')
+#            # BUGTEST
+#            import shutil
+#            shutil.copy(morphtable_file.name, 'aa')
 
     def replace_stuff(self, token):
         t = self.replace_punct(token)
