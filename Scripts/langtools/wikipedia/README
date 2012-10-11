@@ -1,3 +1,12 @@
+Wikipedia parsing with wikitext_to_conll.py and friends:
+=======================================================
+
+wikitext_to_conll.py defines the WikipediaParser object, which uses mwlib to
+parse the Wikipedia markup format. It has two abstract methods, process_tokens()
+and process_templates() that subclasses must implement. Currently it has two
+subclasses, one in the same file, which is also called by the main method, and
+another in create_morphtable.py, which is only necessary for Hungarian.
+
 wikitext_to_conll.py:
 --------------------
 
@@ -22,6 +31,10 @@ hundisambig.
 For an example for all options, please refer to the tool documentations in
 ../utils/tools.py and ../utils/language_config.py.
 
+How to call:
+python2.7 wikitext_to_conll.py -l en wiki.conf input_file_in_markup_format
+output_file_in_conll_format template_output_file
+
 create_morphtable.py:
 --------------------
 
@@ -43,8 +56,12 @@ There are some gotchas with two-pass parsing:
   it to hundisambig or not, and replace it with a safe (preferrably UNKNOWN)
   token.
 
-../utils/tools.py:
------------------
+How to call:
+python2.7 create_morphtable.py -l hu wiki.conf morph_table_output_file
+input_file_in_markup_format
+
+../utils/tool_wrapper.py:
+------------------------
 
 Contains the tools used by the two scripts above.
 
