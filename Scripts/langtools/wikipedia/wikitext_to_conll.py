@@ -5,12 +5,14 @@ pages and the templates files."""
 
 import re
 import sys
+import logging
 from optparse import OptionParser
-from langtools.utils.cascading_config import CascadingConfigParser
 
-from langtools.utils.misc import wikiRemove, print_logging
+from langtools.string.xstring import wikiRemove
+from langtools.utils.cascading_config import CascadingConfigParser
 from langtools.utils.language_config import LanguageTools
 from langtools.utils.file_utils import read_file_into_set
+
 
 class WikipediaParser(object):
     """Base class for Wikipedia dump parsers."""
@@ -361,7 +363,7 @@ class WikitextToConll(WikipediaParser):
     def process_tokens(self, actual_title, tokens, templates):
         """Tags and lemmatizes the tokens, then prints the result into the
         first output file."""
-        print_logging("TITLE " + actual_title)
+        logging.debug("TITLE " + actual_title)
         # POS tag and lemmatize the data
         self.lt.pos_tag(tokens)
         self.lt.lemmatize(tokens)
