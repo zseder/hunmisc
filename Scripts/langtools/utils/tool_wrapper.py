@@ -150,7 +150,7 @@ class HundisambigWrapper(PosTaggerWrapper, LemmatizerWrapper):
         """POS tags AND lemmatizes @p tokens."""
         self.add_pos_and_stems(tokens)
 
-class OcamorphWrapper(PosTaggerWrapper, LemmatizerWrapper):
+class OcamorphWrapper(PosTaggerWrapper):
     """Wrapper class for ocamorph.
 
     This class requires the following parameters:
@@ -158,8 +158,6 @@ class OcamorphWrapper(PosTaggerWrapper, LemmatizerWrapper):
     - ocamorph_model: the ocamorph model file;
     - ocamorph_encoding: the encoding used by the ocamorph and hundisambig
                          model files. The default is iso-8859-2;
-    - hundisambig_runnable: the hundisambig runnable;
-    - hundisambig_model: the hundisambig model file.
 
     @warning This determines the POS tag of the words as well as their lemmas
              in both the pos_tag() and the lemmatize() methods. To avoid adding
@@ -167,13 +165,9 @@ class OcamorphWrapper(PosTaggerWrapper, LemmatizerWrapper):
              either specify OcamorphWrapper as a pos_tagger or a lemmatizer in
              the configuration file, but NOT BOTH."""
     def __init__(self, params):
-        ocamorph = Ocamorph(params['ocamorph_runnable'],
-                            params['ocamorph_model'],
-                            params.get('ocamorph_encoding', 'iso-8859-2'))
-        hundisambig = Hundisambig(params['hundisambig_runnable'],
-                                  params['hundisambig_model'],
-                                  params.get('ocamorph_encoding', 'iso-8859-2'))
-        self.morph_analyzer = MorphAnalyzer(ocamorph, hundisambig)
+        self.ocamorph = Ocamorph(params['ocamorph_runnable'],
+                                 params['ocamorph_model'],
+                                 params.get('ocamorph_encoding', 'iso-8859-2'))
 
     def add_pos_and_stems(self, tokens):
         """Adds POS tags and lemmatizes the words in @c tokens."""
@@ -190,10 +184,6 @@ class OcamorphWrapper(PosTaggerWrapper, LemmatizerWrapper):
                     print unicode(sen[tok_i]).encode('utf-8')
 
     def pos_tag(self, tokens):
-        """POS tags AND lemmatizes @p tokens."""
-        self.add_pos_and_stems(tokens)
-
-    def lemmatize(self, tokens):
         """POS tags AND lemmatizes @p tokens."""
         self.add_pos_and_stems(tokens)
 

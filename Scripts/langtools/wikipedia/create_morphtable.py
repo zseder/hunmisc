@@ -1,5 +1,5 @@
 """
-Creates the bloody morphtable for hundisambig.
+Runs ocamorph and creates the bloody morphtable for hundisambig.
 Parameters: the configuration file, the output file and the input files.
 """
 
@@ -9,7 +9,9 @@ from langtools.utils.language_config import LanguageTools
 from langtools.utils.misc import print_logging
 
 class WikitextToMorphTable(WikipediaParser):
-    """Parses Wikipedia files and creates a morphtable from them."""
+    """
+    Parses Wikipedia files and creates a morphtable from them.
+    """
     def __init__(self, lt, config_file, table_file):
         """
         @param table_file an open output stream.
