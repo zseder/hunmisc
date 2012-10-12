@@ -11,7 +11,7 @@ from optparse import OptionParser
 from langtools.string.xstring import wikiRemove
 from langtools.utils.cascading_config import CascadingConfigParser
 from langtools.utils.language_config import LanguageTools
-from langtools.utils.file_utils import read_file_into_set
+from langtools.io.file_utils import read_file_into_set
 
 
 class WikipediaParser(object):

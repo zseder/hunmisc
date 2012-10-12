@@ -2,11 +2,11 @@
 Runs ocamorph and creates the bloody morphtable for hundisambig.
 Parameters: the configuration file, the output file and the input files.
 """
+import logging
 
 from optparse import OptionParser
 from langtools.wikipedia.wikitext_to_conll import WikipediaParser
 from langtools.utils.language_config import LanguageTools
-from langtools.utils.misc import print_logging
 
 class WikitextToMorphTable(WikipediaParser):
     """
@@ -21,7 +21,7 @@ class WikitextToMorphTable(WikipediaParser):
         self.morph_set = set()
 
     def process_tokens(self, actual_title, tokens, templates):
-        print_logging("TITLE " + actual_title)
+        logging.info("TITLE " + actual_title)
         for sentence in tokens:
             for token in sentence:
                 # Well, that's it for loose coupling
@@ -31,7 +31,8 @@ class WikitextToMorphTable(WikipediaParser):
         sorted_words = sorted(self.morph_set)
         for i in xrange(0, len(sorted_words), 25):
             analyzed = self.lt.pos_tagger.morph_analyzer._ocamorph.tag(sorted_words[i : i + 25])
-            self.table_file.write(u"\n".join("\t".join(token) for token in analyzed).encode(self.lt.pos_tagger.morph_analyzer._hundisambig._encoding))
+#            analyzed = self.lt.pos_tagger.pos_tag(sorted_words[i : i + 25])
+            self.table_file.write(u"\n".join("\t".join(token) for token in analyzed).encode(self.lt.pos_tagger.ocamorph._encoding))
             self.table_file.write("\n")
         self.table_file.flush()
 

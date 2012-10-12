@@ -1,6 +1,6 @@
 import re
 from subprocess_wrapper import AbstractSubprocessClass
-from langtools.utils.misc import ispunct, isquot, print_logging
+from langtools.string.xstring import ispunct, isquot
 
 """
 TODO
@@ -199,10 +199,10 @@ class Hundisambig(SentenceTagger):
             if token_to_send not in self._morph_set:
                 if self._unknown is not None:
                     token_to_send = self._unknown
-                    print_logging(u"REPLACED " + token + u" WITH UNK " + token_to_send.decode(self._encoding))
+                    logging.debug(u"REPLACED " + token + u" WITH UNK " + token_to_send.decode(self._encoding))
                 elif self._noun is not None:
                     token_to_send = self._noun
-                    print_logging(u"REPLACED " + token + u" WITH NOUN " + token_to_send.decode(self._encoding))
+                    logging.debug(u"REPLACED " + token + u" WITH NOUN " + token_to_send.decode(self._encoding))
                 # else: no noun; the morphtable must be unusable anyway
         return token_to_send
     
@@ -301,8 +301,8 @@ class MorphAnalyzer:
                     derivation = parts[1].rsplit('/', 1)[-1].upper()
             return (word, lemma + u'|' + stuff + u'|' + derivation)
         except ValueError, ve:
-            print_logging(ve)
-            print_logging(word + u" // " + crap)
+            logging.debug(ve)
+            logging.debug(word + u" // " + crap)
             raise ve
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -315,6 +315,20 @@ class MorphAnalyzer:
         if self._ocamorph is not None:
             self._ocamorph.stop()
             self._ocamorph = None
+
+class OcamorphAnalyzer(MorphAnalyzer):
+    """"""
+    def __init__(self, ocamorph):
+        MorphAnalyzer.__init__(self, ocamorph, None)
+#        self._hundisambig.start()
+
+    def analyze(self, data):
+        print "DATA", data
+        safe_data = [[self.replace_stuff(tok) for tok in sen] for sen in data]
+        print "SAFE_DATA", safe_data
+        for sen_i, sen in enumerate(safe_data):
+            ret = self._ocamorph.tag(sen)
+            yield ret
 
 class HundisambigAnalyzer(MorphAnalyzer):
     """"""
