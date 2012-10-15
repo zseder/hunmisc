@@ -206,13 +206,14 @@ class Hundisambig(SentenceTagger):
                 # else: no noun; the morphtable must be unusable anyway
         return token_to_send
     
-class MorphAnalyzer:
+class MorphAnalyzer(object):
     UNICODE_PATTERN = re.compile(ur"&#(\d+);")
     NUMBER_PATTERN = re.compile(ur"(\d+|[IVXLCDM]+)[.]", re.IGNORECASE)
 
     def __init__(self, ocamorph, hundisambig):
-        self._ocamorph = ocamorph
+        self._ocamorph    = ocamorph
         self._hundisambig = hundisambig
+        self._encoding    = ocamorph._encoding if ocamorph is not None else hundisambig._encoding
 
     def analyze(self, data):
         from tempfile import NamedTemporaryFile
@@ -250,7 +251,7 @@ class MorphAnalyzer:
         ocamorph."""
         try:
             if ispunct(token):
-                token.encode(self._hundisambig._encoding)
+                token.encode(self._encoding)
             return token
         except UnicodeError:
             if isquot(token):
@@ -320,12 +321,9 @@ class OcamorphAnalyzer(MorphAnalyzer):
     """"""
     def __init__(self, ocamorph):
         MorphAnalyzer.__init__(self, ocamorph, None)
-#        self._hundisambig.start()
 
     def analyze(self, data):
-        print "DATA", data
         safe_data = [[self.replace_stuff(tok) for tok in sen] for sen in data]
-        print "SAFE_DATA", safe_data
         for sen_i, sen in enumerate(safe_data):
             ret = self._ocamorph.tag(sen)
             yield ret

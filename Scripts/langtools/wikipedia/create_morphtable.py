@@ -7,6 +7,7 @@ import logging
 from optparse import OptionParser
 from langtools.wikipedia.wikitext_to_conll import WikipediaParser
 from langtools.utils.language_config import LanguageTools
+from langtools.utils.huntool_wrapper import Ocamorph, OcamorphAnalyzer
 
 class WikitextToMorphTable(WikipediaParser):
     """
@@ -19,20 +20,26 @@ class WikitextToMorphTable(WikipediaParser):
         WikipediaParser.__init__(self, lt, config_file)
         self.table_file = table_file
         self.morph_set = set()
+        self.ocamorph = Ocamorph(self.lt.config['ocamorph_runnable'],
+                                 self.lt.config['ocamorph_model'],
+                                 self.lt.config.get('ocamorph_encoding', 'iso-8859-2'))
+        self.morph_analyzer = OcamorphAnalyzer(self.ocamorph)
 
     def process_tokens(self, actual_title, tokens, templates):
         logging.info("TITLE " + actual_title)
         for sentence in tokens:
             for token in sentence:
                 # Well, that's it for loose coupling
-                self.morph_set.add(self.lt.pos_tagger.morph_analyzer.replace_stuff(token[0]))
+                self.morph_set.add(self.morph_analyzer.replace_stuff(token[0]))
+#                self.morph_set.add(token[0])
 
     def print_tokens(self):
         sorted_words = sorted(self.morph_set)
         for i in xrange(0, len(sorted_words), 25):
-            analyzed = self.lt.pos_tagger.morph_analyzer._ocamorph.tag(sorted_words[i : i + 25])
-#            analyzed = self.lt.pos_tagger.pos_tag(sorted_words[i : i + 25])
-            self.table_file.write(u"\n".join("\t".join(token) for token in analyzed).encode(self.lt.pos_tagger.ocamorph._encoding))
+            analyzed = [sen for sen in self.morph_analyzer.analyze([sorted_words[i : i + 25]])][0]
+#            analyzed = list(analyzed)
+#            print "ANAL", analyzed
+            self.table_file.write(u"\n".join("\t".join(token) for token in analyzed).encode(self.ocamorph._encoding))
             self.table_file.write("\n")
         self.table_file.flush()
 
