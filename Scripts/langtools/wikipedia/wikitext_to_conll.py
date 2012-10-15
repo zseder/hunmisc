@@ -3,6 +3,7 @@ pages and the templates files."""
 # TODO: ' to separate token (currently it is not removed from the beginning of
 #       words).
 
+import sys
 import logging
 from optparse import OptionParser
 
