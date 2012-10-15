@@ -1,7 +1,7 @@
 import sys
 from optparse import OptionParser
 
-from langtools.wikipedia.wikitext_to_conll import WikipediaParser
+from langtools.wikipedia.wikiparser import WikipediaParser
 from langtools.utils.language_config import LanguageTools
 
 class WikitextToRawText(WikipediaParser):
@@ -33,12 +33,12 @@ class WikitextToRawText(WikipediaParser):
     def print_tokens(self, tokens):
         """Prints @p tokens to the page content file."""
         for sen in tokens:
-            for t in sen:
+            for token in sen:
                 try:
-                    self.pages_f.write(t[0].encode("utf-8") + " ")
+                    self.pages_f.write(token[0].encode("utf-8") + " ")
                 except UnicodeError, ue:
                     print "Trying to print: "
-                    for w in t:
+                    for w in token:
                         if isinstance(w, unicode):
                             print w.encode('utf-8')
                         else:
