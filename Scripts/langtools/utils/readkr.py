@@ -308,8 +308,8 @@ def node_dictionary(nodes, kepzos, i):
 def kr_to_dictionary(kr_code):
     code = analyze(kr_code)[0]
     i = len(code.krNodes)
-    return node_dictionary(code.krNodes, code.kepzos, i-1)
-
+    not_specified =  node_dictionary(code.krNodes, code.kepzos, i-1)
+    return fill_def_values(not_specified)
 
 def main() :
     manyWordsPerLine = True
