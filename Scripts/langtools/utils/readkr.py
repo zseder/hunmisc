@@ -258,5 +258,83 @@ def main() :
             except :
                 cerr( "BUG: "+t+" IN WORD: "+inputWord )
 
-if __name__ == "__main__" :
+
+def fill_def_values(dict_attributes):
+
+    if dict_attributes['CAT'] == 'NOUN':
+        if 'CAS' not in dict_attributes:
+            dict_attributes['CAS'] = 'NOM'
+        if 'NUM' not in dict_attributes:
+            dict_attributes['NUM'] = 'SING'
+        if 'ANP' not in dict_attributes:
+            dict_attributes['ANP'] = '0'
+        if 'DEF' not in dict_attributes:
+            dict_attributes['DEF'] = '0'
+        if 'POSS' not in dict_attributes:
+            dict_attributes['POSS'] = '0'
+    if dict_attributes['CAT'] == 'ADJ':
+        if 'CAS' not in dict_attributes:
+            dict_attributes['CAS'] = 'NOM'        
+    if 'SRC' in dict_attributes:
+        dict_attributes['SRC']['STEM'] = fill_def_values(dict_attributes['SRC']['STEM'])
+    return dict_attributes
+
+
+def node_dictionary(nodes, kepzos, i):
+    node = nodes[i]
+    dictionary = {}
+    dictionary['CAT'] = node.value 
+    for ch_node in node.children:
+        attr = ch_node.value
+        if ch_node.children == []:
+            value = 1     
+        else:
+            value = ch_node.children[0].value
+        if attr == 'PLUR':
+            attr, value = 'NUM', 'PLUR'
+        dictionary[attr] = value
+    if i > 0:
+        dictionary['SRC'] = {}
+        dictionary['SRC']['DERIV'] = {}
+        kepzo = kepzos[i-1][0]
+        dictionary['SRC']['DERIV']['CAT'] = kepzo.value
+        if kepzo.children != []:
+            dictionary['SRC']['DERIV']['TYPE'] = kepzo.children[0].value
+        dictionary['SRC']['STEM'] = node_dictionary(nodes, kepzos, i - 1)
+    return dictionary         
+
+
+ 
+def kr_to_dictionary(kr_code):
+    code = analyze(kr_code)[0]
+    i = len(code.krNodes)
+    return node_dictionary(code.krNodes, code.kepzos, i-1)
+
+
+def main() :
+    manyWordsPerLine = True
+ 
+    if manyWordsPerLine :
+        for l in sys.stdin :
+            tokens = l.strip("\n").split(" ")
+            if len(tokens)==1 and tokens[0]=="" :
+                continue
+            for token in tokens :
+                analyze(token)
+    else :
+        # Az ocamorph standard, kacsacs�r�s kimenet�t vizsg�lja helyess�g szempontj�b�l.
+        for l in sys.stdin :
+            t = l.strip("\n")
+            if t[:2]=="> " :
+                inputWord = t[2:]
+                continue
+
+            try :
+                analyze(t)
+            except :
+                cerr( "BUG: "+t+" IN WORD: "+inputWord )
+
+
+if __name__ == '__main__':
     main()
+
