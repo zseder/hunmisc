@@ -305,11 +305,17 @@ def node_dictionary(nodes, kepzos, i):
 
 
  
-def kr_to_dictionary(kr_code):
+def kr_to_dictionary(kr_code, fill=False):
+    """
+    @param fill if True, default CAS,NUM... values get filled 
+    """
     code = analyze(kr_code)[0]
     i = len(code.krNodes)
-    not_specified =  node_dictionary(code.krNodes, code.kepzos, i-1)
-    return fill_def_values(not_specified)
+    not_specified = node_dictionary(code.krNodes, code.kepzos, i-1)
+    if fill:
+        return fill_def_values(not_specified)
+    else:
+        return not_specified
 
 def main() :
     manyWordsPerLine = True
