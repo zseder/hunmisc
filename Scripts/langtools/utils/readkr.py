@@ -56,29 +56,6 @@ class KRCode :
 # Ha ez most C++ lenne, akkor ezt irnam:
 # typedef vector<KRCode> Compound
 
-# Kornai szerint az utolso szoosszetetel kivetelevel a tobbi nem ragozodik igazibol.
-# Itt csak a vege van dekoralva:
-class SimplifiedCompound :
-    def __init__(self) :
-        self.krCode = KRCode()
-        self.modifiers = [] # (list<string>)
-    def __init__(self,compound) :
-        n = len(compound)
-        constituentStems = []
-        for i,constituent in enumerate(compound) :
-            if i<n-1 :
-                if len(constituent.kepzos)!=0 :
-                    cerr("DATA THROWN AWAY: kepzo "+str(constituent.kepzos))
-                if len(constituent.krNodes)!=1 :
-                    cerr("DATA THROWN AWAY: multiple inflection "+" ".join(map(str,constituent.krNodes)) )
-                if len(constituent.krNodes[0].children)!=0 :
-                    cerr("DATA THROWN AWAY: complex KR-code "+str(constituent.krNodes[0]))
-                    
-                constituentStems.append(constituent.stem)
-
-        self.krCode = compound[n-1]
-        self.modifiers = constituentStems
-
 def descent( code, pos, leaf ) :
     if pos==len(code) :
         return pos
@@ -234,31 +211,6 @@ def analyze( t ) :
         krCodes.append( analyzeConstituent(w) )
     return krCodes
 
-
-def main() :
-    manyWordsPerLine = True
-    
-    if manyWordsPerLine :
-        for l in sys.stdin :
-            tokens = l.strip("\n").split(" ")
-            if len(tokens)==1 and tokens[0]=="" :
-                continue
-            for token in tokens :
-                analyze(token)
-    else :
-        # Az ocamorph standard, kacsacsõrös kimenetét vizsgálja helyesség szempontjából.
-        for l in sys.stdin :
-            t = l.strip("\n")
-            if t[:2]=="> " :
-                inputWord = t[2:]
-                continue
-
-            try :
-                analyze(t)
-            except :
-                cerr( "BUG: "+t+" IN WORD: "+inputWord )
-
-
 def fill_def_values(dict_attributes):
 
     if dict_attributes['CAT'] == 'NOUN':
@@ -339,7 +291,6 @@ def main() :
                 analyze(t)
             except :
                 cerr( "BUG: "+t+" IN WORD: "+inputWord )
-
 
 if __name__ == '__main__':
     main()
