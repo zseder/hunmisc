@@ -233,6 +233,9 @@ def fill_def_values(dict_attributes):
 
 
 def node_dictionary(nodes, kepzos, i):
+    """
+    returns dictionary corresponding to the first i step of the derivation
+    """
     node = nodes[i]
     dictionary = {}
     dictionary['CAT'] = node.value 
