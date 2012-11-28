@@ -212,7 +212,8 @@ def analyze( t ) :
     return krCodes
 
 def fill_def_values(dict_attributes):
-
+    
+    dict_attributes['BAR'] = '0'
     if dict_attributes['CAT'] == 'NOUN':
         if 'CAS' not in dict_attributes:
             dict_attributes['CAS'] = 'NOM'
@@ -224,7 +225,7 @@ def fill_def_values(dict_attributes):
             dict_attributes['DEF'] = '0'
         if 'POSS' not in dict_attributes:
             dict_attributes['POSS'] = '0'
-    if dict_attributes['CAT'] == 'ADJ':
+    elif dict_attributes['CAT'] == 'ADJ':
         if 'CAS' not in dict_attributes:
             dict_attributes['CAS'] = 'NOM'        
     if 'SRC' in dict_attributes:
