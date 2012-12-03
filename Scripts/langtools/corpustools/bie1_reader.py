@@ -38,8 +38,8 @@ def read_bie1_sentence(sentence, chunk_field):
 
         if tok[chunk_field][0] in ["B", "I", "E"]:
             if active_chunk is None:
-                logging.warning("there is an improper use of I or E tag " +
-                                "in the sentence:\n" +
+                logging.warning("there is an improper use of I or E tag")
+                logging.debug(" in the sentence:\n" +
                                 "\n".join(("\t".join(tok) for tok in sentence)
                                          ))
                 active_chunk = [[], tok[chunk_field][2:]]
