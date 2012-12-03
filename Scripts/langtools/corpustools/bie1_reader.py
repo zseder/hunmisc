@@ -32,7 +32,7 @@ def read_bie1_sentence(sentence, chunk_field):
 
         # no-chunk token is simple
         if tok[chunk_field] == "O":
-            result.append(token_if_append + "O")
+            result.append(token_if_append + ("O", ))
         # 1-chunks are gonna be one-length chunks
         elif tok[chunk_field].startswith("1-"):
             result.append(([token_if_append], tok[chunk_field][2:]))
