@@ -25,7 +25,10 @@ def read_bie1_sentence(sentence, chunk_field):
                 result.append(tuple(active_chunk))
                 active_chunk = None
 
-        token_if_append = tuple(tok[:chunk_field]) + tuple(tok[chunk_field+1:])
+        if chunk_field == -1:
+            token_if_append = tuple(tok[:chunk_field])
+        else:
+            token_if_append = tuple(tok[:chunk_field]) + tuple(tok[chunk_field+1:])
 
         # no-chunk token is simple
         if tok[chunk_field] == "O":
