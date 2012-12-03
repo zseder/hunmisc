@@ -68,6 +68,7 @@ def read_bie1_corpus(f, chunk_field=-1):
     # close final sentence, if there were no empty line before EOF
     if len(sentence) > 0:
         sentences.append(read_bie1_sentence(sentence, chunk_field))
+    return sentences
 
 def test1():
     read_bie1_corpus(file(sys.argv[1]), int(sys.argv[2]))
