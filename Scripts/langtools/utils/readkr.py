@@ -28,8 +28,8 @@ class Node :
         # self.parent = null
         self.children = []
         self.value = ""
-    def __str__(self) :
-        return self.value + "".join( map( lambda p : "<" + str(p) + ">" , self.children ) )
+    def __unicode__(self) :
+        return self.value + "".join( map( lambda p : "<" + unicode(p) + ">" , self.children ) )
 
 
 class KRCode :
@@ -39,16 +39,17 @@ class KRCode :
         self.stem = ""
         self.krNodes = []
         self.kepzos = [] # TODO Mi a neve?
-    def __str__(self) :
+
+    def __unicode__(self) :
         out = self.stem + "/"
         n = len(self.krNodes)
         assert n-len(self.kepzos) in (0,1)
         for i in range(n) :
             krNode = self.krNodes[i]
-            out += str(krNode)
+            out += unicode(krNode)
             if i<len(self.kepzos) :
                 kepzoGroup = self.kepzos[i]
-                out += "".join( map( lambda k : "[" + str(k) + "]", kepzoGroup ) )
+                out += "".join( map( lambda k : "[" + unicode(k) + "]", kepzoGroup ) )
             if i<n-1 :
                 out += "/"
         return out
@@ -197,8 +198,8 @@ def analyzeConstituent( w ) :
         if len(kepzoGroup)>0 :
             krCode.kepzos.append(kepzoGroup)
 
-    if w!=str(krCode) :
-        cerr( w+" != "+str(krCode) )
+    if w!=unicode(krCode) :
+        cerr( w+" != "+unicode(krCode) )
         raise "internal error"
 
     return krCode
