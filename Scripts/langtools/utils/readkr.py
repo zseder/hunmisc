@@ -233,7 +233,7 @@ def fill_def_values(dict_attributes):
     return dict_attributes
 
 
-def node_dictionary(nodes, kepzos, i):
+def node_dictionary(stem, nodes, kepzos, i):
     """
     returns dictionary corresponding to the first i step of the derivation
     """
@@ -256,7 +256,12 @@ def node_dictionary(nodes, kepzos, i):
         dictionary['SRC']['DERIV']['CAT'] = kepzo.value
         if kepzo.children != []:
             dictionary['SRC']['DERIV']['TYPE'] = kepzo.children[0].value
-        dictionary['SRC']['STEM'] = node_dictionary(nodes, kepzos, i - 1)
+        dictionary['SRC']['STEM'] = node_dictionary(stem, nodes, kepzos, i - 1)
+    if dictionary['CAT'] == 'ART': 
+        if stem[0].lower()== 'a':
+            dictionary['DEF'] = 0
+        if stem[0].lower()== 'e':
+            dictionary['DEF'] = 1 
     return dictionary         
 
 
@@ -267,7 +272,7 @@ def kr_to_dictionary(kr_code, fill=False):
     """
     code = analyze(kr_code)[0]
     i = len(code.krNodes)
-    not_specified = node_dictionary(code.krNodes, code.kepzos, i-1)
+    not_specified = node_dictionary(code.stem, code.krNodes, code.kepzos, i-1)
     if fill:
         return fill_def_values(not_specified)
     else:
