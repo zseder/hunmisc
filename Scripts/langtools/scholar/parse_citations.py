@@ -31,7 +31,11 @@ def from_row_get_title_citation(row):
            
     else:
         citation, anchor = from_citation_box_get_citation(citation_box) 
-        count = int(anchor)
+        try:
+            count = int(anchor)
+        except ValueError:
+            # no citation
+            return None
         return title, citation, count
 
         
