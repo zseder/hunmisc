@@ -46,7 +46,7 @@ def from_html_get_titles_citations(string):
         else:
             title_citation_count = from_row_get_title_citation(row)
             titles_citations_counts.append(title_citation_count)
-            return titles_citations_counts
+    return titles_citations_counts
 
 
 def main():
