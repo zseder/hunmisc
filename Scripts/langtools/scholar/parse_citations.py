@@ -1,5 +1,8 @@
 import sys
+import time
 import urllib
+import os
+from random import randint
 from getpass import getpass
 
 from scholar_selenium import log_into_google, get_bib_for_article, get_firefox
@@ -56,16 +59,21 @@ def main():
 
     username = raw_input("Enter google username\n")
     password = getpass()
-    firefox = get_firefox("/home/zseder/.mozilla/firefox/hto63qnp.default/")
+    firefox = get_firefox("/home/zseder/.mozilla/firefox/dfhg1kcn.default/")
     log_into_google(firefox, username, password)
     
     for triple in titles_citations_counts:
         title, link, count = triple
-        link = link.replace("&amp;", "&")
-        for i in xrange(count):
-            bib = get_bib_for_article(firefox, link + "&start={0}&num=0".format(i))
-            print title + "\t" + link + "\t" + bib.replace("\n", "")
-            quit()
+        title_ascii = title.decode("utf-8").encode("ascii", "ignore").replace(" ", "_")
+        num_of_lines = 0
+        if os.path.exists(title_ascii):
+            num_of_lines = len(open(title_ascii).readlines())
+        with open(title_ascii, "a") as of:
+		link = link.replace("&amp;", "&")
+		for i in xrange(num_of_lines, count):
+		    bib = get_bib_for_article(firefox, link + "&start={0}&num=0".format(i))
+		    of.write(title + "\t" + link + "\t" + bib.replace("\n", "") + "\n")
+                    time.sleep(randint(65, 80))
          
 main()
 
