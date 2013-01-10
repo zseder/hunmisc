@@ -4,7 +4,6 @@ from selenium import webdriver
 
 def get_firefox(profile_path):
     """open up an existing and working firefox"""
-    profile = webdriver.FirefoxProfile("/home/zseder/.mozilla/firefox/hto63qnp.default/")
     profile = webdriver.FirefoxProfile(profile_path)
     driver = webdriver.Firefox(profile)
     return driver
