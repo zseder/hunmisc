@@ -3,6 +3,7 @@ import logging
 
 from subprocess_wrapper import AbstractSubprocessClass
 from langtools.string.xstring import ispunct, isquot
+from langtools.corpus.bie1_reader import parse_bie1_sentence
 
 """
 TODO
@@ -36,7 +37,7 @@ class SentenceTagger(AbstractSubprocessClass):
     ie. one token per line, attributes separated by tab (or @sep),
     empty line on sentence end
     """
-    def __init__(self, runnable, encoding, tag_index=-1, sep="\t", isep="\t", osep="\t", chunk_field=-1):
+    def __init__(self, runnable, encoding, tag_index=-1, sep="\t", isep="\t", osep="\t", chunk_field=None):
         AbstractSubprocessClass.__init__(self, runnable, encoding)
         self._tag_index = tag_index
         self.sep = sep
@@ -44,7 +45,7 @@ class SentenceTagger(AbstractSubprocessClass):
         self.osep = sep
         self.isep = isep
         self.osep = osep
-        if chunk_field == -1:
+        if chunk_field == None:
             self.chunk_mode = False
         else:
             self.chunk_mode = True
@@ -345,7 +346,7 @@ class HundisambigAnalyzer(MorphAnalyzer):
             yield [self.correct(token, data[sen_i][i]) for i, token in enumerate(ret)]
 
 class Hunchunk(SentenceTagger):
-    def __init__(self, huntag, modelName, bigramModel, configFile, encoding="LATIN2"):
+    def __init__(self, huntag, modelName, bigramModel, configFile, encoding="LATIN2", chunk_field=-1):
         SentenceTagger.__init__(self, "python", encoding, 2)
         self.huntag = huntag
         self.modelName = modelName
