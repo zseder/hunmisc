@@ -3,7 +3,7 @@ import logging
 
 from subprocess_wrapper import AbstractSubprocessClass
 from langtools.string.xstring import ispunct, isquot
-from langtools.corpus.bie1_reader import parse_bie1_sentence
+from langtools.corpustools.bie1_reader import parse_bie1_sentence
 
 """
 TODO
