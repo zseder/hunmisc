@@ -1,6 +1,9 @@
 import re
+import logging
+
 from subprocess_wrapper import AbstractSubprocessClass
 from langtools.string.xstring import ispunct, isquot
+from langtools.corpustools.bie1_reader import parse_bie1_sentence
 
 """
 TODO
@@ -34,7 +37,7 @@ class SentenceTagger(AbstractSubprocessClass):
     ie. one token per line, attributes separated by tab (or @sep),
     empty line on sentence end
     """
-    def __init__(self, runnable, encoding, tag_index=-1, sep="\t", isep="\t", osep="\t"):
+    def __init__(self, runnable, encoding, tag_index=-1, sep="\t", isep="\t", osep="\t", chunk_field=None):
         AbstractSubprocessClass.__init__(self, runnable, encoding)
         self._tag_index = tag_index
         self.sep = sep
@@ -42,6 +45,11 @@ class SentenceTagger(AbstractSubprocessClass):
         self.osep = sep
         self.isep = isep
         self.osep = osep
+        if chunk_field == None:
+            self.chunk_mode = False
+        else:
+            self.chunk_mode = True
+            self.chunk_field = chunk_field
         
     def send(self, tokens):
         """
@@ -56,36 +64,30 @@ class SentenceTagger(AbstractSubprocessClass):
                     token_str = self.isep.join(token)
                 else:
                     token_str = token
+
                 token_to_send = self.encode(token_str)
-#                print "WRITING", token_str.encode('utf-8')
-#                import sys
-#                sys.stdout.flush()
                 self._process.stdin.write(token_to_send)
                 self._process.stdin.write("\n")
             self._process.stdin.write("\n")
             self._process.stdin.flush()
         except IOError, ioe:
-            print "ERROR: ", str(ioe)
-            print self._process.stderr.readline()
+            logging.error(str(ioe))
+            logging.error(self._process.stderr.readline())
             raise ioe
 
-    def getStdErr(self):
-        print self._process.stderr.readlines()
+    def get_std_err(self):
+        return self._process.stderr.readlines()
     
     def recv_and_append(self, tokens):
         tagged_tokens = []
         for token in tokens:
             line = self._process.stdout.readline()
-            if line.startswith('Accuracy ='):
-                line = self._process.stdout.readline()
-            #print list(line)
-            if line == '\n' or line == '':
-                continue
             decoded = self.decode(line)
             tagged = decoded.strip().split(self.osep)
-            if len(tagged) == 0:
+
+            if len(tagged) == 0 or len(decoded.strip()) == 0:
                 continue
-            #print tagged
+
             tag = tagged[self._tag_index]
             if self.tuple_mode:
                 tagged_tokens.append(token + (tag,))
@@ -95,7 +97,10 @@ class SentenceTagger(AbstractSubprocessClass):
         # is it last reading necessary?
         self._process.stdout.readline()
 
-        return tagged_tokens
+        if self.chunk_mode:
+            return parse_bie1_sentence(tagged_tokens, self.chunk_field)
+        else:
+            return tagged_tokens
 
     def encode(self, token):
         """Encodes @p token before it is sent to the tagger."""
@@ -341,7 +346,7 @@ class HundisambigAnalyzer(MorphAnalyzer):
             yield [self.correct(token, data[sen_i][i]) for i, token in enumerate(ret)]
 
 class Hunchunk(SentenceTagger):
-    def __init__(self, huntag, modelName, bigramModel, configFile, encoding="LATIN2"):
+    def __init__(self, huntag, modelName, bigramModel, configFile, encoding="LATIN2", chunk_field=-1):
         SentenceTagger.__init__(self, "python", encoding, 2)
         self.huntag = huntag
         self.modelName = modelName

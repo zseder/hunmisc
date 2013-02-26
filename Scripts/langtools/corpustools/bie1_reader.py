@@ -1,7 +1,7 @@
 import sys
 import logging
 
-def read_bie1_sentence(sentence, chunk_field):
+def parse_bie1_sentence(sentence, chunk_field):
     """BIE1 or BI format reader
     a @param sentence input is a list of tokens, a token is an iterable,
     and @param chunk_field is the index of which chunk we want to read
@@ -63,14 +63,14 @@ def read_bie1_corpus(f, chunk_field=-1):
         le = l.strip().split("\t")
         if len(l.strip()) == 0:
             if len(sentence) > 0:
-                sentences.append(read_bie1_sentence(sentence, chunk_field))
+                sentences.append(parse_bie1_sentence(sentence, chunk_field))
             sentence = []
         else:
             sentence.append(le)
 
     # close final sentence, if there were no empty line before EOF
     if len(sentence) > 0:
-        sentences.append(read_bie1_sentence(sentence, chunk_field))
+        sentences.append(parse_bie1_sentence(sentence, chunk_field))
     return sentences
 
 def test1():
