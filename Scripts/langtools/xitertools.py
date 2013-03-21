@@ -1,5 +1,8 @@
 """Contains methods that in a better world should be in the itertools module."""
 
+import heapq   
+from collections import Iterable
+
 def all_partitions(lst):
     """Returns all possible partitionings of a list."""
     length = len(lst)
@@ -43,10 +46,6 @@ def smallest_items(iterable, count):
     Selects the smallest items, using the heap data structure. 
     It is faster than sorted(iterable)[:count] when size(iterable) >> count.
     """
-    
-    import heapq   
-    from collections import Iterable
-
 
     if not isinstance(iterable, Iterable):
         raise TypeError("input should be iterable")
