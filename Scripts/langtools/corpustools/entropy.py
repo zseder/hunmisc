@@ -22,7 +22,7 @@ def normalize_dict(d):
 def read_corp(f, data_field, freq_field):
     corp = {}
     for l in f:
-        le = l.split()
+        le = l.split("\t")
         try:
             word = le[data_field]
             freq = float(le[freq_field])
