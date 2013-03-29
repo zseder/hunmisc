@@ -23,8 +23,11 @@ def read_corp(f, data_field, freq_field):
     corp = {}
     for l in f:
         le = l.split()
-        word = le[data_field]
-        freq = float(le[freq_field])
+        try:
+            word = le[data_field]
+            freq = float(le[freq_field])
+        except IndexError:
+            continue
         corp[word] = freq
     corp = normalize_dict(corp)
     return corp
@@ -39,7 +42,8 @@ def char_dist(corp, splitter=None):
     return dist
 
 def entropy(dist):
-    return sum([-prob * math.log(prob, 2) for _, prob in dist.iteritems()])
+    return sum([-prob * math.log(prob, 2) for _, prob in dist.iteritems()
+               if prob > 0.0])
 
 def main():
     inp_filename = sys.argv[1]
