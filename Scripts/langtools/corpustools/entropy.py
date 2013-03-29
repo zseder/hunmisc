@@ -35,7 +35,7 @@ def read_corp(f, data_field, freq_field):
 def char_dist(corp, splitter=None):
     dist = defaultdict(float)
     for w in corp:
-        chars = (w.split(splitter) if splitter is not None else w.split())
+        chars = (w.split(splitter) if splitter is not None else w)
         for char in chars:
             dist[char] += corp[w]
     dist = normalize_dict(dist)
