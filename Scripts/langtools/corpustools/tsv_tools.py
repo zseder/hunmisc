@@ -19,22 +19,23 @@ def sentence_iterator(input):
             yield curr_sen
             curr_sen = []
             continue
-        curr_sen.append(line.strip().split())
+        curr_sen.append(line.strip().split('\t'))
     if curr_sen!=[]:
         yield curr_sen
 
+cas_patt = re.compile('<CAS<...>>')
 def get_np_case(chunk):
     nouns = [tok for tok in chunk if 'NOUN' in tok[1]]
     if nouns == []:
-        """If an NP contains no noun, we assume its rightmost element
-        to be the head"""
+        #If an NP contains no noun, we assume its rightmost element
+        #to be the head
         head_kr = chunk[-1][1]
     else:
         head_kr = nouns[-1][1]
     if 'CAS' not in head_kr:
         case = '<CAS<NOM>>'
     else:
-        case = re.findall('<CAS<...>>', head_kr)[0]
+        case = cas_patt.findall(head_kr)[0]
     return case
 
 def get_pp_case(chunk):
@@ -59,10 +60,14 @@ def collapse_chunks(sen):
     chunk tag (and its case, if applicable) as their analysis"""
     new_sen = []
     for chunk in toks_to_chunks(sen):
-        chunk_cat = chunk[0][-1].split('-')[-1] # this works for O too
-        chunk_text = '_'.join([tok[0] for tok in chunk])
-        cased_chunk_tag = get_chunk_case(chunk, chunk_cat)
-        new_sen.append([chunk_text, cased_chunk_tag])
+        if chunk[0][-1] == 'O':
+            new_sen.append(chunk[0])
+        else:
+            chunk_cat = chunk[0][-1].split('-')[-1]
+            chunk_cat = chunk_cat.split('<')[0]#some datasets already have case
+            chunk_text = '_'.join([tok[0] for tok in chunk])
+            cased_chunk_tag = get_chunk_case(chunk, chunk_cat)
+            new_sen.append([chunk_text, cased_chunk_tag, cased_chunk_tag])
     return new_sen
 
 def toks_to_chunks(sen, strict=False):
@@ -71,7 +76,9 @@ def toks_to_chunks(sen, strict=False):
     tagging must conform to BIE1 standards, otherwise an exception is raised"""
     new_sen = []
     curr_chunk = []
+    #print sen
     for tok in sen:
+        #print tok
         if tok[-1] == 'O':
             if curr_chunk!=[] and strict:
                 raise InvalidTaggingError
