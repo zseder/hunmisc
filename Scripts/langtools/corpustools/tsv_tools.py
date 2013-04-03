@@ -43,7 +43,7 @@ def get_pp_case(chunk):
     if postps == []:
         head = '???'
     else:
-        head = postps[-1][0]
+        head = postps[-1][2].lower()
     return '<'+head+'>'
 
 def get_chunk_case(chunk, cat):
