@@ -82,6 +82,9 @@ class SentenceTagger(AbstractSubprocessClass):
         tagged_tokens = []
         for token in tokens:
             line = self._process.stdout.readline()
+            if line.startswith("Accuracy"):
+                line = self._process.stdout.readline()
+
             decoded = self.decode(line)
             tagged = decoded.strip().split(self.osep)
 
@@ -347,7 +350,7 @@ class HundisambigAnalyzer(MorphAnalyzer):
 
 class Hunchunk(SentenceTagger):
     def __init__(self, huntag, modelName, bigramModel, configFile, encoding="LATIN2", chunk_field=-1):
-        SentenceTagger.__init__(self, "python", encoding, 2)
+        SentenceTagger.__init__(self, "python", encoding, chunk_field, chunk_field=chunk_field)
         self.huntag = huntag
         self.modelName = modelName
         self.bigramModel = bigramModel
