@@ -1,30 +1,36 @@
 import sys
 import math
-"""This script calculates cross-entropy between two frequency lists. Zero frequencies, as well as words that are only present in one of the two files are discarded.
+"""This script calculates cross-entropy between two frequency lists. Zero frequencies, as well as words that are only present in one of the two files are discarded. Probability mass discarded in data1 is printed.
 Usage:
     python entropy.py file1 file2 data_field freq_field
 """
-def main(s1, s2, w_field, f_field):
-    freqs1 = dict([(l[w_field], int(l[f_field]))
-                   for l in [line.strip().split() for line in s1]
-                   if int(l[f_field])>0])
-    freqs2 = dict([(l[w_field], int(l[f_field]))
-                   for l in [line.strip().split() for line in s2]
-                   if l[w_field] in freqs1 and int(l[f_field])>0])
+def cross_entropy(q, p):
+    qsum = float(sum(q.itervalues()))
+    psum = float(sum(p.itervalues()))
+    filtered_p = dict([(word, count) for (word, count) in p.iteritems()
+                        if word in q and q[word] != 0])
+    filtered_p_sum = float(sum(filtered_p.itervalues()))
+    filtered_p_norm = dict([(w, count / filtered_p_sum) 
+                            for w, count in filtered_p.iteritems()])
+    qnorm = dict([(w, freq/qsum) for w, freq in q.iteritems()])
+    pnorm = dict([(w, freq/psum) for w, freq in p.iteritems()])
 
-    freqs1 = dict([(word, int(freq)) for (word, freq) in freqs1.iteritems()
-                   if word in freqs2])
-    sys.stderr.write('kept {0} words\n'.format(len(freqs1)))
-    total1 = float(sum(freqs1.values()))
-    total2 = float(sum(freqs2.values()))
+    not_covered = 1.0 - sum([prob for (word, prob) in pnorm.iteritems()
+                        if word in qnorm and qnorm[word] != 0])
+
     ce = 0
-    for word, f1 in freqs1.iteritems():
-        p1 = f1/total1
-        p2 = freqs2[word]/total2
-        ce += p1*math.log(p1/p2, 2)
+    for word, p_prob in filtered_p_norm.iteritems():
+        q_prob = qnorm[word]
+        ce += p_prob*math.log(p_prob/q_prob, 2)
 
-    return ce
+    return ce, not_covered
 
 if __name__ == '__main__':
-    print main(file(sys.argv[1]), file(sys.argv[2]),
-               int(sys.argv[3]), int(sys.argv[4]))
+    q = dict([(word, int(freq))
+               for (word, freq) in [line.strip().split()
+                                    for line in file(sys.argv[1])]])
+    p = dict([(word, int(freq))
+               for (word, freq) in [line.strip().split()
+                                    for line in file(sys.argv[2])]])
+    ce, uncovered = cross_entropy(q, p)
+    print uncovered, ce
