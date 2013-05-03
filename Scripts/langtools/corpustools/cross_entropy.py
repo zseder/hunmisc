@@ -1,5 +1,6 @@
 import sys
 import math
+import re
 """This script calculates cross-entropy between two frequency lists. Zero frequencies, as well as words that are only present in one of the two files are discarded. Probability mass discarded in data1 is printed.
 Usage:
     python entropy.py file1 file2 data_field freq_field
@@ -26,11 +27,12 @@ def cross_entropy(q, p):
     return ce, not_covered
 
 if __name__ == '__main__':
-    q = dict([(word, int(freq))
-               for (word, freq) in [line.strip().split()
+
+    q = dict([(word, float(freq))
+               for (word, freq) in [re.split("\s", line.rstrip())
                                     for line in file(sys.argv[1])]])
-    p = dict([(word, int(freq))
-               for (word, freq) in [line.strip().split()
+    p = dict([(word, float(freq))
+               for (word, freq) in [re.split("\s", line.rstrip())
                                     for line in file(sys.argv[2])]])
     ce, uncovered = cross_entropy(q, p)
     print uncovered, ce
