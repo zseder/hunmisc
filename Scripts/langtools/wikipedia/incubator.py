@@ -5,14 +5,16 @@ output with this separator should be ok
 """
 import sys
 from collections import defaultdict
+
 from read_articles import read_articles
+from wp_stats import get_stats
 
 def split_inc(articles):
     articles_by_lang = defaultdict(dict)
     for article_title, article in articles.iteritems():
-        if len(article_title[0].split("/")) > 1:
-            lang = article_title[0].split("/")[1].strip()
-            short_title = article_title[0].split("/")[2].strip()
+        if len(article_title.split("/")) > 2:
+            lang = article_title.split("/")[1].strip()
+            short_title = article_title.split("/")[2].strip()
             articles_by_lang[lang][short_title] = article
     return articles_by_lang
 
@@ -32,10 +34,17 @@ def write_articles_to_files(articles):
                 for line in article:
                     ostream.write(line)
 
+def print_stats(articles_by_lang):
+    for lang in articles_by_lang:
+        tot_size, real_size, real_total_ratio, adjusted_size = get_stats(
+            articles_by_lang[lang])
+        print lang, tot_size, real_size, real_total_ratio, adjusted_size
+
 def main():
     articles = read_articles(sys.stdin)
     articles_by_lang = split_inc(articles)
-    write_articles_to_files(articles_by_lang)
+    print_stats(articles_by_lang)
+    #write_articles_to_files(articles_by_lang)
 
 if __name__ == "__main__":
     main()
