@@ -6,11 +6,11 @@ output with this separator should be ok
 import sys
 from collections import defaultdict
 
-def main():
+def split_inc(istream):
     article = []
     sep = "%%#PAGE"
     articles = defaultdict(list)
-    for l in sys.stdin:
+    for l in istream:
         if l.startswith(sep):
             if (len(article) > 0 and len(article[0].split("/")) > 1):
                 lang = article[0].split("/")[1].strip()
@@ -18,7 +18,9 @@ def main():
             article = [l]
         else:
             article.append(l)
+    return article
 
+def write_articles_to_files(articles):
     for lang in articles:
         if (lang.find(" ") >= 0 or lang.find(":") >= 0
             or lang.startswith("abusefilter")
@@ -33,6 +35,10 @@ def main():
             for article in fa:
                 for line in article:
                     ostream.write(line)
+
+def main():
+    articles = split_inc(sys.stdin)
+    write_articles_to_files(articles)
 
 if __name__ == "__main__":
     main()
