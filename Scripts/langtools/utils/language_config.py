@@ -1,6 +1,7 @@
 """Reads the configuration file and sets up the tools necessary to parse
 the selected language."""
 
+import logging
 from langtools.utils.cascading_config import CascadingConfigParser
 
 class LanguageTools(object):
@@ -50,15 +51,15 @@ class LanguageTools(object):
     def initialize_tool(self, tool_name):
         """Instantiates the specified tool. The format of @p tool_name is
         package.Class."""
-        print "Initializing", tool_name
+        logging.debug("Initializing " + tool_name)
         try:
             tool_package, tool_class = self.config[tool_name].rsplit('.', 1)
-            print "Class", tool_package + '.' + tool_class
+            logging.debug("Class" + tool_package + '.' + tool_class)
             tool_module = __import__(tool_package, fromlist=[tool_class])
             tool_object = getattr(tool_module, tool_class)(self.config)
             return tool_object
         except KeyError, ke:
-            print "KeyError", ke
+            logging.warn("KeyError: {0}".format(ke))
             return None
 
     def pos_tag(self, tokens):

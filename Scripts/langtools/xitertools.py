@@ -1,8 +1,7 @@
 """Contains methods that in a better world should be in the itertools module."""
 
-import heapq
+import heapq   
 from collections import Iterable
-
 
 def all_partitions(lst):
     """Returns all possible partitionings of a list."""
