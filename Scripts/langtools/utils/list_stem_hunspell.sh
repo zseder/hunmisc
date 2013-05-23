@@ -3,7 +3,7 @@ language=$1
 input_file=$2
 output_file=$3
 hunspell=/home/zseder/.local/bin/hunspell
-if [ ! -e $hunspell];
+if [ ! -e $hunspell ];
 then
     echo "needs latest hunspell, currently at nessi6:$hunspell"
     exit
@@ -26,11 +26,11 @@ then
 
 elif [[ ${language} == "Vietnamese" || ${language} == "Korean" ]];
 then
-	celkod=`grep "^SET" /mnt/store/home/hlt/Language/Multi/${language}/${language}.aff | head -1 | cut -f2 -d" " | sed 's/\r$//'`
+	celkod=`grep "^SET" /mnt/store/home/hlt/Language/Multi/hunspell_dicts/${language}/${language}.aff | head -1 | cut -f2 -d" " | sed 's/\r$//'`
 	cat ${input_file} | iconv -t ${celkod} -f utf-8 -c | $hunspell -d /mnt/store/home/hlt/Language/Multi/hunspell_dicts/${language}/${language} -s  | egrep ' ' > ${output_file}
 
 else	
-	celkod=`grep "^SET" /mnt/store/home/hlt/Language/Multi/${language}/${language}.aff | head -1 | cut -f2 -d" " | sed 's/\r$//'`
+	celkod=`grep "^SET" /mnt/store/home/hlt/Language/Multi/hunspell_dicts/${language}/${language}.aff | head -1 | cut -f2 -d" " | sed 's/\r$//'`
 	cat ${input_file} | iconv -t ${celkod} -f utf-8 -c | $hunspell -d /mnt/store/home/hlt/Language/Multi/hunspell_dicts/${language}/${language} -s -i ${celkod} 2>${language}.hunspell.err | egrep ' ' | iconv -f ${celkod} -t utf-8 > ${output_file}
 fi
 
