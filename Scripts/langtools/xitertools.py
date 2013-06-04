@@ -41,7 +41,8 @@ def __split_length(length, splits):
                 ret.extend(rest)
                 yield ret
 
-def smallest_items(iterable, count):
+
+def partial_sort(iterable, count):
     """
     Selects the smallest items, using the heap data structure. 
     It is faster than sorted(iterable)[:count] when size(iterable) >> count.
@@ -50,17 +51,16 @@ def smallest_items(iterable, count):
     if not isinstance(iterable, Iterable):
         raise TypeError("input should be iterable")
        
-        return None
-    else:
-        h = []
-        heapq.heapify(h)
-        smallest_list = []
-        for item in iterable:
-            heapq.heappush(h, item)
-        for i in range(int(count)):
-               smallest_list.append(heapq.heappop(h))
-
-        return smallest_list
+    
+    h = []
+    heapq.heapify(h)
+    smallest_list = []
+    for item in iterable:
+        heapq.heappush(h, item)
+    for i in range(int(count)):
+        smallest_list.append(heapq.heappop(h))
+               
+    return smallest_list
 
 
 
