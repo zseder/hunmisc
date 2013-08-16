@@ -1,7 +1,7 @@
 
 from subprocess import Popen, PIPE
 
-class AbstractSubprocessClass:
+class AbstractSubprocessClass(object):
     """
     Simple abstract wrapper class for commands that need to be
     called with Popen and communicate with them
