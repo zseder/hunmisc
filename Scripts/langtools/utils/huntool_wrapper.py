@@ -367,7 +367,7 @@ class Hunchunk(SentenceTagger):
         o += ["-c", self.configFile]
         self.options = o
 
-def Hunspell(AbstractSubprocessClass):
+class Hunspell(AbstractSubprocessClass):
     MATCH = 0
     AFFIX = 1
     COMPOUND = 2
@@ -375,10 +375,11 @@ def Hunspell(AbstractSubprocessClass):
     INCORRECT = 4
 
     def __init__(self, runnable, dictpath):
-        self._encoding = self.__get_encoding()
-        self._runnable = runnable
+        encoding = self.__get_encoding(dictpath)
+        print encoding
+        AbstractSubprocessClass.__init__(self, runnable, encoding)
         o = ["-a"]
-        o += ["-d {0}".format(dictpath)]
+        o += ["-d",  dictpath]
         self.options = o
 
     def __get_encoding(self, dictpath):
@@ -392,6 +393,11 @@ def Hunspell(AbstractSubprocessClass):
         # no encoding, assuming UTF-8?
         return "UTF-8"
 
+    def start(self):
+        AbstractSubprocessClass.start(self)
+        # useless status line printed to stdout...
+        _ = self._process.stdout.readline()
+
     def analyze(self, text):
         words = text.split(" ")
         return [self.analyze_word(word) for word in words]
@@ -401,16 +407,19 @@ def Hunspell(AbstractSubprocessClass):
         self._process.stdin.flush()
         res_line = self._process.stdout.readline().strip().decode(
             self._encoding)
+        # empty line as well
+        _ = self._process.stdout.readline()
+
         if res_line == "*":
-            return MATCH
+            return Hunspell.MATCH
         elif res_line[0] == "+":
-            return AFFIX
+            return Hunspell.AFFIX
         elif res_line[0] == "-":
-            return COMPOUND
+            return Hunspell.COMPOUND
         elif res_line[0] == "&":
-            return SUGGEST
+            return Hunspell.SUGGEST
         elif res_line[0] == "#":
-            return INCORRECT
+            return Hunspell.INCORRECT
 
 if __name__ == "__main__":
     o = Ocamorph("/home/zseder/Proj/huntools/ocamorph-1.1-linux/ocamorph",
