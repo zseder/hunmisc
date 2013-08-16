@@ -1,5 +1,6 @@
 import re
 import logging
+import signal
 
 from subprocess_wrapper import AbstractSubprocessClass
 from langtools.string.xstring import ispunct, isquot
@@ -9,6 +10,12 @@ from langtools.corpustools.bie1_reader import parse_bie1_sentence
 TODO
 - maybe a sentence, token, etc class hierarchy?
 """
+
+class Alarm(Exception):
+    """To implement timeout in hunspell"""
+
+def alarm_handler(signum, frame):
+    raise Alarm
 
 class LineByLineTagger(AbstractSubprocessClass):
     def __init__(self, runnable, encoding):
@@ -384,6 +391,7 @@ class Hunspell(AbstractSubprocessClass):
     SUGGEST = 3
     INCORRECT = 4
     EMPTY = 5
+    TIMEOUT = 6
 
     def __init__(self, runnable, dictpath):
         encoding = self.__get_encoding(dictpath)
@@ -407,6 +415,7 @@ class Hunspell(AbstractSubprocessClass):
         AbstractSubprocessClass.start(self)
         # useless status line printed to stdout...
         _ = self._process.stdout.readline()
+        signal.signal(signal.SIGALRM, alarm_handler)
 
     def analyze(self, text):
         words = text.split(" ")
@@ -415,23 +424,30 @@ class Hunspell(AbstractSubprocessClass):
     def analyze_word(self, word):
         self._process.stdin.write(word.encode(self._encoding) + "\n")
         self._process.stdin.flush()
-        res_line = self._process.stdout.readline().strip().decode(
-            self._encoding)
-        if len(res_line.strip()) == 0:
-            return Hunspell.EMPTY
-        # empty line as well
-        _ = self._process.stdout.readline()
 
-        if res_line == "*":
-            return Hunspell.MATCH
-        elif res_line[0] == "+":
-            return Hunspell.AFFIX
-        elif res_line[0] == "-":
-            return Hunspell.COMPOUND
-        elif res_line[0] == "&":
-            return Hunspell.SUGGEST
-        elif res_line[0] == "#":
-            return Hunspell.INCORRECT
+        # timeout with one second
+        signal.alarm(1)
+        try:
+            res_line = self._process.stdout.readline().strip().decode(
+                self._encoding)
+            signal.alarm(0)
+            if len(res_line.strip()) == 0:
+                return Hunspell.EMPTY
+            # empty line as well
+            _ = self._process.stdout.readline()
+
+            if res_line == "*":
+                return Hunspell.MATCH
+            elif res_line[0] == "+":
+                return Hunspell.AFFIX
+            elif res_line[0] == "-":
+                return Hunspell.COMPOUND
+            elif res_line[0] == "&":
+                return Hunspell.SUGGEST
+            elif res_line[0] == "#":
+                return Hunspell.INCORRECT
+        except Alarm:
+            return Hunspell.TIMEOUT
 
 if __name__ == "__main__":
     o = Ocamorph("/home/zseder/Proj/huntools/ocamorph-1.1-linux/ocamorph",
