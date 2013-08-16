@@ -383,6 +383,7 @@ class Hunspell(AbstractSubprocessClass):
     COMPOUND = 2
     SUGGEST = 3
     INCORRECT = 4
+    EMPTY = 5
 
     def __init__(self, runnable, dictpath):
         encoding = self.__get_encoding(dictpath)
@@ -416,6 +417,8 @@ class Hunspell(AbstractSubprocessClass):
         self._process.stdin.flush()
         res_line = self._process.stdout.readline().strip().decode(
             self._encoding)
+        if len(res_line.strip()) == 0:
+            return Hunspell.EMPTY
         # empty line as well
         _ = self._process.stdout.readline()
 
