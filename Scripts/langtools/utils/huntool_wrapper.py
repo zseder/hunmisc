@@ -433,12 +433,12 @@ class Hunspell(AbstractSubprocessClass):
         try:
             res_line = self._process.stdout.readline().strip().decode(
                 self._encoding)
+            signal.alarm(0)
         except Alarm:
             yield Hunspell.TIMEOUT
         while res_line:
             if len(res_line.strip()) == 0:
                 yield Hunspell.EMPTY
-            signal.alarm(0)
 
             if res_line == "*":
                 yield Hunspell.MATCH
