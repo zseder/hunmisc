@@ -368,17 +368,49 @@ class Hunchunk(SentenceTagger):
         self.options = o
 
 def Hunspell(AbstractSubprocessClass):
+    MATCH = 0
+    AFFIX = 1
+    COMPOUND = 2
+    SUGGEST = 3
+    INCORRECT = 4
+
     def __init__(self, runnable, dictpath):
-        self._encoding = self.get_encoding()
+        self._encoding = self.__get_encoding()
         self._runnable = runnable
         o = ["-a"]
         o += ["-d {0}".format(dictpath)]
         self.options = o
 
-
-    def get_encoding(self, dictpath):
+    def __get_encoding(self, dictpath):
         affpath = dictpath + ".aff"
+        with open(affpath) as aff_f:
+            for line in aff_f:
+                l = line.strip()
+                if l.startswith("SET "):
+                    encoding = l.split(" ", 1)[1]
+                    return encoding
+        # no encoding, assuming UTF-8?
+        return "UTF-8"
 
+    def analyze(self, text):
+        words = text.split(" ")
+        return [self.analyze_word(word) for word in words]
+
+    def analyze_word(self, word):
+        self._process.stdin.write(word.encode(self._encoding) + "\n")
+        self._process.stdin.flush()
+        res_line = self._process.stdout.readline().strip().decode(
+            self._encoding)
+        if res_line == "*":
+            return MATCH
+        elif res_line[0] == "+":
+            return AFFIX
+        elif res_line[0] == "-":
+            return COMPOUND
+        elif res_line[0] == "&":
+            return SUGGEST
+        elif res_line[0] == "#":
+            return INCORRECT
 
 if __name__ == "__main__":
     o = Ocamorph("/home/zseder/Proj/huntools/ocamorph-1.1-linux/ocamorph",
