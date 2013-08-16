@@ -419,7 +419,10 @@ class Hunspell(AbstractSubprocessClass):
 
     def analyze(self, text):
         words = text.split(" ")
-        return [self.analyze_word(word) for word in words]
+        #return [self.analyze_word(word) for word in words]
+        #return [list(self.analyze_word(word)) for word in words]
+        return reduce(lambda x, y: x + y, 
+                      [list(self.analyze_word(word)) for word in words])
 
     def analyze_word(self, word):
         self._process.stdin.write(word.encode(self._encoding) + "\n")
@@ -430,24 +433,30 @@ class Hunspell(AbstractSubprocessClass):
         try:
             res_line = self._process.stdout.readline().strip().decode(
                 self._encoding)
+        except Alarm:
+            yield Hunspell.TIMEOUT
+        while res_line:
             if len(res_line.strip()) == 0:
-                return Hunspell.EMPTY
-            # empty line as well
-            _ = self._process.stdout.readline()
+                yield Hunspell.EMPTY
             signal.alarm(0)
 
             if res_line == "*":
-                return Hunspell.MATCH
+                yield Hunspell.MATCH
             elif res_line[0] == "+":
-                return Hunspell.AFFIX
+                yield Hunspell.AFFIX
             elif res_line[0] == "-":
-                return Hunspell.COMPOUND
+                yield Hunspell.COMPOUND
             elif res_line[0] == "&":
-                return Hunspell.SUGGEST
+                yield Hunspell.SUGGEST
             elif res_line[0] == "#":
-                return Hunspell.INCORRECT
-        except Alarm:
-            return Hunspell.TIMEOUT
+                yield Hunspell.INCORRECT
+            try:
+                signal.alarm(1)
+                res_line = self._process.stdout.readline().strip().decode(
+                    self._encoding)
+                signal.alarm(0)
+            except Alarm:
+                yield Hunspell.TIMEOUT
 
 if __name__ == "__main__":
     o = Ocamorph("/home/zseder/Proj/huntools/ocamorph-1.1-linux/ocamorph",
