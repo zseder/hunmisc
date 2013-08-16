@@ -367,6 +367,18 @@ class Hunchunk(SentenceTagger):
         o += ["-c", self.configFile]
         self.options = o
 
+def Hunspell(AbstractSubprocessClass):
+    def __init__(self, runnable, dictpath):
+        self._encoding = self.get_encoding()
+        self._runnable = runnable
+        o = ["-a"]
+        o += ["-d {0}".format(dictpath)]
+        self.options = o
+
+
+    def get_encoding(self, dictpath):
+        affpath = dictpath + ".aff"
+
 
 if __name__ == "__main__":
     o = Ocamorph("/home/zseder/Proj/huntools/ocamorph-1.1-linux/ocamorph",
