@@ -368,6 +368,16 @@ class Hunchunk(SentenceTagger):
         self.options = o
 
 class Hunspell(AbstractSubprocessClass):
+    """wrapper for hunspell run by -a option
+    result is a list of codes, see the codes below this description
+    Example usage:
+        >>> from huntool_wrapper import Hunspell
+        >>> h = Hunspell(path_to_hunspell, path_to_dict_without_extension)
+        >>> h.start()
+        >>> h.analyze("Ich habe keine hausaufgabe")
+        [0, 0, 0, 3]
+
+    """
     MATCH = 0
     AFFIX = 1
     COMPOUND = 2
@@ -376,7 +386,6 @@ class Hunspell(AbstractSubprocessClass):
 
     def __init__(self, runnable, dictpath):
         encoding = self.__get_encoding(dictpath)
-        print encoding
         AbstractSubprocessClass.__init__(self, runnable, encoding)
         o = ["-a"]
         o += ["-d",  dictpath]
