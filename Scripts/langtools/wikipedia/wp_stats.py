@@ -9,13 +9,20 @@ def has_long_paragraph(article, length=450):
     return max([len(par) for par in article.split("\n")]) >= length
 
 def get_stats(wp, char_entropy=1.0):
-    total_size = get_char_size(wp)
+    res = {}
+    res["total_size"] = get_char_size(wp)
     good_articles = dict([(t, a) for t, a in wp.iteritems()
                           if has_long_paragraph(a)])
-    real_size = get_char_size(good_articles)
-    real_total_ratio = float(len(good_articles)) / len(wp)
-    adjusted_size = real_size * char_entropy
-    return (total_size, real_size, real_total_ratio, adjusted_size)
+    res["real_size"] = get_char_size(good_articles)
+    res["real_total_ratio"] = float(len(good_articles)) / len(wp)
+    res["adjusted_size"] = res["real_size"] * char_entropy
+    res["articles"] = len(wp)
+    goods = len(good_articles)
+    if goods > 0:
+        res["avg good page length"] = res["real_size"] / float(goods)
+    else:
+        res["avg good page length"] = 0
+    return res
 
 def main():
     pass
