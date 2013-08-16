@@ -430,11 +430,11 @@ class Hunspell(AbstractSubprocessClass):
         try:
             res_line = self._process.stdout.readline().strip().decode(
                 self._encoding)
-            signal.alarm(0)
             if len(res_line.strip()) == 0:
                 return Hunspell.EMPTY
             # empty line as well
             _ = self._process.stdout.readline()
+            signal.alarm(0)
 
             if res_line == "*":
                 return Hunspell.MATCH
