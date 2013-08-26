@@ -1,5 +1,6 @@
 import re
 import logging
+import signal
 
 from subprocess_wrapper import AbstractSubprocessClass
 from langtools.string.xstring import ispunct, isquot
@@ -9,6 +10,12 @@ from langtools.corpustools.bie1_reader import parse_bie1_sentence
 TODO
 - maybe a sentence, token, etc class hierarchy?
 """
+
+class Alarm(Exception):
+    """To implement timeout in hunspell"""
+
+def alarm_handler(signum, frame):
+    raise Alarm
 
 class LineByLineTagger(AbstractSubprocessClass):
     def __init__(self, runnable, encoding):
@@ -367,6 +374,89 @@ class Hunchunk(SentenceTagger):
         o += ["-c", self.configFile]
         self.options = o
 
+class Hunspell(AbstractSubprocessClass):
+    """wrapper for hunspell run by -a option
+    result is a list of codes, see the codes below this description
+    Example usage:
+        >>> from huntool_wrapper import Hunspell
+        >>> h = Hunspell(path_to_hunspell, path_to_dict_without_extension)
+        >>> h.start()
+        >>> h.analyze("Ich habe keine hausaufgabe")
+        [0, 0, 0, 3]
+
+    """
+    MATCH = 0
+    AFFIX = 1
+    COMPOUND = 2
+    SUGGEST = 3
+    INCORRECT = 4
+    EMPTY = 5
+    TIMEOUT = 6
+
+    def __init__(self, runnable, dictpath):
+        encoding = self.__get_encoding(dictpath)
+        AbstractSubprocessClass.__init__(self, runnable, encoding)
+        o = ["-a"]
+        o += ["-d",  dictpath]
+        self.options = o
+
+    def __get_encoding(self, dictpath):
+        affpath = dictpath + ".aff"
+        with open(affpath) as aff_f:
+            for line in aff_f:
+                l = line.strip()
+                if l.startswith("SET "):
+                    encoding = l.split(" ", 1)[1]
+                    return encoding
+        # no encoding, assuming UTF-8?
+        return "UTF-8"
+
+    def start(self):
+        AbstractSubprocessClass.start(self)
+        # useless status line printed to stdout...
+        _ = self._process.stdout.readline()
+        signal.signal(signal.SIGALRM, alarm_handler)
+
+    def analyze(self, text):
+        words = text.split(" ")
+        #return [self.analyze_word(word) for word in words]
+        #return [list(self.analyze_word(word)) for word in words]
+        return reduce(lambda x, y: x + y, 
+                      [list(self.analyze_word(word)) for word in words])
+
+    def analyze_word(self, word):
+        self._process.stdin.write(word.encode(self._encoding) + "\n")
+        self._process.stdin.flush()
+
+        # timeout with one second
+        signal.alarm(1)
+        try:
+            res_line = self._process.stdout.readline().strip().decode(
+                self._encoding)
+            signal.alarm(0)
+        except Alarm:
+            yield Hunspell.TIMEOUT
+        while res_line:
+            if len(res_line.strip()) == 0:
+                yield Hunspell.EMPTY
+
+            if res_line == "*":
+                yield Hunspell.MATCH
+            elif res_line[0] == "+":
+                yield Hunspell.AFFIX
+            elif res_line[0] == "-":
+                yield Hunspell.COMPOUND
+            elif res_line[0] == "&":
+                yield Hunspell.SUGGEST
+            elif res_line[0] == "#":
+                yield Hunspell.INCORRECT
+            try:
+                signal.alarm(1)
+                res_line = self._process.stdout.readline().strip().decode(
+                    self._encoding)
+                signal.alarm(0)
+            except Alarm:
+                yield Hunspell.TIMEOUT
 
 if __name__ == "__main__":
     o = Ocamorph("/home/zseder/Proj/huntools/ocamorph-1.1-linux/ocamorph",
