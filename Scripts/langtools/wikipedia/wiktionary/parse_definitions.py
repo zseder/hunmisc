@@ -9,20 +9,20 @@ def sort_out_abbrevs(line, abbrevs, other_patterns):
     for pair in abbrevs:
         abbrev = pair[0]
         if abbrev in line:
-             contained.add(abbrev.encode('utf-8'))
+             contained.add(abbrev)
              line = line.replace(abbrev, "")
         abbrev_description_pattern = "(.*)" + abbrev[:-2] + "\|([:,;])}}(.*)"    
         compiled = re.compile(abbrev_description_pattern)
         m = compiled.match(line)
         while m:
-            contained.add(abbrev.encode('utf-8'))
+            contained.add(abbrev)
             line = m.groups()[0] + m.groups()[1] + m.groups()[2]
             m = compiled.match(line)
     for pat in other_patterns: 
         compiled = re.compile(pat)
         m = compiled.search(line)
         while m:
-            contained.add(m.group().encode('utf-8'))
+            contained.add(m.group())
             line = line[:m.start()] + line[m.end():]
             m = compiled.search(line)
 
@@ -44,26 +44,24 @@ def sort_out_wiki_tags(line_with_wiki_tags):
     for item in tags_to_delete:
         line_without_idezojelek = re.sub('\{\{' + item + '\|.*?\}\}', '', line_without_idezojelek)
 
-    line_without_idezojelek_u = line_without_idezojelek.decode('utf-8')
-
     stylistic_wiki_tags = [(u'{{ugs.}}',  u'umgangssprachlich'), (u'{{abw.}}', u'abwertend'), (u'{{va.}}', u'veraltet'), (u'{{allg.}}', u'allgemein'), (u'{{bildl.}}', u'bildlich'), (u'{{dichter.}}', u'dichterlich'), (u'{{fachspr.}}', u'fachsprachlich'), (u'{{fam.}}', u'familiar'), (u'{{geh.}}', u'gehoben'), (u'{{hist.}}', u'historisch'), (u'{{landsch.}}', u'landschaftlich'), (u'{{nordd.}}', u'norddeutsch'), (u'{{poet.}}', u'poetisch'), (u'{{reg.}}', u'regional'), (u'{{scherzh.}}u', u'scherzlich'), (u'{{schweiz.}}', u'schweiz'), (u'{{veraltend}}', u'veraltend'), (u'{{veraltet}}', u'veraltetu'), (u'{{vul.}}', u'vulgarisch'), (u'{{\xf6sterr.}}', u'{{\xf6sterreichisch}}'), (u'{{\xfcbertr.}}', u'\xfcbertragen'), (u'{{s\xfcdd.}}', u's\xfcddeutsche'), (u'{{scherzh.}}', u'scherzlich')]
 
-    stylistic_other_patterns = ['{{Kontext|Linguistik|.*?}}']
+    stylistic_other_patterns = ['{{Kontext\|Linguistik\|.*?}}']
 
     syntactic_wiki_tags = [(u'{{refl.}}', u'reflexiv'),(u'{{intrans.}}', u'intransitiv'), (u'{{trans.}}', u'transitiv'), (u'{{kPl.}}', u'kein Plural'), (u'{{Pl.}}', u'Plural'), (u'{{kSt.}}', u'keine Steigerung'), (u'{{Dativ}}', u'Dativ'), (u'{{Genitiv}}', 'Genitiv'), (u'{{n}}', u'neutrum'), (u'{{f}}', 'femininum'), (u'{{m}}', u'masculinum'), (u'{{Akkusativ}}', u'Akkusativ')]
 
     
     syntactic_other_patterns = []
-    line_u, stylistic = sort_out_abbrevs(line_without_idezojelek_u, stylistic_wiki_tags, stylistic_other_patterns) 
+    line_u, stylistic = sort_out_abbrevs(line_without_idezojelek, stylistic_wiki_tags, stylistic_other_patterns) 
     line_u, syntactic = sort_out_abbrevs(line_u, syntactic_wiki_tags, syntactic_other_patterns)
     
-   
-    return line_u.encode('utf-8'), stylistic, syntactic
+
+    return line_u, stylistic, syntactic
 
 
 def sort_out_html_like_tags(string):
     
-    string_unescaped = HTMLParser().unescape(string.decode('utf-8')).encode('utf-8')
+    string_unescaped = HTMLParser().unescape(string)
     string_without_nbsp = string_unescaped.replace('&nbsp;', '')
     string_without_ndash = string_without_nbsp.replace('&ndash;','')
     string_without_sup_tag = re.sub('<sup>.*?</sup>', '', string_without_ndash)
@@ -134,14 +132,16 @@ def generate_pos_parts(text):
         subtext_matcher = subtext_pattern.search(text)
         yield pos, art, this_text
 
-def generate_language_parts(text):
+def generate_language_parts(text, title):
     
-    subtext_pattern = re.compile("==.*?\({{Sprache\|(.*?)}}\) ==", re.DOTALL)
+    subtext_pattern = re.compile("==[\s\n]*.*?[\s\n]*\({{Sprache\|([\w]*)}}\) ==", re.UNICODE)
     subtext_matcher = subtext_pattern.search(text)
     while subtext_matcher:
+        
         language = subtext_matcher.groups()[0].strip()
         leftover = text[subtext_matcher.end():]
         another_subtext_matcher = subtext_pattern.search(leftover)
+
         if another_subtext_matcher:
             this_text = leftover[:another_subtext_matcher.start()]
             text = leftover[another_subtext_matcher.end():]
@@ -150,12 +150,14 @@ def generate_language_parts(text):
             this_text = leftover
 
         subtext_matcher = another_subtext_matcher
+
         yield language, this_text
+
 
 def generate_pages(f):
     intext = False
     for l in f:
-        l = l.lstrip(' ').strip('\t')
+        l = l.lstrip(' ').decode('utf-8').strip('\t')
         # title
         if l.startswith("<title>"):
             title = l.split("<title>")[1].split("</title>")[0]
@@ -181,19 +183,18 @@ def generate_pages(f):
         # inside text
         if intext:
             text += l
-            
 
 def main():
     data_file = open(sys.argv[1])
     d = {}
     for title, text in generate_pages(data_file):
+
         if ":" in title:
             continue
         
         if title not in d:
             d[title] = []
-        #print "Wort", title
-        for language, langtext in generate_language_parts(text):
+        for language, langtext in generate_language_parts(text, title):
             if language != "Deutsch":
                 continue
 
@@ -201,11 +202,12 @@ def main():
                 definition_block = get_definition_part(postext)
                 if definition_block == None:
                     continue
+
                 d[title].append((pos, art, []))
                 for index, definition in generate_definitions(definition_block):
                     cleaned_def, syntactic_tags, stylistic_tags = clean_def(definition)
+
                     d[title][-1][2].append((";".join(list(syntactic_tags)), ";".join(list(stylistic_tags)), index, cleaned_def))
-    
     cPickle.dump(d, open(sys.argv[2], "w"))
-                
-main()    
+if __name__ == "__main__":                
+    main()    
