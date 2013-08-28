@@ -24,7 +24,7 @@ def select_main_category(category_list):
     else:
         return category_list[-1]
 
-def select_category(block):
+def select_categories(block):
 
     category_list = []
     for l in block:
@@ -32,7 +32,7 @@ def select_category(block):
         if cat != None:
             category_list.append(get_category_from_line(l))
             
-    return  select_main_category(category_list)    
+    return category_list    
         
 
 def generate_entity_blocks(file_handler):
@@ -53,15 +53,16 @@ def generate_entity_blocks(file_handler):
 def parse(file_handler):
 
     for entity, block in generate_entity_blocks(file_handler): 
-        category = select_category(block)
-        yield entity, category
+        categories = select_categories(block)
+        yield entity, categories
 
 def main():
 
     
     for item in parse(sys.stdin):
-        entity, category = item
-        print entity + '\t' + category
+        entity, categories = item
+        main_category = select_main_category(categories)
+        print entity + '\t' + main_category
 
 
 if __name__ == "__main__":  
