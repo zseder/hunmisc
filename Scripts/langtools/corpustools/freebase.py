@@ -6,8 +6,10 @@ def unescape(string):
 
     without_outer_quotation = string[1:-1]
     reescaped = without_outer_quotation.decode('string-escape')
+    reescaped_without_tab = reescaped.replace('\t', ' ')
 
-    return reescaped
+    return reescaped_without_tab
+
 
 def generate_object_dicts(file_handler):
     
@@ -53,13 +55,7 @@ def get_variant_names(info_dict):
         name_string, lang_string = '@'.join(string.split('@')[:-1]), string.split('@')[-1]
         lang = lang_string[:-1]
         name = unescape(name_string)
-        
-        #try:
-        #    language = prep_string.split('"')[2][1:][:-1]
-        #    vn[sub_name].append(language)
-
-        #except IndexError:
-        #    print 'badly formatted', string, prep_string
+        vn[name].append(lang) 
             
     return vn    
 
