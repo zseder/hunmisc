@@ -102,16 +102,25 @@ def generate_definitions(block):
         def_matcher = def_pattern.search(block)
         yield index, definition.strip()
 
-def get_definition_part(text):
 
-    try:
-        return text.split('{{Bedeutungen}}', 1)[1].split('\n\n', 1)[0]
+def get_definition_part(text, template_matcher):
+
+    try :
+        block = text.split('{{Bedeutungen}}', 1)[1]
+        if template_matcher.search(block) is not None:
+            block = template_matcher.search(block).groups()[0]
+        else:
+            block = block.split('\n\n', 1)[0]
+        return block
+
     except IndexError:
         return None
+
+
     
 def generate_pos_parts(text):
 
-    subtext_pattern = re.compile("=== {{Wortart\|(.*?)\|Deutsch}}((,)? {{(.*?)}})?.*? ===", re.DOTALL)
+    subtext_pattern = re.compile("=== {{Wortart\|(.*?)\|Deutsch}}((,)? {{(.*?)}})?.*?===", re.DOTALL)
     subtext_matcher = subtext_pattern.search(text)
     while subtext_matcher:
         pos = subtext_matcher.groups()[0].strip()
@@ -184,8 +193,17 @@ def generate_pages(f):
         if intext:
             text += l
 
+def get_list_element_matcher(list):
+    pattern = '(.*?)(' + '|'.join(list) + ')'
+    return re.compile(pattern, re.DOTALL)
+    
+       
+
 def main():
+
     data_file = open(sys.argv[1])
+    templates = open(sys.argv[3]).readlines()
+    template_matcher = get_list_element_matcher(templates)
     d = {}
     for title, text in generate_pages(data_file):
 
@@ -199,7 +217,7 @@ def main():
                 continue
 
             for pos, art, postext in generate_pos_parts(langtext):
-                definition_block = get_definition_part(postext)
+                definition_block = get_definition_part(postext, template_matcher)
                 if definition_block == None:
                     continue
 
