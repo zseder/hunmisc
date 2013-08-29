@@ -48,6 +48,10 @@ def sort_out_wiki_tags(line_with_wiki_tags):
 
     stylistic_other_patterns = ['{{Kontext\|Linguistik\|.*?}}']
 
+    """
+    tags may be in another line, (eg.the one above), this is not yet handled.
+    """
+
     syntactic_wiki_tags = [(u'{{refl.}}', u'reflexiv'),(u'{{intrans.}}', u'intransitiv'), (u'{{trans.}}', u'transitiv'), (u'{{kPl.}}', u'kein Plural'), (u'{{Pl.}}', u'Plural'), (u'{{kSt.}}', u'keine Steigerung'), (u'{{Dativ}}', u'Dativ'), (u'{{Genitiv}}', 'Genitiv'), (u'{{n}}', u'neutrum'), (u'{{f}}', 'femininum'), (u'{{m}}', u'masculinum'), (u'{{Akkusativ}}', u'Akkusativ')]
 
     
