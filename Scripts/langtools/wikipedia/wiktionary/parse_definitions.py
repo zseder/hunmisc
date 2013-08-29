@@ -203,6 +203,7 @@ def main():
 
     data_file = open(sys.argv[1])
     templates = open(sys.argv[3]).readlines()
+    # the list list may be here: http://de.wiktionary.org/wiki/Wiktionary:Textbausteine#MediaWiki-Texte_zur_Gliederung_der_Formatvorlage
     template_matcher = get_list_element_matcher(templates)
     d = {}
     for title, text in generate_pages(data_file):
