@@ -2,9 +2,12 @@ import sys
 import re
 from collections import defaultdict
 
-def preprocess(string):
+def unescape(string):
 
-    return string.replace('\\"', '')
+    without_outer_quotation = string[1:-1]
+    reescaped = without_outer_quotation.decode('string-escape')
+
+    return reescaped
 
 def generate_object_dicts(file_handler):
     
@@ -38,17 +41,26 @@ def get_domains(info_dict):
         domain = string.split(':')[1].split('.')[0]
         if domain != 'common' and domain != 'type' and domain != 'base' and domain != 'm':
             domains.add(domain)
-    return list(domains)
+    if domains == set([]): 
+        return None
+    else:
+        return list(domains)
 
 def get_variant_names(info_dict):
 
     vn = defaultdict(list)
     for string in info_dict['ns:type.object.name']:
-        string = preprocess(string)
-        sub_name  = string.split('"')[1]
-        language = string.split('"')[2][1:][:-1]
-        vn[sub_name].append(language)
+        name_string, lang_string = '@'.join(string.split('@')[:-1]), string.split('@')[-1]
+        lang = lang_string[:-1]
+        name = unescape(name_string)
+        
+        #try:
+        #    language = prep_string.split('"')[2][1:][:-1]
+        #    vn[sub_name].append(language)
 
+        #except IndexError:
+        #    print 'badly formatted', string, prep_string
+            
     return vn    
 
 
@@ -56,11 +68,12 @@ def get_variant_names(info_dict):
 def parse(file_handler):
    
     for info_dict in generate_object_dicts(file_handler):
-        freebase_domains = get_domains(info_dict)        
-        variant_names = get_variant_names(info_dict)
-        for var in variant_names:
-            lang_list = variant_names[var]
-            yield var, lang_list, freebase_domains
+        freebase_domains = get_domains(info_dict)       
+        if freebase_domains != None:
+            variant_names = get_variant_names(info_dict)
+            for var in variant_names:
+                lang_list = variant_names[var]
+                yield var, lang_list, freebase_domains
 
 
 def main():
