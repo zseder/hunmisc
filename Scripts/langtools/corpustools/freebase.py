@@ -7,8 +7,9 @@ def unescape(string):
     without_outer_quotation = string[1:-1]
     reescaped = without_outer_quotation.decode('string-escape')
     reescaped_without_tab = reescaped.replace('\t', ' ')
+    reescaped_without_newline = reescaped_without_tab.replace('\n', ' ')
 
-    return reescaped_without_tab
+    return reescaped_without_newline
 
 
 def generate_object_dicts(file_handler):
