@@ -1,0 +1,70 @@
+import sys
+
+
+def get_entity_from_line(l):
+
+    entity = l.split('>')[0].split('/')[-1]
+    entity_formatted = entity.replace('_', ' ')
+
+    return entity_formatted
+
+def get_category_from_line(l):
+
+    potential_category = l.split(' ')[2]
+    if potential_category.startswith('<http://dbpedia.org/ontology'):
+        category = potential_category.split('>')[0].split('/')[-1]
+    else:
+        category = None
+    return category
+
+def select_main_category(category_list):
+    # selects 2nd ontology level, if that would be Agent than 3rd
+    if category_list[-1] == 'Agent':
+        return category_list[-2]
+    else:
+        return category_list[-1]
+
+def select_categories(block):
+
+    category_list = []
+    for l in block:
+        cat = get_category_from_line(l)
+        if cat != None:
+            category_list.append(get_category_from_line(l))
+            
+    return category_list    
+        
+
+def generate_entity_blocks(file_handler):
+    
+    prev_entity = ''
+    block  = []
+    for l in file_handler:
+        if l.startswith('#'):
+            continue
+        entity = get_entity_from_line(l)
+        if (entity != prev_entity) and (prev_entity != ''):
+            yield prev_entity, block
+            block  = []
+        block.append(l.strip())    
+        prev_entity = entity
+
+
+def parse(file_handler):
+
+    for entity, block in generate_entity_blocks(file_handler): 
+        categories = select_categories(block)
+        yield entity, categories
+
+def main():
+
+    
+    for item in parse(sys.stdin):
+        entity, categories = item
+        main_category = select_main_category(categories)
+        print entity + '\t' + main_category
+
+
+if __name__ == "__main__":  
+    main()
+
