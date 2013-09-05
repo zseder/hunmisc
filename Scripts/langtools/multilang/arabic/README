@@ -1,0 +1,5 @@
+sama_stemmer.sh
+- arabic stemmer depending on SAMA (http://www.ldc.upenn.edu/Catalog/catalogEntry.jsp?catalogId=LDC2010L01)
+
+buckwalter_to_utf8.pl
+- converts between encodings. Needed for sama_stemmer because it produces buckwalter output
