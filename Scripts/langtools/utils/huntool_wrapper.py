@@ -393,10 +393,15 @@ class Hunspell(AbstractSubprocessClass):
     EMPTY = 5
     TIMEOUT = 6
 
-    def __init__(self, runnable, dictpath):
+    def __init__(self, runnable, dictpath, mode="stem"):
         encoding = self.__get_encoding(dictpath)
         AbstractSubprocessClass.__init__(self, runnable, encoding)
-        o = ["-a"]
+        o = []
+        self.mode = mode
+        if mode == "stem":
+            o += ["-s"]
+        elif mode == "analyze":
+            o += ["-a"]
         o += ["-d",  dictpath]
         self.options = o
 
@@ -413,19 +418,53 @@ class Hunspell(AbstractSubprocessClass):
 
     def start(self):
         AbstractSubprocessClass.start(self)
-        # useless status line printed to stdout...
-        _ = self._process.stdout.readline()
+        if self.mode == "analyze":
+            # useless status line printed to stdout...
+            _ = self._process.stdout.readline()
         signal.signal(signal.SIGALRM, alarm_handler)
+
+    def check(self, text):
+        words = text.split(" ")
+        return reduce(lambda x, y: x + y, 
+                      [self.check_word(word) for word in words])
+
+    def check_word(self, word):
+        new_res = []
+        for res in self.process_word(word):
+            print res
+            r = res.strip()
+            if len(r) == 0:
+                continue
+            if r.split() > 1:
+                new_res.append(Hunspell.MATCH)
+            else:
+                new_res.append(Hunspell.INCORRECT)
+        return new_res
 
     def analyze(self, text):
         words = text.split(" ")
-        #return [self.analyze_word(word) for word in words]
-        #return [list(self.analyze_word(word)) for word in words]
-        return reduce(lambda x, y: x + y, 
-                      [list(self.analyze_word(word)) for word in words])
+        res = reduce(lambda x, y: x + y, 
+                      [list(self.process_word(word)) for word in words])
+        new_res = []
+        for r in res:
+            if len(r.strip()) == 0:
+                new_res.append(Hunspell.EMPTY)
 
-    def analyze_word(self, word):
-        self._process.stdin.write(word.encode(self._encoding) + "\n")
+            if r == "*":
+                new_res.append(Hunspell.MATCH)
+            elif r[0] == "+":
+                new_res.append(Hunspell.AFFIX)
+            elif r[0] == "-":
+                new_res.append(Hunspell.COMPOUND)
+            elif r[0] == "&":
+                new_res.append(Hunspell.SUGGEST)
+            elif r[0] == "#":
+                new_res.append(Hunspell.INCORRECT)
+        return new_res
+
+    def process_word(self, word):
+        print word
+        self._process.stdin.write("\n" + word.encode(self._encoding) + "\n")
         self._process.stdin.flush()
 
         # timeout with one second
@@ -433,23 +472,13 @@ class Hunspell(AbstractSubprocessClass):
         try:
             res_line = self._process.stdout.readline().strip().decode(
                 self._encoding)
+            print res_line
             signal.alarm(0)
         except Alarm:
             yield Hunspell.TIMEOUT
+            return
         while res_line:
-            if len(res_line.strip()) == 0:
-                yield Hunspell.EMPTY
-
-            if res_line == "*":
-                yield Hunspell.MATCH
-            elif res_line[0] == "+":
-                yield Hunspell.AFFIX
-            elif res_line[0] == "-":
-                yield Hunspell.COMPOUND
-            elif res_line[0] == "&":
-                yield Hunspell.SUGGEST
-            elif res_line[0] == "#":
-                yield Hunspell.INCORRECT
+            yield res_line
             try:
                 signal.alarm(1)
                 res_line = self._process.stdout.readline().strip().decode(
@@ -457,6 +486,7 @@ class Hunspell(AbstractSubprocessClass):
                 signal.alarm(0)
             except Alarm:
                 yield Hunspell.TIMEOUT
+                return
 
 if __name__ == "__main__":
     o = Ocamorph("/home/zseder/Proj/huntools/ocamorph-1.1-linux/ocamorph",
