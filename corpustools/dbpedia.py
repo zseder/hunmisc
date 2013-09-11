@@ -85,7 +85,7 @@ def main():
     for item in parse(sys.stdin):
         entity, categories = item
         main_category = select_main_category(categories)
-        print entity + '\t' + main_category
+        print entity.encode('utf-8') + '\t' + main_category
 
 
 if __name__ == "__main__":  
