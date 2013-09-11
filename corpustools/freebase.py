@@ -28,7 +28,6 @@ from collections import defaultdict
 def unescape(string):
 
     without_outer_quotation = string[1:-1]
-    print 31, repr(without_outer_quotation)
     reescaped = without_outer_quotation.decode('string-escape')
     reescaped_without_tab = reescaped.replace('\t', ' ')
     reescaped_without_newline = reescaped_without_tab.replace('\n', ' ')
