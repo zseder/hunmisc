@@ -26,7 +26,7 @@ import sys
 
 def get_entity_from_line(l):
 
-    entity = l.split('>')[0].split('/')[-1]
+    entity = l.split('>')[0].split('/')[-1].decode('unicode-escape')
     entity_formatted = entity.replace('_', ' ')
 
     return entity_formatted
