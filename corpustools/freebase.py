@@ -45,8 +45,8 @@ def generate_object_dicts(file_handler):
     old_sub = ''
     info_dict = defaultdict(list)
 
-    for l in file_handler:
-
+    for l_utf in file_handler:
+        l = l_utf.decode('utf-8')
         if needed_line_patt.match(l) is None:
             continue
         sub, pred, obj = l.strip('\n').split('\t')
