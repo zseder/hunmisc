@@ -28,6 +28,7 @@ from collections import defaultdict
 def unescape(string):
 
     without_outer_quotation = string[1:-1]
+    print 31, repr(without_outer_quotation)
     reescaped = without_outer_quotation.decode('string-escape')
     reescaped_without_tab = reescaped.replace('\t', ' ')
     reescaped_without_newline = reescaped_without_tab.replace('\n', ' ')
@@ -45,8 +46,7 @@ def generate_object_dicts(file_handler):
     old_sub = ''
     info_dict = defaultdict(list)
 
-    for l_utf in file_handler:
-        l = l_utf.decode('utf-8')
+    for l in file_handler:
         if needed_line_patt.match(l) is None:
             continue
         sub, pred, obj = l.strip('\n').split('\t')
@@ -93,7 +93,7 @@ def parse(file_handler):
             variant_names = get_variant_names(info_dict)
             for var in variant_names:
                 lang_list = variant_names[var]
-                yield var, lang_list, freebase_domains
+                yield var.decode('utf-8'), lang_list, freebase_domains
 
 
 def main():
@@ -101,7 +101,7 @@ def main():
     file_handler = sys.stdin
 
     for named_entity, lang_list, domain_list in parse(file_handler):
-        print named_entity + '\t' + ' '.join(lang_list) + '\t' + ' '.join(domain_list)
+        print named_entity.encode('utf-8') + '\t' + ' '.join(lang_list) + '\t' + ' '.join(domain_list)
 
     file_handler.close()
 
