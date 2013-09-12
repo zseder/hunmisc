@@ -22,7 +22,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 import sys
-import re
 from collections import defaultdict
 
 def unescape(string):
@@ -37,7 +36,6 @@ def unescape(string):
 
 def generate_object_dicts(file_handler):
     
-    needed_line_patt = re.compile('ns:m\.')
     for j in range(8):
     #first 8 lines of dump is not needed
         l = file_handler.readline()
@@ -46,8 +44,9 @@ def generate_object_dicts(file_handler):
     info_dict = defaultdict(list)
 
     for l in file_handler:
-        if needed_line_patt.match(l) is None:
+        if l[:5] != 'ns:m.':
             continue
+
         sub, pred, obj = l.strip('\n').split('\t')
         if sub != old_sub and first == False:
             yield info_dict
@@ -105,4 +104,6 @@ def main():
     file_handler.close()
 
 if __name__ == "__main__":
-    main()
+    import cProfile
+    cProfile.run('main()')
+    #main()
