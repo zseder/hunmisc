@@ -22,11 +22,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 import sys
-
+import re
 
 def get_entity_from_line(l):
 
-    entity = l.split('>')[0].split('/')[-1].decode('unicode-escape')
+    entity_matcher = re.search('resource/(.*?)>', l)
+    entity = entity_matcher.groups()[0]
+    entity = entity.decode('unicode-escape')
     entity_formatted = entity.replace('_', ' ')
 
     return entity_formatted
@@ -57,6 +59,13 @@ def select_categories(block):
             
     return category_list    
         
+def check_if_needed(entity_string):
+
+    needed = True
+    if entity_string.endswith('  /  1') or entity_string.endswith('  /  2'):
+        needed = False
+
+    return needed
 
 def generate_entity_blocks(file_handler):
     
@@ -66,6 +75,9 @@ def generate_entity_blocks(file_handler):
         if l.startswith('#'):
             continue
         entity = get_entity_from_line(l)
+        needed = check_if_needed(entity)
+        if not needed:
+            continue
         if (entity != prev_entity) and (prev_entity != ''):
             yield prev_entity, block
             block  = []
