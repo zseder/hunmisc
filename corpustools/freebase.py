@@ -64,7 +64,7 @@ def get_domains(info_dict):
     domains = set([])
     for string in info_dict['ns:type.object.type']:
         domain = string.split(':')[1].split('.')[0]
-        if domain != 'common' and domain != 'type' and domain != 'base' and domain != 'm':
+        if domain != 'common' and domain != 'type' and domain != 'base' and domain != 'm' and domain != 'freebase':
             domains.add(domain)
     if domains == set([]): 
         return None
