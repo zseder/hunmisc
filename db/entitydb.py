@@ -11,6 +11,10 @@ class EntityDB(object):
         self.__init_caches()
         self.d = {}
         self.values = []
+        self.to_keep = None
+
+    def add_to_keep_list(self, to_keep):
+        self.to_keep = set(to_keep)
 
     def __init_caches(self):
         # "freebase" -> 0
@@ -61,6 +65,10 @@ class EntityDB(object):
         for pair in pairs:
             key, value = pair
             key = key.lower()
+            if self.to_keep is not None:
+                if key not in self.to_keep:
+                    continue
+
             if not key in self.d:
                 self.d[key] = len(self.values)
                 self.values.append(set())
@@ -110,6 +118,7 @@ class EntityDB(object):
         logging.info("compactizing done.")
 
     def dump(self, pickle_f, dawg_fb):
+        self.to_keep = None
         self.compactize()
         self.dawg.write(dawg_fb)
         del self.dawg

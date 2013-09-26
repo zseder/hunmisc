@@ -1,15 +1,10 @@
 import sys
 import logging
-from entitydb import EntityDB
 import gzip
 
-try:
-    from hunmisc.corpustools import dbpedia
-    from hunmisc.corpustools import freebase
-except ImportError:
-    sys.stderr.write("Hunmisc (https://github.com/zseder/hunmisc/) " +
-                     "has to be in pythonpath\n")
-    sys.exit(-1)
+from hunmisc.db.entitydb import EntityDB
+from hunmisc.corpustools import dbpedia
+from hunmisc.corpustools import freebase
 
 def gen_freebase_results(f):
     for res in freebase.parse(f):
@@ -59,6 +54,10 @@ def main():
     geo_f = sys.argv[4]
     gerword_def_f = sys.argv[5]
     gerword_undef_f = sys.argv[6]
+    if len(sys.argv) > 7:
+        with open(sys.argv[7]) as f:
+            entity_db.add_to_keep_list(
+                [l.strip().decode("utf-8") for l in f.readlines()])
 
     with gzip.open(freebase_dump_gzip_f) as f:
         entity_db.fill_dict(gen_freebase_results(f), "freebase")
