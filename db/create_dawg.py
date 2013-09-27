@@ -54,7 +54,9 @@ def main():
     geo_f = sys.argv[4]
     gerword_def_f = sys.argv[5]
     gerword_undef_f = sys.argv[6]
-    if len(sys.argv) > 7:
+    dawg_fn = sys.argv[-1]
+    entities_fn = sys.argv[-2]
+    if len(sys.argv) > 9:
         with open(sys.argv[7]) as f:
             entity_db.add_to_keep_list(
                 [l.strip().decode("utf-8") for l in f.readlines()])
@@ -76,8 +78,8 @@ def main():
     with open(gerword_undef_f) as f:
         entity_db.fill_dict(add_simple_list_file(f), "german_wikt_undefined")
 
-    with open('words.dawg.compact', 'wb') as dawg_fb:
-        with open("entities.pickle", "w") as pickle_f:
+    with open(dawg_fn, 'wb') as dawg_fb:
+        with open(entities_fn, "w") as pickle_f:
             entity_db.dump(pickle_f, dawg_fb)
 
 if __name__ == "__main__":
