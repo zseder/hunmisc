@@ -83,22 +83,6 @@ class IntervalTree(object):
                 best_path = [path, s]
         return best_path[0]
 
-    def fill_path_with_unknown(self, path, last_index):
-        path.insert(0, (0,0))
-        path.append((last_index,last_index))
-        unks = []
-        for i in xrange(1, len(path)):
-            interval = path[i]
-            prev = path[i-1]
-            if prev[1] != interval[0]:
-                unks.append((i, (prev[1], interval[0])))
-
-        for ui in xrange(len(unks) - 1, -1, -1):
-            i, interval = unks[ui]
-            path.insert(i, interval)
-        del path[-1]
-        del path[0]
-
 def test():
     test_intervals = [[(0,1), (0,2), (1,2), (1,3), (2,3)],
                       [(2,3)],
