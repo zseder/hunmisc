@@ -101,14 +101,8 @@ class EntityDB(object):
             value_index = self.dawg[name]
             res = []
             values = self.values[value_index]
-            for src_lang_type_i in values:
-                src_i, lang_type_i = self.src_lang_type_cache[src_lang_type_i]
-
-                src = self.src_cache[src_i]
-                lang_i, type_i = self.lang_type_cache[lang_type_i]
-                lang = self.lang_cache[lang_i]
-                type_ = self.type_cache[type_i]
-                res.append((src, lang, type_))
+            for src, value in values:
+                res.append(self.caches[src].get(value))
             return res
         except IndexError:
             logging.error("There is an error in compact EntityDB")
