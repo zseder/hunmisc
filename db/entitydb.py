@@ -1,5 +1,6 @@
 import logging
 import cPickle
+from collections import Iterable
 
 import dawg
 
@@ -36,7 +37,12 @@ class EntityDB(object):
         if not entity in self.d:
             self.d[entity] = len(self.values)
             self.values.append(set())
-        compact_value = self.caches[src].store(data)
+
+        if isinstance(data, Iterable):
+            for d in data:
+                compact_value = self.caches[src].store(d)
+        else:
+            compact_value = self.caches[src].store(data)
         self.values[self.d[entity]].add((src, compact_value))
 
     def compactize_values(self):
