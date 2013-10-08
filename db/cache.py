@@ -25,10 +25,10 @@ class DictValueCache(object):
 
     def finalize(self):
         self.cache = [v[0] for v in 
-            sorted(lambda x: x[1], self.cache.iteritems(), reverse=True)]
+            sorted(self.cache.iteritems(), key=lambda x: x[1], reverse=True)]
 
     def get(self, index):
-        if type(index) == int and type(self.cache) == dict:
+        if type(self.cache) == dict:
             sys.stderr.write("cache is not finalized yet\n")
             return
         return self.cache[index]
@@ -53,12 +53,18 @@ class LangTypeCache(DictValueCache):
         DictValueCache.store(self, 
             (self.lang_cache[lang], self.type_cache[type_]))
 
+    def get(self, index):
+        l_i, t_i = DictValueCache.get(index)
+        lang = self.lang_cache[l_i]
+        type_ = self.type_cache[t_i]
+        return lang, type_
+
     def finalize(self):
         DictValueCache.finalize(self)
         self.lang_cache = [v[0] for v in 
-            sorted(lambda x: x[1], self.lang_cache.iteritems(), reverse=True)]
+            sorted(self.lang_cache.iteritems(), key=lambda x: x[1], reverse=True)]
         self.type_cache = [v[0] for v in 
-            sorted(lambda x: x[1], self.type_cache.iteritems(), reverse=True)]
+            sorted(self.type_cache.iteritems(), key=lambda x: x[1], reverse=True)]
 
 
 
