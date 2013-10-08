@@ -1,3 +1,4 @@
+from collections import defaultdict
 import logging
 import cPickle
 
@@ -7,11 +8,13 @@ def intdict_to_list(d):
     return [k for k, v in sorted(d.iteritems(), key=lambda x: x[1])]
 
 class EntityDB(object):
-    def __init__(self):
+    def __init__(self, max_length=5):
         self.__init_caches()
         self.d = {}
         self.values = []
         self.to_keep = None
+        self.long_entities = defaultdict(set)
+        self.max_l = max_length
 
     def add_to_keep_list(self, to_keep):
         self.to_keep = set(to_keep)
@@ -77,7 +80,10 @@ class EntityDB(object):
                 self.values[self.d[key]] |= set(compact_value)
             else:
                 self.values[self.d[key]].add(compact_value)
-
+            
+            ks = key.split()
+            if len(ks) > self.max_l:
+                self.long_entities[" ".join(ks[:self.max_l])].add(key)
     
     def compactize_values(self):
         self.values = [frozenset(s) for s in self.values]
@@ -122,6 +128,7 @@ class EntityDB(object):
         self.compactize()
         self.dawg.write(dawg_fb)
         del self.dawg
+        self.long_entities = dict(self.long_entities)
         cPickle.dump(self, pickle_f, 2)
 
     @staticmethod
@@ -150,4 +157,13 @@ class EntityDB(object):
         except IndexError:
             logging.error("There is an error in compact EntityDB")
             logging.exception("IndexError")
+
+    def get_ngrams_with_prefix(self, prefix):
+        if prefix not in self.long_entities:
+            return
+
+        res = []
+        for entity in self.long_entities[prefix]:
+            res.append((entity, self.get_type(entity)))
+        return res
          
