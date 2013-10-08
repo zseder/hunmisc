@@ -25,7 +25,7 @@ class DictValueCache(object):
 
     def finalize(self):
         self.cache = [v[0] for v in 
-            sorted(self.cache.iteritems(), key=lambda x: x[1], reverse=True)]
+            sorted(self.cache.iteritems(), key=lambda x: x[1])]
 
     def get(self, index):
         if type(self.cache) == dict:
@@ -62,9 +62,9 @@ class LangTypeCache(DictValueCache):
     def finalize(self):
         DictValueCache.finalize(self)
         self.lang_cache = [v[0] for v in 
-            sorted(self.lang_cache.iteritems(), key=lambda x: x[1], reverse=True)]
+            sorted(self.lang_cache.iteritems(), key=lambda x: x[1])]
         self.type_cache = [v[0] for v in 
-            sorted(self.type_cache.iteritems(), key=lambda x: x[1], reverse=True)]
+            sorted(self.type_cache.iteritems(), key=lambda x: x[1])]
 
 
 
