@@ -82,7 +82,7 @@ class EntityDB(object):
 
     def dump(self, pickle_f, dawg_fb):
         self.to_keep = None
-        self.compactize()
+        self.finalize()
         self.dawg.write(dawg_fb)
         del self.dawg
         cPickle.dump(self, pickle_f, 2)
