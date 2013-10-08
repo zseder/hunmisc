@@ -45,7 +45,7 @@ class EntityDB(object):
             compact_value = self.caches[src].store(data)
         self.values[self.d[entity]].add((src, compact_value))
 
-    def compactize_values(self):
+    def finalize_values(self):
         self.values = [frozenset(s) for s in self.values]
 
         first = {self.values[0]: 0}
@@ -68,17 +68,17 @@ class EntityDB(object):
         self.values = [self.values[vi] for vi in xrange(len(self.values))
                       if vi not in to_del]
 
-    def compactize(self):
+    def finalize(self):
         for cache in self.caches.itervalues():
             cache.finalize()
 
-        logging.info("Compactizing values...")
-        self.compactize_values()
+        logging.info("Finalizing values...")
+        self.finalize_values()
 
         logging.info("Creating dawg...")
         self.dawg = dawg.IntCompletionDAWG(self.d)
         del self.d
-        logging.info("compactizing done.")
+        logging.info("finalizing done.")
 
     def dump(self, pickle_f, dawg_fb):
         self.to_keep = None
