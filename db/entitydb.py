@@ -32,7 +32,7 @@ class EntityDB(object):
         entity = entity.lower()
         if self.to_keep is not None:
             if entity not in self.to_keep:
-                continue
+                return
 
         if not entity in self.d:
             self.d[entity] = len(self.values)

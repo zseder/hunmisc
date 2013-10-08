@@ -47,7 +47,8 @@ def gen_simple_list_pairs(f):
         yield l, None
 
 def main():
-    entity_db = EntityDB()
+    entity_db = EntityDB(["freebase", "dbpedia", "geonames",
+                         "german_wikt_defined", "german_wikt_undefined"])
     freebase_dump_gzip_f = sys.argv[1]
     dbpedia_en_f = sys.argv[2]
     dbpedia_de_f = sys.argv[3]
