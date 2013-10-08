@@ -35,6 +35,7 @@ class DictValueCache(object):
 
 class LangTypeCache(DictValueCache):
     def __init__(self):
+        DictValueCache.__init__(self)
         self.lang_cache = {}
         self.type_cache = {}
 
