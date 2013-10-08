@@ -54,7 +54,7 @@ class LangTypeCache(DictValueCache):
             (self.lang_cache[lang], self.type_cache[type_]))
 
     def get(self, index):
-        l_i, t_i = DictValueCache.get(index)
+        l_i, t_i = DictValueCache.get(self, index)
         lang = self.lang_cache[l_i]
         type_ = self.type_cache[t_i]
         return lang, type_
