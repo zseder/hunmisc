@@ -1,5 +1,9 @@
 import sys
 
+def init_cache(name):
+    # later this will be different for specific caches if needed
+    return DictValueCache()
+
 class DictValueCache(object):
     """This class (and children) implements a store, and supplementary data
     for dawgs are being kept here. EntityDB will create these objects,
