@@ -27,19 +27,17 @@ class EntityDB(object):
         for source in sources:
             self.caches[source] = cache.init_cache(source)
 
-    def fill_dict(self, pairs, src):
-        for pair in pairs:
-            key, value = pair
-            key = key.lower()
-            if self.to_keep is not None:
-                if key not in self.to_keep:
-                    continue
+    def add_entity(self, entity, data, src):
+        entity = entity.lower()
+        if self.to_keep is not None:
+            if entity not in self.to_keep:
+                continue
 
-            if not key in self.d:
-                self.d[key] = len(self.values)
-                self.values.append(set())
-            compact_value = self.caches[src].store(value)
-            self.values[self.d[key]].add((src, compact_value))
+        if not entity in self.d:
+            self.d[entity] = len(self.values)
+            self.values.append(set())
+        compact_value = self.caches[src].store(data)
+        self.values[self.d[entity]].add((src, compact_value))
 
     def compactize_values(self):
         self.values = [frozenset(s) for s in self.values]
