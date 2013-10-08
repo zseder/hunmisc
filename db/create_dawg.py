@@ -6,7 +6,7 @@ from hunmisc.db.entitydb import EntityDB
 from hunmisc.corpustools import dbpedia
 from hunmisc.corpustools import freebase
 
-def gen_freebase_results(f):
+def gen_freebase_pairs(f):
     for res in freebase.parse(f):
         word, langs, domains = res
         l = []
@@ -20,7 +20,7 @@ def gen_freebase_results(f):
         
         yield word, l
 
-def gen_dbpedia_results(f, lang):
+def gen_dbpedia_pairs(f, lang):
     for res in dbpedia.parse(f):
         word, categories = res
         category = dbpedia.select_main_category(categories)
@@ -31,7 +31,7 @@ def gen_dbpedia_results(f, lang):
 
         yield word, [(lang, category)]
 
-def add_geonames_list_file(f):
+def gen_geoname_pairs(f):
     for l in f:
         l = l.strip().decode("utf-8")
         le = l.split("\t")
@@ -39,12 +39,12 @@ def add_geonames_list_file(f):
             continue
 
         entity, lang, type_ = le
-        yield entity, [(lang, type_)]
+        yield entity, (lang, type_)
 
-def add_simple_list_file(f):
+def gen_simple_list_pairs(f):
     for l in f:
         l = l.strip().decode("utf-8")
-        yield l, [(None, None)]
+        yield l, None
 
 def main():
     entity_db = EntityDB()
@@ -62,21 +62,28 @@ def main():
                 [l.strip().decode("utf-8") for l in f.readlines()])
 
     with gzip.open(freebase_dump_gzip_f) as f:
-        entity_db.fill_dict(gen_freebase_results(f), "freebase")
+        for entity, data in gen_freebase_pairs(f):
+            entity_db.add_entity(entity, data, "freebase")
 
     with open(dbpedia_en_f) as f:
-        entity_db.fill_dict(gen_dbpedia_results(f, "en"), "dbpedia")
+        for entity, data in gen_dbpedia_pairs(f, "en"):
+            entity_db.add_entity(entity, data, "dbpedia")
+
     with open(dbpedia_de_f) as f:
-        entity_db.fill_dict(gen_dbpedia_results(f, "de"), "dbpedia")
+        for entity, data in gen_dbpedia_pairs(f, "de"):
+            entity_db.add_entity(entity, data, "dbpedia")
 
     with open(geo_f) as f:
-        entity_db.fill_dict(add_geonames_list_file(f), "geonames")
+        for entity, data in gen_geoname_pairs(f):
+            entity_db.add_entity(entity, data, "geonames")
 
     with open(gerword_def_f) as f:
-        entity_db.fill_dict(add_simple_list_file(f), "german_wikt_defined")
+        for entity, data in gen_simple_list_pairs(f):
+            entity_db.add_entity(entity, data, "german_wikt_defined")
 
     with open(gerword_undef_f) as f:
-        entity_db.fill_dict(add_simple_list_file(f), "german_wikt_undefined")
+        for entity, data in gen_simple_list_pairs(f):
+            entity_db.add_entity(entity, data, "german_wikt_undefined")
 
     with open(dawg_fn, 'wb') as dawg_fb:
         with open(entities_fn, "w") as pickle_f:
