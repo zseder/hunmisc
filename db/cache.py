@@ -50,7 +50,7 @@ class LangTypeCache(DictValueCache):
         if type_ not in self.type_cache:
             self.type_cache[type_] = len(self.type_cache)
 
-        DictValueCache.store(self, 
+        return DictValueCache.store(self, 
             (self.lang_cache[lang], self.type_cache[type_]))
 
     def get(self, index):
