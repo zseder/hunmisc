@@ -102,7 +102,7 @@ class EntityDB(object):
             res = []
             values = self.values[value_index]
             for src, value in values:
-                res.append(self.caches[src].get(value))
+                res.append((src, self.caches[src].get(value)))
             return res
         except IndexError:
             logging.error("There is an error in compact EntityDB")
