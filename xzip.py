@@ -10,7 +10,7 @@ def gzip_open(filename):
     os.mkfifo(tmp_fifo)
 
     p = subprocess.Popen("gzip --stdout -d %s > %s" % (filename, tmp_fifo), shell=True)
-    f = io.open(tmp_fifo, "r", encoding="utf-8")
+    f = io.open(tmp_fifo, "rb")
 
     while True:
         line = f.readline()
