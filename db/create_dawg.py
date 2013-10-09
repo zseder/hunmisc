@@ -55,9 +55,10 @@ def main():
     geo_f = sys.argv[4]
     gerword_def_f = sys.argv[5]
     gerword_undef_f = sys.argv[6]
-    dawg_fn = sys.argv[-1]
-    entities_fn = sys.argv[-2]
-    if len(sys.argv) > 9:
+    prefix_dawg_fn = sys.argv[-1]
+    dawg_fn = sys.argv[-2]
+    entities_fn = sys.argv[-3]
+    if len(sys.argv) > 10:
         with open(sys.argv[7]) as f:
             entity_db.add_to_keep_list(
                 [l.strip().decode("utf-8") for l in f.readlines()])
@@ -93,7 +94,8 @@ def main():
 
     with open(dawg_fn, 'wb') as dawg_fb:
         with open(entities_fn, "w") as pickle_f:
-            entity_db.dump(pickle_f, dawg_fb)
+            with open(prefix_dawg_fn, "wb") as pd_fb:
+                entity_db.dump(pickle_f, dawg_fb, pd_fb)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s : %(module)s (%(lineno)s) - %(levelname)s - %(message)s")
