@@ -36,14 +36,16 @@ def unescape(string):
 
 def generate_object_dicts(file_handler):
     
-    for j in range(8):
-    #first 8 lines of dump is not needed
-        l = file_handler.readline()
     first = True
     old_sub = ''
     info_dict = defaultdict(list)
 
+    lc = 0
     for l in file_handler:
+        #first 8 lines of dump is not needed
+        lc += 1
+        if lc < 9: continue
+
         if l[:5] != 'ns:m.':
             continue
 
