@@ -140,7 +140,7 @@ class EntityDB(object):
             return
 
         res = []
-        for entity in self.long_entities[prefix]:
+        for entity in self.long_values[self.long_entities[prefix]]:
             res.append((entity, self.get_type(entity)))
         return res
          
