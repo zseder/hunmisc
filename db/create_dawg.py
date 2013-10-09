@@ -29,7 +29,7 @@ def gen_dbpedia_pairs(f, lang):
             sys.stderr.write("dbpedia parser provided empty string\n")
             continue
 
-        yield word, [(lang, category)]
+        yield word, (lang, category)
 
 def gen_geoname_pairs(f):
     for l in f:
@@ -63,8 +63,13 @@ def main():
                 [l.strip().decode("utf-8") for l in f.readlines()])
 
     with gzip.open(freebase_dump_gzip_f) as f:
+        c = 0
         for entity, data in gen_freebase_pairs(f):
-            entity_db.add_entity(entity, data, "freebase")
+            for dat in data:
+                entity_db.add_entity(entity, dat, "freebase")
+            c += 1
+            if c % 100000 == 0:
+                logging.info("freebase: {0}".format(c))
 
     with open(dbpedia_en_f) as f:
         for entity, data in gen_dbpedia_pairs(f, "en"):
