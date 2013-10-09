@@ -23,12 +23,16 @@ class EntityDB(object):
 
     def __init_caches(self, sources):
         self.caches = {}
+        self.source_indices = {}
+        self.source_names = []
         
         if sources is None:
             sources = []
 
         for source in sources:
             self.caches[source] = cache.init_cache(source)
+            self.source_indices[source] = len(self.source_indices)
+            self.source_names.append(source)
 
     def add_entity(self, entity, data, src):
         entity = entity.lower()
@@ -41,7 +45,8 @@ class EntityDB(object):
             self.values.append(set())
 
         compact_value = self.caches[src].store(data)
-        self.values[self.d[entity]].add((src, compact_value))
+        self.values[self.d[entity]].add(
+            (self.source_indices[src], compact_value))
 
         es = entity.split()
         if len(es) > self.max_l:
@@ -70,6 +75,17 @@ class EntityDB(object):
         self.values = [self.values[vi] for vi in xrange(len(self.values))
                       if vi not in to_del]
 
+    def finalize_long_entities(self):
+        logging.info("Creating prefix trie...")
+        self.long_values = {}
+        self.long_entities = dawg.IntDAWG(
+            (p, self.long_values.setdefault(frozenset(full), 
+                                            len(self.long_values)))
+            for p, full in self.long_entities.iteritems())
+        self.long_values = [k for k, _ in 
+                            sorted(self.long_values.iteritems(),
+                                   key=lambda x: x[1])]
+
     def finalize(self):
         for cache in self.caches.itervalues():
             cache.finalize()
@@ -77,24 +93,31 @@ class EntityDB(object):
         logging.info("Finalizing values...")
         self.finalize_values()
 
-        logging.info("Creating dawg...")
+        logging.info("Creating main dawg...")
         self.dawg = dawg.IntCompletionDAWG(self.d)
         del self.d
+
+        self.finalize_long_entities()
+
         logging.info("finalizing done.")
 
-    def dump(self, pickle_f, dawg_fb):
+    def dump(self, pickle_f, dawg_fb, prefix_trie_fb):
         self.to_keep = None
         self.finalize()
         self.dawg.write(dawg_fb)
         del self.dawg
-        self.long_entities = dict(self.long_entities)
+
+        self.long_entities.write(prefix_trie_fb)
+        del self.long_entities
         cPickle.dump(self, pickle_f, 2)
 
     @staticmethod
-    def load(pickle_f, dawg_fn):
+    def load(pickle_f, dawg_fn, prefix_dawg_fn):
         entity_db = cPickle.load(pickle_f)
         entity_db.dawg = dawg.IntCompletionDAWG()
         entity_db.dawg.load(dawg_fn)
+        entity_db.long_entities = dawg.IntDAWG()
+        entity_db.long_entities.load(prefix_dawg_fn)
         return entity_db
 
     def get_type(self, name):
@@ -105,6 +128,7 @@ class EntityDB(object):
             res = []
             values = self.values[value_index]
             for src, value in values:
+                src = self.source_names[src]
                 res.append((src, self.caches[src].get(value)))
             return res
         except IndexError:
