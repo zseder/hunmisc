@@ -1,10 +1,10 @@
 import sys
 import logging
-import gzip
 
 from hunmisc.db.entitydb import EntityDB
 from hunmisc.corpustools import dbpedia
 from hunmisc.corpustools import freebase
+from hunmisc.xzip import gzip_open
 
 def gen_freebase_pairs(f):
     for res in freebase.parse(f):
@@ -62,14 +62,14 @@ def main():
             entity_db.add_to_keep_list(
                 [l.strip().decode("utf-8") for l in f.readlines()])
 
-    with gzip.open(freebase_dump_gzip_f) as f:
-        c = 0
-        for entity, data in gen_freebase_pairs(f):
-            for dat in data:
-                entity_db.add_entity(entity, dat, "freebase")
-            c += 1
-            if c % 100000 == 0:
-                logging.info("freebase: {0}".format(c))
+    f = gzip_open(freebase_dump_gzip_f)
+    c = 0
+    for entity, data in gen_freebase_pairs(f):
+        for dat in data:
+            entity_db.add_entity(entity, dat, "freebase")
+        c += 1
+        if c % 100000 == 0:
+            logging.info("freebase: {0}".format(c))
 
     with open(dbpedia_en_f) as f:
         for entity, data in gen_dbpedia_pairs(f, "en"):
