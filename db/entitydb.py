@@ -4,12 +4,14 @@ import cPickle
 
 import dawg
 
+import cache
+
 def intdict_to_list(d):
     return [k for k, v in sorted(d.iteritems(), key=lambda x: x[1])]
 
 class EntityDB(object):
-    def __init__(self, max_length=5):
-        self.__init_caches()
+    def __init__(self, sources=None, max_length=5):
+        self.__init_caches(sources)
         self.d = {}
         self.values = []
         self.to_keep = None
@@ -19,73 +21,33 @@ class EntityDB(object):
     def add_to_keep_list(self, to_keep):
         self.to_keep = set(to_keep)
 
-    def __init_caches(self):
-        # "freebase" -> 0
-        self.src_cache = {}
+    def __init_caches(self, sources):
+        self.caches = {}
+        
+        if sources is None:
+            sources = []
 
-        # "Person" -> 0
-        self.type_cache = {}
+        for source in sources:
+            self.caches[source] = cache.init_cache(source)
 
-        # "en" -> 0
-        self.lang_cache = {}
+    def add_entity(self, entity, data, src):
+        entity = entity.lower()
+        if self.to_keep is not None:
+            if entity not in self.to_keep:
+                return
 
-        # ("en", "Person") -> 0
-        # actually (0,0) -> 0
-        self.lang_type_cache = {}
+        if not entity in self.d:
+            self.d[entity] = len(self.values)
+            self.values.append(set())
 
-        # ("freebase", ("en", "Person")) -> 0
-        # actually (0,0) -> 0
-        self.src_lang_type_cache = {}
+        compact_value = self.caches[src].store(data)
+        self.values[self.d[entity]].add((src, compact_value))
 
-    def compact_value(self, value, src):
-        if value is None or type(value) == list and len(value) == 0:
-            # if no valid list, used for typeless sources
-            if len(value) == 0:
-                src = self.src_cache.setdefault(src, len(self.src_cache))
-                return self.src_lang_type_cache.setdefault(
-                    (src, -1), len(self.src_lang_type_cache))
+        es = entity.split()
+        if len(es) > self.max_l:
+            self.long_entities[" ".join(es[:self.max_l])].add(entity)
 
-        if type(value) == list:
-            return [self.compact_value(v, src) for v in value]
-
-        elif type(value) == tuple and len(value) == 2:
-            lang, type_ = value
-            lang = self.lang_cache.setdefault(lang, len(self.lang_cache))
-            type_ = self.type_cache.setdefault(type_, len(self.type_cache))
-
-            pair = lang, type_
-            lang_type_pair = self.lang_type_cache.setdefault(
-                pair, len(self.lang_type_cache))
-
-            src = self.src_cache.setdefault(src, len(self.src_cache))
-            pair = src, lang_type_pair
-            src_langtype_pair = self.src_lang_type_cache.setdefault(
-                pair, len(self.src_lang_type_cache))
-
-            return src_langtype_pair
-
-    def fill_dict(self, pairs, src):
-        for pair in pairs:
-            key, value = pair
-            key = key.lower()
-            if self.to_keep is not None:
-                if key not in self.to_keep:
-                    continue
-
-            if not key in self.d:
-                self.d[key] = len(self.values)
-                self.values.append(set())
-            compact_value = self.compact_value(value, src)
-            if type(compact_value) is list:
-                self.values[self.d[key]] |= set(compact_value)
-            else:
-                self.values[self.d[key]].add(compact_value)
-            
-            ks = key.split()
-            if len(ks) > self.max_l:
-                self.long_entities[" ".join(ks[:self.max_l])].add(key)
-    
-    def compactize_values(self):
+    def finalize_values(self):
         self.values = [frozenset(s) for s in self.values]
 
         first = {self.values[0]: 0}
@@ -108,24 +70,21 @@ class EntityDB(object):
         self.values = [self.values[vi] for vi in xrange(len(self.values))
                       if vi not in to_del]
 
-    def compactize(self):
-        self.src_cache = intdict_to_list(self.src_cache)
-        self.type_cache = intdict_to_list(self.type_cache)
-        self.lang_cache = intdict_to_list(self.lang_cache)
-        self.lang_type_cache = intdict_to_list(self.lang_type_cache)
-        self.src_lang_type_cache = intdict_to_list(self.src_lang_type_cache)
+    def finalize(self):
+        for cache in self.caches.itervalues():
+            cache.finalize()
 
-        logging.info("Compactizing values...")
-        self.compactize_values()
+        logging.info("Finalizing values...")
+        self.finalize_values()
 
         logging.info("Creating dawg...")
         self.dawg = dawg.IntCompletionDAWG(self.d)
         del self.d
-        logging.info("compactizing done.")
+        logging.info("finalizing done.")
 
     def dump(self, pickle_f, dawg_fb):
         self.to_keep = None
-        self.compactize()
+        self.finalize()
         self.dawg.write(dawg_fb)
         del self.dawg
         self.long_entities = dict(self.long_entities)
@@ -145,14 +104,8 @@ class EntityDB(object):
             value_index = self.dawg[name]
             res = []
             values = self.values[value_index]
-            for src_lang_type_i in values:
-                src_i, lang_type_i = self.src_lang_type_cache[src_lang_type_i]
-
-                src = self.src_cache[src_i]
-                lang_i, type_i = self.lang_type_cache[lang_type_i]
-                lang = self.lang_cache[lang_i]
-                type_ = self.type_cache[type_i]
-                res.append((src, lang, type_))
+            for src, value in values:
+                res.append((src, self.caches[src].get(value)))
             return res
         except IndexError:
             logging.error("There is an error in compact EntityDB")
