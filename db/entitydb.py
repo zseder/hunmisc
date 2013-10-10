@@ -79,7 +79,7 @@ class EntityDB(object):
                       if vi not in to_del]
 
     def finalize_long_entities(self):
-        logging.info("Creating prefix trie...")
+        logging.info("Creating prefix dawg...")
         self.long_values = {}
         self.long_entities = dawg.IntDAWG(
             (p, self.long_values.setdefault(frozenset(full), 
