@@ -26,8 +26,8 @@ import logging
 import signal
 
 from subprocess_wrapper import AbstractSubprocessClass
-from langtools.string.xstring import ispunct, isquot
-from langtools.corpustools.bie1_reader import parse_bie1_sentence
+from hunmisc.string.xstring import ispunct, isquot
+from hunmisc.corpustools.bie1_reader import parse_bie1_sentence
 
 """
 TODO
@@ -401,13 +401,28 @@ class Hunspell(AbstractSubprocessClass):
     """wrapper for hunspell run by -a option
     result is a list of codes, see the codes below this description
     Example usage:
-        >>> from huntool_wrapper import Hunspell
-        >>> h = Hunspell(path_to_hunspell, path_to_dict_without_extension)
+        Analyzing:
+        >>> from hunmisc.utils.huntool_wrapper import Hunspell
+        >>> h = Hunspell(path_to_hunspell, path_to_dict_without_extension,
+                        mode="analyze")
         >>> h.start()
         >>> h.analyze("Ich habe keine hausaufgabe")
         [0, 0, 0, 3]
 
+        Stemming:
+        >>> from hunmisc.utils.huntool_wrapper import Hunspell
+        >>> h = Hunspell(path_to_hunspell, path_to_dict_without_extension)
+        >>> h.start()
+        >>> h.stem("asztalokkal")
+        u'asztal'
+
     """
+
+    stem_err_msg = "hunspell is blocking while using -s function because of"+\
+                " buffering. Modify pipe_interface() method in "\
+                "hunspell.cxx with fflush() stdout while stemming to make "+\
+                "this work.\n"
+
     MATCH = 0
     AFFIX = 1
     COMPOUND = 2
@@ -464,6 +479,20 @@ class Hunspell(AbstractSubprocessClass):
                 new_res.append(Hunspell.INCORRECT)
         return new_res
 
+    def stem_word(self, word):
+        signal.alarm(2)
+        try:
+            self._process.stdin.write(word.encode(self._encoding) + "\n")
+            self._process.stdin.flush()
+            res_line = self._process.stdout.readline().strip().decode(
+                self._encoding)
+            root, stem = tuple(res_line.split())
+            _ = self._process.stdout.readline()
+            signal.alarm(0)
+            return stem
+        except Alarm:
+            raise Exception(Hunspell.stem_err_msg)
+
     def analyze(self, text):
         words = text.split(" ")
         res = reduce(lambda x, y: x + y, 
@@ -486,7 +515,6 @@ class Hunspell(AbstractSubprocessClass):
         return new_res
 
     def process_word(self, word):
-        print word
         self._process.stdin.write("\n" + word.encode(self._encoding) + "\n")
         self._process.stdin.flush()
 
@@ -495,7 +523,6 @@ class Hunspell(AbstractSubprocessClass):
         try:
             res_line = self._process.stdout.readline().strip().decode(
                 self._encoding)
-            print res_line
             signal.alarm(0)
         except Alarm:
             yield Hunspell.TIMEOUT
