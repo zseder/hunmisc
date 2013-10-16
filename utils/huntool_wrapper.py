@@ -441,6 +441,7 @@ class Hunspell(AbstractSubprocessClass):
         elif mode == "analyze":
             o += ["-a"]
         o += ["-d",  dictpath]
+        o += ["-i",  encoding]
         self.options = o
 
     def __get_encoding(self, dictpath):
@@ -479,17 +480,25 @@ class Hunspell(AbstractSubprocessClass):
                 new_res.append(Hunspell.INCORRECT)
         return new_res
 
+    def choose_stem(self, stems):
+        return sorted([(s, len(s)) for s in stems], lambda x: x[1],
+                      reverse=True)[0]
+
     def stem_word(self, word):
         signal.alarm(2)
         try:
+            stems = []
             self._process.stdin.write(word.encode(self._encoding) + "\n")
             self._process.stdin.flush()
-            res_line = self._process.stdout.readline().strip().decode(
-                self._encoding)
-            root, stem = tuple(res_line.split())
-            _ = self._process.stdout.readline()
-            signal.alarm(0)
-            return stem
+
+            while True:
+                res_line = self._process.stdout.readline().strip().decode(
+                    self._encoding)
+                if len(res_line.strip()) == 0:
+                    signal.alarm(0)
+                    return self.choose_stem(stems)
+                root, stem = tuple(res_line.split())
+                stems.append(stem)
         except Alarm:
             raise Exception(Hunspell.stem_err_msg)
 
