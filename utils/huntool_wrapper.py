@@ -494,10 +494,13 @@ class Hunspell(AbstractSubprocessClass):
             while True:
                 res_line = self._process.stdout.readline().strip().decode(
                     self._encoding)
-                if len(res_line.strip()) == 0:
+                if len(res_line) == 0:
                     signal.alarm(0)
                     return self.choose_stem(stems)
-                root, stem = tuple(res_line.split())
+                if len(res_line.split()) == 2:
+                    root, stem = tuple(res_line.split())
+                else:
+                    stem = res_line
                 stems.append(stem)
         except Alarm:
             raise Exception(Hunspell.stem_err_msg)
