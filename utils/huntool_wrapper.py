@@ -486,7 +486,10 @@ class Hunspell(AbstractSubprocessClass):
             self._process.stdin.flush()
             res_line = self._process.stdout.readline().strip().decode(
                 self._encoding)
-            root, stem = tuple(res_line.split())
+            if len(res_line.split()) == 2:
+                root, stem = tuple(res_line.split())
+            else:
+                stem = res_line
             _ = self._process.stdout.readline()
             signal.alarm(0)
             return stem
