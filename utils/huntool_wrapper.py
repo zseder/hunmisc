@@ -458,6 +458,7 @@ class Hunspell(AbstractSubprocessClass):
 
     def start(self):
         AbstractSubprocessClass.start(self)
+        signal.signal(signal.SIGALRM, alarm_handler)
         if self.mode == "analyze":
             # useless status line printed to stdout...
             _ = self._process.stdout.readline()
@@ -466,17 +467,12 @@ class Hunspell(AbstractSubprocessClass):
                 self._process.stdin.write("a\n")
                 self._process.stdin.flush()
 
-                while True:
-                    res_line = self._process.stdout.readline().strip().decode(
-                        self._encoding)
-                    if len(res_line) == 0:
-                        signal.alarm(0)
-                    if len(res_line.split()) == 2:
-                        root, stem = tuple(res_line.split())
+                signal.alarm(2)
+                self._process.stdout.readline()
+                self._process.stdout.readline()
             except Alarm:
                 raise Exception(Hunspell.stem_err_msg)
 
-        signal.signal(signal.SIGALRM, alarm_handler)
 
     def check(self, text):
         words = text.split(" ")
