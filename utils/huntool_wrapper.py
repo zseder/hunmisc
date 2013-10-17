@@ -481,8 +481,7 @@ class Hunspell(AbstractSubprocessClass):
         return new_res
 
     def choose_stem(self, stems):
-        return sorted([(s, len(s)) for s in stems], lambda x: x[1],
-                      reverse=True)[0]
+        return sorted([s for s in stems], key=lambda x: len(x))[0]
 
     def stem_word(self, word):
         signal.alarm(2)
