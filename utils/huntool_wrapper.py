@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 import re
 import logging
 import signal
+import sys
 
 from subprocess_wrapper import AbstractSubprocessClass
 from hunmisc.string.xstring import ispunct, isquot
@@ -460,6 +461,21 @@ class Hunspell(AbstractSubprocessClass):
         if self.mode == "analyze":
             # useless status line printed to stdout...
             _ = self._process.stdout.readline()
+        if self.mode == "stem":
+            try:
+                self._process.stdin.write("a\n")
+                self._process.stdin.flush()
+
+                while True:
+                    res_line = self._process.stdout.readline().strip().decode(
+                        self._encoding)
+                    if len(res_line) == 0:
+                        signal.alarm(0)
+                    if len(res_line.split()) == 2:
+                        root, stem = tuple(res_line.split())
+            except Alarm:
+                raise Exception(Hunspell.stem_err_msg)
+
         signal.signal(signal.SIGALRM, alarm_handler)
 
     def check(self, text):
@@ -502,7 +518,9 @@ class Hunspell(AbstractSubprocessClass):
                     stem = res_line
                 stems.append(stem)
         except Alarm:
-            raise Exception(Hunspell.stem_err_msg)
+            msgu = u"hunspell timeout at word {0}\n".format(word)
+            sys.stderr.write(msgu.encode("utf-8"))
+            return word
 
     def analyze(self, text):
         words = text.split(" ")
