@@ -467,9 +467,10 @@ class Hunspell(AbstractSubprocessClass):
                 self._process.stdin.write("a\n")
                 self._process.stdin.flush()
 
-                signal.alarm(2)
+                signal.alarm(5)
                 self._process.stdout.readline()
                 self._process.stdout.readline()
+                signal.alarm(0)
             except Alarm:
                 raise Exception(Hunspell.stem_err_msg)
 
