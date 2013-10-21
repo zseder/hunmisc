@@ -26,7 +26,6 @@ class Hunspell_chache_aimed(object):
         self.only_alpha = only_alpha
         if self.only_alpha is True:
             self.alpha_matcher = re.compile("[^\W\d_]+", re.UNICODE)
-        print "{0} {1} {2} {3}".format(runnable, path, cache_file, only_alpha)
         self.hunspell.start()
         
     def read_cache(self):
@@ -53,7 +52,6 @@ class Hunspell_chache_aimed(object):
                 return word
         if word in self.cached_words:
             return self.cached_words[word]
-        sys.stderr.write(word.encode('utf-8') + '\n')
         stem = self.hunspell.stem_word(word)
         self.hunspell._process.stdout.flush()
         self.cached_words[word] = stem
@@ -67,30 +65,28 @@ def get_lang_spec_path(language, info_file):
         if lang == language:
             return l.strip().split('\t')[1]
 
-def stem_line(line, hs):
-    return ' '.join([ hs.cached_stem(tok) for tok in line.strip().split(' ') ])
+def stem(text, hs):
+    return [ hs.cached_stem(tok) for line in text for tok in line.strip().split(' ')]
 
+def process_text(text, todo):
 
-def process_text(text, tokenizer, hs):
-    for tokenized_sen in tokenizer.tokenize(text.decode('utf-8')):
-        stemmed_sen = stem_line(' '.join(tokenized_sen), hs)
-        yield stemmed_sen.encode('utf-8')
+    for function in todo:
+        text = function(text)
 
-def process_wp(stream, hs, tokenizer):
+    return text  
+
+def process_wp(stream, todo):
 
     wp_page = ''
     for line in stream:
         if line.startswith('%%#PAGE'):
-            for processed_sen in process_text(wp_page, tokenizer, hs):
-                print processed_sen
+            print process_text(wp_page, todo).encode('utf-8')
             wp_page = ''
             print line.strip()
         else:
-            wp_page += line
+            wp_page += line.decode('utf-8')
 
-    for processed_sen in process_text(wp_page, tokenizer, hs):
-        print processed_sen 
-
+    print process_text(wp_page, todo).encode('utf-8')
 
 def get_tools(language, hunspell_path, hunspell_path_infos, cache):
 
@@ -101,37 +97,31 @@ def get_tools(language, hunspell_path, hunspell_path_infos, cache):
 
     return hs, tokenizer
 
-
 def process_bible(stream, hs, tokenizer):
 
     for line in stream:
-        parts = line.strip().split('\t')
+        parts = line.decode('utf-8').strip().split('\t')
         if len(parts) == 2:
             tag = parts[0]
             stemmed_sens = []
             for sen in process_text(parts[1], tokenizer, hs):
                 stemmed_sens.append(sen)
-            print "{0}\t{1}".format(tag, ' '.join(stemmed_sens))    
+            print "{0}\t{1}".format(tag, ' '.join(stemmed_sens)).encode('utf-8')    
 
-def process_wp_given_lang(stream, language, hunspell_path, hunspell_path_infos, cache):
-    
-    hs, tokenizer = get_tools(language, hunspell_path, hunspell_path_infos, cache)
-    process_wp(stream, hs, tokenizer)
-    hs.write_cache()
-
-def process_bible_given_lang(stream, language, hunspell_path, hunspell_path_infos, cache):
-    hs, tokenizer = get_tools(language, hunspell_path, hunspell_path_infos, cache)
-    process_bible(stream, hs, tokenizer)
-    hs.write_cache()
 
 def main():
+
 
     language = sys.argv[1]
     hunspell_path = sys.argv[2]
     hunspell_path_infos = sys.argv[3]
     cache_file = sys.argv[4]
-    process_wp_given_lang(sys.stdin, language, hunspell_path, hunspell_path_infos, cache_file)
-   
+    hs, tokenizer = get_tools(language, hunspell_path, hunspell_path_infos, cache_file)
+    todo = [ lambda x: "\n".join(tokenizer.sen_tokenize(x)), 
+             lambda x: "\n".join([' '.join(tokenizer.word_tokenize(line)) for line in x.split('\n')]),
+             lambda x: "\n".join([' '.join([hs.cached_stem(w) for w in l.strip().split(' ')]) for l in x.split('\n')]) ] 
+
+    process_wp(sys.stdin, todo)
 
 if __name__ == "__main__":
     main()
