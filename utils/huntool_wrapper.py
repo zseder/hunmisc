@@ -27,7 +27,7 @@ import signal
 import sys
 
 from subprocess_wrapper import AbstractSubprocessClass
-from hunmisc.string.xstring import ispunct, isquot
+from hunmisc.xstring.xstring import ispunct, isquot
 from hunmisc.corpustools.bie1_reader import parse_bie1_sentence
 
 """
