@@ -497,13 +497,14 @@ class Hunspell(AbstractSubprocessClass):
         return sorted([s for s in stems], key=lambda x: len(x))[0]
 
     def stem_word(self, word):
-        signal.alarm(1)
+        try:
+            to_send = word.encode(self._encoding)
+        except UnicodeEncodeError:
+            return word
+
+        signal.setitimer(signal.ITIMER_REAL, 0.05, 0)
         try:
             stems = []
-            try:
-                to_send = word.encode(self._encoding)
-            except UnicodeEncodeError:
-                return word
             self._process.stdin.write(to_send + "\n")
             self._process.stdin.flush()
 
@@ -511,7 +512,7 @@ class Hunspell(AbstractSubprocessClass):
                 res_line = self._process.stdout.readline().strip().decode(
                     self._encoding)
                 if len(res_line) == 0:
-                    signal.alarm(0)
+                    signal.setitimer(signal.ITIMER_REAL, 0, 0)
                     if len(stems) == 0:
                         return word
                     else:
