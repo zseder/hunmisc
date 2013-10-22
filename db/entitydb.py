@@ -121,6 +121,15 @@ class EntityDB(object):
         del self.long_entities
         cPickle.dump(self, pickle_f, 2)
 
+    def dump_to_files(self, model_name):
+        prefix_dawg_fn = model_name+'.pdawg'
+        dawg_fn = model_name+'.dawg'
+        entities_fn = model_name+'.edb'
+        with open(dawg_fn, 'wb') as dawg_fb:
+            with open(entities_fn, "w") as pickle_f:
+                with open(prefix_dawg_fn, "wb") as pd_fb:
+                    self.dump(pickle_f, dawg_fb, pd_fb)
+
     @staticmethod
     def load(pickle_f, dawg_fn, prefix_dawg_fn):
         entity_db = cPickle.load(pickle_f)
@@ -129,6 +138,21 @@ class EntityDB(object):
         entity_db.long_entities = dawg.IntDAWG()
         entity_db.long_entities.load(prefix_dawg_fn)
         return entity_db
+
+    @staticmethod
+    def load_from_files(file_name):
+        entitydb_fn = file_name+'.edb'
+        main_dawg_fn = file_name+'.dawg'
+        prefix_dawg_fn = file_name+'.pdawg'
+        return EntityDB.load(open(entitydb_fn), main_dawg_fn, prefix_dawg_fn)
+    
+    @staticmethod
+    def create_from_list(file_name):
+        db = EntityDB()
+        entity_list = (line.strip().split('\t') for line in file(file_name))
+        for entity, e_type in entity_list:
+            db.add_entity(entity, None, e_type)        
+        return db
 
     def get_type(self, name):
         if name not in self.dawg:

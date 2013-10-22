@@ -1,5 +1,5 @@
 """Installs the EntityDB module"""
-from fabric.api import local, lcd
+from fabric.api import local, lcd, cd, run
 import cliqz
 import os
 
@@ -17,4 +17,6 @@ def install_db():
 	with lcd( resource_file( '.' ) ):
 		local( 'PACKAGE={} make package'.format( pkg['local'] ) )
 	cliqz.package.install( pkg, path )
+	with cd(path):
+		run('python setup.py install')
 	return path
