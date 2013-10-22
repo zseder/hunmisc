@@ -117,11 +117,13 @@ def main():
     hunspell_path_infos = sys.argv[3]
     cache_file = sys.argv[4]
     hs, tokenizer = get_tools(language, hunspell_path, hunspell_path_infos, cache_file)
-    todo = [ lambda x: "\n".join(tokenizer.sen_tokenize(x)), 
-             lambda x: "\n".join([' '.join(tokenizer.word_tokenize(line)) for line in x.split('\n')]),
-             lambda x: "\n".join([' '.join([hs.cached_stem(w) for w in l.strip().split(' ')]) for l in x.split('\n')]) ] 
+    hs.read_cache()
+    todo =         [lambda x: "\n".join(tokenizer.sen_tokenize(x)), 
+                    lambda x: "\n".join([' '.join(tokenizer.word_tokenize(line)) for line in x.split('\n')]), 
+                    lambda x: "\n".join([' '.join([hs.cached_stem(w) for w in l.strip().split(' ')]) for l in x.split('\n')]) ] 
 
     process_wp(sys.stdin, todo)
+    hs.write_cache()
 
 if __name__ == "__main__":
     main()
