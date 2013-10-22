@@ -24,10 +24,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 import re
 import logging
 import signal
+import sys
 
 from subprocess_wrapper import AbstractSubprocessClass
-from langtools.string.xstring import ispunct, isquot
-from langtools.corpustools.bie1_reader import parse_bie1_sentence
+from hunmisc.string.xstring import ispunct, isquot
+from hunmisc.corpustools.bie1_reader import parse_bie1_sentence
 
 """
 TODO
@@ -401,13 +402,28 @@ class Hunspell(AbstractSubprocessClass):
     """wrapper for hunspell run by -a option
     result is a list of codes, see the codes below this description
     Example usage:
-        >>> from huntool_wrapper import Hunspell
-        >>> h = Hunspell(path_to_hunspell, path_to_dict_without_extension)
+        Analyzing:
+        >>> from hunmisc.utils.huntool_wrapper import Hunspell
+        >>> h = Hunspell(path_to_hunspell, path_to_dict_without_extension,
+                        mode="analyze")
         >>> h.start()
         >>> h.analyze("Ich habe keine hausaufgabe")
         [0, 0, 0, 3]
 
+        Stemming:
+        >>> from hunmisc.utils.huntool_wrapper import Hunspell
+        >>> h = Hunspell(path_to_hunspell, path_to_dict_without_extension)
+        >>> h.start()
+        >>> h.stem("asztalokkal")
+        u'asztal'
+
     """
+
+    stem_err_msg = "hunspell is blocking while using -s function because of"+\
+                " buffering. Modify pipe_interface() method in "\
+                "hunspell.cxx with fflush() stdout while stemming to make "+\
+                "this work.\n"
+
     MATCH = 0
     AFFIX = 1
     COMPOUND = 2
@@ -426,6 +442,7 @@ class Hunspell(AbstractSubprocessClass):
         elif mode == "analyze":
             o += ["-a"]
         o += ["-d",  dictpath]
+        o += ["-i",  encoding]
         self.options = o
 
     def __get_encoding(self, dictpath):
@@ -441,10 +458,22 @@ class Hunspell(AbstractSubprocessClass):
 
     def start(self):
         AbstractSubprocessClass.start(self)
+        signal.signal(signal.SIGALRM, alarm_handler)
         if self.mode == "analyze":
             # useless status line printed to stdout...
             _ = self._process.stdout.readline()
-        signal.signal(signal.SIGALRM, alarm_handler)
+        if self.mode == "stem":
+            try:
+                self._process.stdin.write("a\n")
+                self._process.stdin.flush()
+
+                signal.alarm(5)
+                self._process.stdout.readline()
+                self._process.stdout.readline()
+                signal.alarm(0)
+            except Alarm:
+                raise Exception(Hunspell.stem_err_msg)
+
 
     def check(self, text):
         words = text.split(" ")
@@ -463,6 +492,39 @@ class Hunspell(AbstractSubprocessClass):
             else:
                 new_res.append(Hunspell.INCORRECT)
         return new_res
+
+    def choose_stem(self, stems):
+        return sorted([s for s in stems], key=lambda x: len(x))[0]
+
+    def stem_word(self, word):
+        signal.alarm(1)
+        try:
+            stems = []
+            try:
+                to_send = word.encode(self._encoding)
+            except UnicodeEncodeError:
+                return word
+            self._process.stdin.write(to_send + "\n")
+            self._process.stdin.flush()
+
+            while True:
+                res_line = self._process.stdout.readline().strip().decode(
+                    self._encoding)
+                if len(res_line) == 0:
+                    signal.alarm(0)
+                    if len(stems) == 0:
+                        return word
+                    else:
+                        return self.choose_stem(stems)
+                if len(res_line.split()) == 2:
+                    root, stem = tuple(res_line.split())
+                else:
+                    stem = res_line
+                stems.append(stem)
+        except Alarm:
+            msgu = u"hunspell timeout at word {0}\n".format(word)
+            sys.stderr.write(msgu.encode("utf-8"))
+            return word
 
     def analyze(self, text):
         words = text.split(" ")
@@ -486,7 +548,6 @@ class Hunspell(AbstractSubprocessClass):
         return new_res
 
     def process_word(self, word):
-        print word
         self._process.stdin.write("\n" + word.encode(self._encoding) + "\n")
         self._process.stdin.flush()
 
@@ -495,7 +556,6 @@ class Hunspell(AbstractSubprocessClass):
         try:
             res_line = self._process.stdout.readline().strip().decode(
                 self._encoding)
-            print res_line
             signal.alarm(0)
         except Alarm:
             yield Hunspell.TIMEOUT

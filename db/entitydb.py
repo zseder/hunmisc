@@ -21,6 +21,11 @@ class EntityDB(object):
     def add_to_keep_list(self, to_keep):
         self.to_keep = set(to_keep)
 
+    def __init_cache(self, source):
+        self.caches[source] = cache.init_cache(source)
+        self.source_indices[source] = len(self.source_indices)
+        self.source_names.append(source)
+
     def __init_caches(self, sources):
         self.caches = {}
         self.source_indices = {}
@@ -30,9 +35,9 @@ class EntityDB(object):
             sources = []
 
         for source in sources:
-            self.caches[source] = cache.init_cache(source)
-            self.source_indices[source] = len(self.source_indices)
-            self.source_names.append(source)
+            self.__init_cache(source)
+
+        self.value_cache = cache.DictValueCache()
 
     def add_entity(self, entity, data, src):
         entity = entity.lower()
@@ -44,9 +49,13 @@ class EntityDB(object):
             self.d[entity] = len(self.values)
             self.values.append(set())
 
+        if src not in self.caches:
+            self.__init_cache(src)
+
         compact_value = self.caches[src].store(data)
-        self.values[self.d[entity]].add(
-            (self.source_indices[src], compact_value))
+        compact_pair = self.value_cache.store((self.source_indices[src], 
+                                               compact_value))
+        self.values[self.d[entity]].add(compact_pair)
 
         es = entity.split()
         if len(es) > self.max_l:
@@ -76,7 +85,7 @@ class EntityDB(object):
                       if vi not in to_del]
 
     def finalize_long_entities(self):
-        logging.info("Creating prefix trie...")
+        logging.info("Creating prefix dawg...")
         self.long_values = {}
         self.long_entities = dawg.IntDAWG(
             (p, self.long_values.setdefault(frozenset(full), 
@@ -89,6 +98,7 @@ class EntityDB(object):
     def finalize(self):
         for cache in self.caches.itervalues():
             cache.finalize()
+        self.value_cache.finalize()
 
         logging.info("Finalizing values...")
         self.finalize_values()
@@ -127,7 +137,8 @@ class EntityDB(object):
             value_index = self.dawg[name]
             res = []
             values = self.values[value_index]
-            for src, value in values:
+            for value_cache_index in values:
+                src, value = self.value_cache.get(value_cache_index)
                 src = self.source_names[src]
                 res.append((src, self.caches[src].get(value)))
             return res
