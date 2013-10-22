@@ -21,6 +21,11 @@ class EntityDB(object):
     def add_to_keep_list(self, to_keep):
         self.to_keep = set(to_keep)
 
+    def __init_cache(self, source):
+        self.caches[source] = cache.init_cache(source)
+        self.source_indices[source] = len(self.source_indices)
+        self.source_names.append(source)
+
     def __init_caches(self, sources):
         self.caches = {}
         self.source_indices = {}
@@ -30,9 +35,7 @@ class EntityDB(object):
             sources = []
 
         for source in sources:
-            self.caches[source] = cache.init_cache(source)
-            self.source_indices[source] = len(self.source_indices)
-            self.source_names.append(source)
+            self.__init_cache(source)
 
         self.value_cache = cache.DictValueCache()
 
@@ -45,6 +48,9 @@ class EntityDB(object):
         if not entity in self.d:
             self.d[entity] = len(self.values)
             self.values.append(set())
+
+        if src not in self.caches:
+            self.__init_cache(src)
 
         compact_value = self.caches[src].store(data)
         compact_pair = self.value_cache.store((self.source_indices[src], 
