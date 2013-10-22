@@ -468,11 +468,12 @@ class Hunspell(AbstractSubprocessClass):
                 self._process.stdin.flush()
 
                 signal.alarm(5)
-                self._process.stdout.readline()
+                self.a_line = self._process.stdout.readline()
                 self._process.stdout.readline()
                 signal.alarm(0)
             except Alarm:
                 raise Exception(Hunspell.stem_err_msg)
+        self.stuck = False
 
 
     def check(self, text):
@@ -496,13 +497,32 @@ class Hunspell(AbstractSubprocessClass):
     def choose_stem(self, stems):
         return sorted([s for s in stems], key=lambda x: len(x))[0]
 
+    def clear_process_output(self):
+        while True:
+            signal.setitimer(signal.ITIMER_REAL, 0.05, 0)
+            try:
+                res_line = self._process.stdout.readline()
+                sys.stderr.write(repr(res_line))
+                if res_line == self.a_line:
+                    self.stuck = False
+                    # final empty after a
+                    self._process.stdout.readline()
+                    sys.stderr.write("Stuck cleared.\n")
+                    signal.setitimer(signal.ITIMER_REAL, 0, 0)
+                    break
+            except Alarm:
+                pass
+    
     def stem_word(self, word):
         try:
             to_send = word.encode(self._encoding)
         except UnicodeEncodeError:
             return word
 
-        signal.setitimer(signal.ITIMER_REAL, 0.05, 0)
+        if self.stuck:
+            self.clear_process_output()
+
+        signal.setitimer(signal.ITIMER_REAL, 0.15, 0)
         try:
             stems = []
             self._process.stdin.write(to_send + "\n")
@@ -525,6 +545,9 @@ class Hunspell(AbstractSubprocessClass):
         except Alarm:
             msgu = u"hunspell timeout at word {0}\n".format(word)
             sys.stderr.write(msgu.encode("utf-8"))
+            self._process.stdin.write("a\n")
+            self._process.stdin.flush()
+            self.stuck = True
             return word
 
     def analyze(self, text):
