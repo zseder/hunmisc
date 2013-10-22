@@ -48,24 +48,32 @@ class NltkTools:
     _cleanerPattern = re.compile("(\w\w)([.?,:;!])(\w)(\w)", re.UNICODE)
 
     def __init__(self, tok=False, wtok=False, stok=False, pos=False, stem=False,
-                 pos_model=None, abbrev_set=None):
+                 pos_model=None, abbrev_set=None, stok_model = None):
         """@param abbrev_set: a set of frequent abbreviations."""
         if tok:
             wtok = True
             stok = True
-            
+
         if wtok:
             self.wordTokenizer = PunktWordTokenizer()
             #self.punktSplitter = re.compile(r"^([\w\d]+)([.?,:;!])$", re.UNICODE)
             self.punktSplitter = re.compile(r"^(.+)([.?,:;!])$", re.UNICODE)
             # Bragantino,2006.In fix this shit
         if stok:
-            try:
-                self.senTokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
-            except LookupError:
-                sys.stderr.write("WARNING: english tokenizer cannot be loaded, nltk.data does not contain in!")
-                sys.stderr.write("WARNING: using an untrained sen_tokenizer")
-                self.senTokenizer = PunktSentenceTokenizer()
+            if stok_model is not None:
+                try:
+                   self.senTokenizer = stok_model
+                except LookupError:
+                    sys.stderr.write("WARNING: tokenizer cannot be loaded")
+                    sys.stderr.write("WARNING: using an untrained sen_tokenizer")
+                    self.senTokenizer = PunktSentenceTokenizer()
+            else:        
+                try:
+                    self.senTokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+                except LookupError:
+                    sys.stderr.write("WARNING: english tokenizer cannot be loaded, nltk.data does not contain in!")
+                    sys.stderr.write("WARNING: using an untrained sen_tokenizer")
+                    self.senTokenizer = PunktSentenceTokenizer()
         
         self.abbrev_set = (set(abbrev_set) if abbrev_set is not None else set())
         
