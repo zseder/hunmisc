@@ -10,6 +10,7 @@ def resource_file( name ):
 def install_db():
 	path = '/opt/hunmisc'
 	cliqz.log_action('Installing Entity DB')
+	cliqz.cli.system_package('build-essential', 'python-dev')
 	cliqz.cli.python_package('dawg')
 	pkg = cliqz.package.gen_definition()
 	pkg['strip'] = 1
