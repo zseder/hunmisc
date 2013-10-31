@@ -499,6 +499,8 @@ class Hunspell(AbstractSubprocessClass):
 
     def clear_process_output(self):
         while True:
+            self._process.stdin.write("a\n")
+            self._process.stdin.flush()
             signal.setitimer(signal.ITIMER_REAL, 0.05, 0)
             try:
                 res_line = self._process.stdout.readline()
@@ -522,31 +524,36 @@ class Hunspell(AbstractSubprocessClass):
         if self.stuck:
             self.clear_process_output()
 
-        signal.setitimer(signal.ITIMER_REAL, 0.15, 0)
+        signal.setitimer(signal.ITIMER_REAL, 0.25, 0)
         try:
             stems = []
             self._process.stdin.write(to_send + "\n")
             self._process.stdin.flush()
+            have_final_results = False
 
             while True:
                 res_line = self._process.stdout.readline().strip().decode(
                     self._encoding)
                 if len(res_line) == 0:
-                    signal.setitimer(signal.ITIMER_REAL, 0, 0)
-                    if len(stems) == 0:
-                        return word
-                    else:
-                        return self.choose_stem(stems)
+                    if have_final_results:
+                        signal.setitimer(signal.ITIMER_REAL, 0, 0)
+                        if len(stems) == 0:
+                            return word
+                        else:
+                            return self.choose_stem(stems)
+
                 if len(res_line.split()) == 2:
                     root, stem = tuple(res_line.split())
+                    if root == word[-len(root):]:
+                        have_final_results = True
                 else:
                     stem = res_line
+                    if stem == word[-len(stem):]:
+                        have_final_results = True
                 stems.append(stem)
         except Alarm:
             msgu = u"hunspell timeout at word {0}\n".format(word)
             sys.stderr.write(msgu.encode("utf-8"))
-            self._process.stdin.write("a\n")
-            self._process.stdin.flush()
             self.stuck = True
             return word
 
