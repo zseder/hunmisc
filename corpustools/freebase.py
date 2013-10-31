@@ -84,6 +84,17 @@ def get_variant_names(info_dict):
             
     return vn    
 
+def get_aliases(info_dict):
+
+    aliases = []
+    for string in info_dict['ns:common.topic.alias']:
+        name_string, lang_string = '@'.join(string.split('@')[:-1]), string.split('@')[-1]
+        lang = lang_string[:-1]
+        name = unescape(name_string)
+        aliases.append((name.decode('utf-8'), lang))    
+
+    return aliases
+
 
 
 def parse(file_handler):
@@ -92,9 +103,10 @@ def parse(file_handler):
         freebase_domains = get_domains(info_dict)       
         if freebase_domains != None:
             variant_names = get_variant_names(info_dict)
+            aliases = get_aliases(info_dict)
             for var in variant_names:
                 lang_list = variant_names[var]
-                yield var.decode('utf-8'), lang_list, freebase_domains
+                yield var.decode('utf-8'), lang_list, freebase_domains, aliases 
 
 
 def main():
