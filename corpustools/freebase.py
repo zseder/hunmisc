@@ -146,15 +146,15 @@ def local_parse(info_dict):
 
 def get_notable(type_name_dict, type_domain_dict, domain_name_dict, info_dict, freebase_code):
     if 'ns:common.topic.notable_types' not in info_dict:
-        notable_type = 'not_found'
-        notable_domain = 'not_found'
+        notable_type = 'not found'
+        notable_domain = 'not found'
 
     else:
         #looks for notable type
         notable_type_code = info_dict['ns:common.topic.notable_types'][0][:-1] 
 
         if notable_type_code not in type_name_dict:
-            notable_type = 'not_found'
+            notable_type = 'not found'
             sys.stderr.write('notable_type_code:{0} of entity {1} not in type_name_dict\n'.format(notable_type_code,
                                                                                                   freebase_code))
 
@@ -164,7 +164,7 @@ def get_notable(type_name_dict, type_domain_dict, domain_name_dict, info_dict, f
         #looks for notable domain
 
         if notable_type_code not in type_domain_dict:
-            notable_domain = 'not_found'
+            notable_domain = 'not found'
             sys.stderr.write('notable_type_code:{0} of entity {1} not in type_domain_dict\n'.format(notable_type_code,
                                                                                                     freebase_code))
 
@@ -173,20 +173,25 @@ def get_notable(type_name_dict, type_domain_dict, domain_name_dict, info_dict, f
             notable_domain_code_dotted = type_domain_dict[notable_type_code]
             notable_domain_code = notable_domain_code_dotted[:-1]
             if notable_domain_code not in domain_name_dict:
-                notable_domain = 'not_found'
+                notable_domain = 'not found'
                 sys.stderr.write('notable_domain_code:{0} of entity {1} not in domain_name_dict\n'.format(notable_domain_code, 
                                                                                                           freebase_code))
             else:
                 notable_domain = domain_name_dict[notable_domain_code]
     return notable_type, notable_domain    
 
+def formatize(string):
+    return string.lower().replace('_', ' ')
 
 
-def parse_with_noteble(file_handler, names_of_types, domains_of_types, names_of_domains):
+
+def parse_with_noteble(file_handler, names_of_types, domains_of_types, names_of_domains, classes_of_types):
     
     type_name_dict = get_dict(names_of_types)
     type_domain_dict = get_dict(domains_of_types)
     domain_name_dict = get_dict(names_of_domains)
+    type_class_dict = get_dict(classes_of_types)
+
 
     for item in generate_object_dicts(file_handler):
         freebase_code, info_dict = item
@@ -197,21 +202,27 @@ def parse_with_noteble(file_handler, names_of_types, domains_of_types, names_of_
             notable_type, notable_domain = get_notable(type_name_dict, type_domain_dict,\
                                                        domain_name_dict, info_dict, freebase_code)
 
-            if notable_type == 'not_found':
+            if notable_type == 'not found':
                 notable_type = freebase_types[0]
 
-            if notable_domain == 'not_found':
+            if notable_domain == 'not found':
                 notable_domain = freebase_domains[0]
 
-            #for item in lista:
-            #    variant, lang_list, freebase_domains, freebase_types,  aliases = item
-            #    yield variant, lang_list, freebase_domains, freebase_types, aliases,\
-            #        freebase_code, notable_type, notable_domain
             _, lang_list, freebase_domains, freebase_types,  aliases = lista[0]
             english_name = get_english_name(info_dict)
+             
+            notable_type_formatted = formatize(notable_type)
+            notable_domain_formatted = formatize(notable_domain)
+
+            if notable_type_formatted in type_class_dict:
+                category = type_class_dict[notable_type_formatted]
+
+            else:
+                category = 'not categorized'
+            
 
             yield english_name, lang_list, freebase_domains, freebase_types,\
-                        aliases, freebase_code, notable_type, notable_domain    
+                  aliases, freebase_code, notable_type_formatted, notable_domain_formatted, category
 
 
 def get_type_names(file_handler):
@@ -245,14 +256,15 @@ def main():
     names_of_types = open(sys.argv[1])
     domains_of_types = open(sys.argv[2])
     names_of_domains = open(sys.argv[3])
+    classes_of_types = open(sys.argv[4])
 
     #for item in parse(file_handler, open(sys.argv[1])):
     #    named_entity, lang_list, domain_list, aliases, freebase_code, notable_type = item
     #    print named_entity.encode('utf-8') + '\t' + ' '.join(lang_list) + '\t' + ' '.join(domain_list) + '\t' + ' '.join([a.encode('utf-8') for b in aliases for a in b]) + '\t' + freebase_code + '\t' + notable_type
     
-    for item in parse_with_noteble(file_handler, names_of_types, domains_of_types, names_of_domains):
-        english_name, _, _, _, _, freebase_code, notable_type, notable_domain = item
-        print "{0}\t{1}\t{2}\t{3}".format(english_name, freebase_code, notable_type, notable_domain)
+    for item in parse_with_noteble(file_handler, names_of_types, domains_of_types, names_of_domains, classes_of_types):
+        english_name, _, _, _, _, freebase_code, notable_type, notable_domain, category = item
+        print "{0}\t{1}\t{2}\t{3}".format(english_name, freebase_code, notable_type, category)
 
     file_handler.close()
 if __name__ == "__main__":
