@@ -1,6 +1,6 @@
 diff -u ../../../1/liblinear-1.93/python/liblinear.py ./liblinear.py
 --- ../../../1/liblinear-1.93/python/liblinear.py	2013-01-21 19:03:19.000000000 +0100
-+++ ./liblinear.py	2013-11-12 18:45:37.883652443 +0100
++++ ./liblinear.py	2013-11-12 18:54:09.080091110 +0100
 @@ -10,7 +10,7 @@
  	if sys.platform == 'win32':
  		liblinear = CDLL(path.join(dirname, r'..\windows\liblinear.dll'))
@@ -79,16 +79,16 @@ diff -u ../../../1/liblinear-1.93/python/liblinear.py ./liblinear.py
 +	def __init_raw__(self, bias):
 +		self.bias = bias
 +		self.x_space = []
-+		self.y = []
++		self.y_ = []
 +	
 +	def add_event(self, y, x):
 +		tmp_xi, tmp_idx = gen_feature_nodearray(x)
 +		self.x_space += [tmp_xi]
 +		self.max_idx = max(self.max_idx, tmp_idx)
-+		self.y += y
++		self.y_ += y
 +	
 +	def finish(self):
-+		self.l = len(self.y)
++		self.l = len(self.y_)
 +		self.n = self.max_idx
  		self.y = (c_double * l)()
  		for i, yi in enumerate(y): self.y[i] = y[i]
