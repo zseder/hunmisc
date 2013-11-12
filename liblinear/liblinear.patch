@@ -1,6 +1,6 @@
 diff -u ../../../1/liblinear-1.93/python/liblinear.py ./liblinear.py
 --- ../../../1/liblinear-1.93/python/liblinear.py	2013-01-21 19:03:19.000000000 +0100
-+++ ./liblinear.py	2013-11-12 18:59:08.548090791 +0100
++++ ./liblinear.py	2013-11-12 19:02:43.312115579 +0100
 @@ -10,7 +10,7 @@
  	if sys.platform == 'win32':
  		liblinear = CDLL(path.join(dirname, r'..\windows\liblinear.dll'))
@@ -84,9 +84,9 @@ diff -u ../../../1/liblinear-1.93/python/liblinear.py ./liblinear.py
 +	
 +	def add_event(self, y, x):
 +		tmp_xi, tmp_idx = gen_feature_nodearray(x)
-+		self.x_space += [tmp_xi]
++		self.x_space.append(tmp_xi)
 +		self.max_idx = max(self.max_idx, tmp_idx)
-+		self.y_ += y
++		self.y_.append(y)
 +	
 +	def finish(self):
 +		self.l = len(self.y_)
