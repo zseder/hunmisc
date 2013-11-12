@@ -1,6 +1,6 @@
 diff -u ../../../1/liblinear-1.93/python/liblinear.py ./liblinear.py
 --- ../../../1/liblinear-1.93/python/liblinear.py	2013-01-21 19:03:19.000000000 +0100
-+++ ./liblinear.py	2013-11-12 18:54:09.080091110 +0100
++++ ./liblinear.py	2013-11-12 18:59:08.548090791 +0100
 @@ -10,7 +10,7 @@
  	if sys.platform == 'win32':
  		liblinear = CDLL(path.join(dirname, r'..\windows\liblinear.dll'))
@@ -48,7 +48,7 @@ diff -u ../../../1/liblinear-1.93/python/liblinear.py ./liblinear.py
  
  	if feature_max:
  		assert(isinstance(feature_max, int))
-@@ -79,20 +101,35 @@
+@@ -79,20 +101,36 @@
  	_types = [c_int, c_int, POINTER(c_double), POINTER(POINTER(feature_node)), c_double]
  	_fields_ = genFields(_names, _types)
  
@@ -80,6 +80,7 @@ diff -u ../../../1/liblinear-1.93/python/liblinear.py ./liblinear.py
 +		self.bias = bias
 +		self.x_space = []
 +		self.y_ = []
++		self.max_idx = 0
 +	
 +	def add_event(self, y, x):
 +		tmp_xi, tmp_idx = gen_feature_nodearray(x)
@@ -93,7 +94,7 @@ diff -u ../../../1/liblinear-1.93/python/liblinear.py ./liblinear.py
  		self.y = (c_double * l)()
  		for i, yi in enumerate(y): self.y[i] = y[i]
  
-@@ -100,6 +137,7 @@
+@@ -100,6 +138,7 @@
  		for i, xi in enumerate(self.x_space): self.x[i] = xi
  
  		self.set_bias(bias)
