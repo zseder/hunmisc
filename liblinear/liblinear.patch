@@ -1,6 +1,6 @@
 diff -u ../../../1/liblinear-1.93/python/liblinear.py ./liblinear.py
 --- ../../../1/liblinear-1.93/python/liblinear.py	2013-01-21 19:03:19.000000000 +0100
-+++ ./liblinear.py	2013-11-13 10:37:33.602761924 +0100
++++ ./liblinear.py	2013-11-13 10:41:09.499241726 +0100
 @@ -10,7 +10,7 @@
  	if sys.platform == 'win32':
  		liblinear = CDLL(path.join(dirname, r'..\windows\liblinear.dll'))
@@ -96,7 +96,8 @@ diff -u ../../../1/liblinear-1.93/python/liblinear.py ./liblinear.py
 +		self.y = (c_double * self.l)()
 +		for i, yi in enumerate(self.y_): self.y[i] = yi
  
- 		self.x = (POINTER(feature_node) * l)() 
+-		self.x = (POINTER(feature_node) * l)() 
++		self.x = (POINTER(feature_node) * self.l)() 
  		for i, xi in enumerate(self.x_space): self.x[i] = xi
  
  		self.set_bias(bias)
