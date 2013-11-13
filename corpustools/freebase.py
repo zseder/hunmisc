@@ -230,19 +230,20 @@ def parse_notable_fors(file_handler, code_to_notable_code, names_of_types):
 
     for item in generate_object_dicts(file_handler):
         freebase_code, info_dict = item
-        notable_for = info_dict.get('ns:common.topic.notable_for', [''])[0]
-        types, proper_types = get_all_types(info_dict)
+        if 'ns:common.topic.' in info_dict['ns:type.object.type']:
+            notable_for = info_dict.get('ns:common.topic.notable_for', [''])[0]
+            types, proper_types = get_all_types(info_dict)
         
-        english_name = get_name(info_dict, 'en')
-        if notable_for == '':
-            notable_for_str = get_relev_type(info_dict)
-            sys.stderr.write('no notable for to this entity\n')
-        else:
-            notable_for_str = get_notable_name(notable_for, type_name_dict, code_to_notable_code_dict)
-            if notable_for_str == None:
-                sys.stderr.write('{0}\n'.format(freebase_code))
+            english_name = get_name(info_dict, 'en')
+            if notable_for == '':
                 notable_for_str = get_relev_type(info_dict)
-        yield freebase_code, english_name, notable_for_str        
+                sys.stderr.write('no notable for to this entity\n')
+            else:
+                notable_for_str = get_notable_name(notable_for, type_name_dict, code_to_notable_code_dict)
+                if notable_for_str == None:
+                    sys.stderr.write('{0}\n'.format(freebase_code))
+                    notable_for_str = get_relev_type(info_dict)
+            yield freebase_code, english_name, notable_for_str        
                  
 
 
