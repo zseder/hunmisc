@@ -1,6 +1,78 @@
-diff -u ../../../1/liblinear-1.93/python/liblinear.py ./liblinear.py
---- ../../../1/liblinear-1.93/python/liblinear.py	2013-01-21 19:03:19.000000000 +0100
-+++ ./liblinear.py	2013-11-13 10:47:58.251263630 +0100
+diff -u -r ../../1/liblinear-1.93//Makefile ./Makefile
+--- ../../1/liblinear-1.93//Makefile	2012-04-11 20:38:27.000000000 +0200
++++ ./Makefile	2013-11-19 17:41:11.381163546 +0100
+@@ -1,6 +1,6 @@
+ CXX ?= g++
+ CC ?= gcc
+-CFLAGS = -Wall -Wconversion -O3 -fPIC
++CFLAGS = -Wall -Wconversion -O3 -fPIC -fopenmp
+ LIBS = blas/blas.a
+ SHVER = 1
+ OS = $(shell uname)
+diff -u -r ../../1/liblinear-1.93//linear.cpp ./linear.cpp
+--- ../../1/liblinear-1.93//linear.cpp	2012-10-28 17:46:32.000000000 +0100
++++ ./linear.cpp	2013-11-19 17:41:59.073162764 +0100
+@@ -2369,27 +2369,36 @@
+ 			}
+ 			else
+ 			{
+-				model_->w=Malloc(double, w_size*nr_class);
+-				double *w=Malloc(double, w_size);
+-				for(i=0;i<nr_class;i++)
+-				{
+-					int si = start[i];
+-					int ei = si+count[i];
+-
+-					k=0;
+-					for(; k<si; k++)
+-						sub_prob.y[k] = -1;
+-					for(; k<ei; k++)
+-						sub_prob.y[k] = +1;
+-					for(; k<sub_prob.l; k++)
+-						sub_prob.y[k] = -1;
+-
+-					train_one(&sub_prob, param, w, weighted_C[i], param->C);
+-
+-					for(int j=0;j<w_size;j++)
+-						model_->w[j*nr_class+i] = w[j];
+-				}
+-				free(w);
++                model_->w=Malloc(double, w_size*nr_class);
++#pragma omp parallel for private(i) 
++                for(i=0;i<nr_class;i++)
++                {
++                    problem sub_prob_omp;
++                    sub_prob_omp.l = l;
++                    sub_prob_omp.n = n;
++                    sub_prob_omp.x = x;
++                    sub_prob_omp.y = Malloc(double,l);
++
++                    int si = start[i];
++                    int ei = si+count[i];
++
++                    double *w=Malloc(double, w_size);
++
++                    int t=0;
++                    for(; t<si; t++)
++                        sub_prob_omp.y[t] = -1;
++                    for(; t<ei; t++)
++                        sub_prob_omp.y[t] = +1;
++                    for(; t<sub_prob_omp.l; t++)
++                        sub_prob_omp.y[t] = -1;
++
++                    train_one(&sub_prob_omp, param, w, weighted_C[i], param->C);
++
++                    for(int j=0;j<w_size;j++)
++                        model_->w[j*nr_class+i] = w[j];
++                    free(sub_prob_omp.y);
++                    free(w);
++                }
+ 			}
+ 
+ 		}
+diff -u -r ../../1/liblinear-1.93//python/liblinear.py ./python/liblinear.py
+--- ../../1/liblinear-1.93//python/liblinear.py	2013-01-21 19:03:19.000000000 +0100
++++ ./python/liblinear.py	2013-11-13 10:47:58.251263630 +0100
 @@ -10,7 +10,7 @@
  	if sys.platform == 'win32':
  		liblinear = CDLL(path.join(dirname, r'..\windows\liblinear.dll'))
