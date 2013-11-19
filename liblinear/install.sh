@@ -4,7 +4,7 @@ tar xzvf liblinear.tar.gz
 mv liblinear-* liblinear
 cd liblinear
 make
-patch < ../liblinear.patch
+patch -p0 < ../liblinear.patch
 cd python
 make
 mv *py ../../
