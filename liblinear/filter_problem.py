@@ -10,7 +10,7 @@ def filter_fs(problem_f_handler, not_needed_list, orig_num_fname,
     
     orig_new_nums = {}
     new_num_fname = {}
-    max_new_value = -1 
+    max_new_value = 0 
     not_needed_feats = set(not_needed_list)
     for l in problem_f_handler:
         needed_data = []
@@ -22,7 +22,7 @@ def filter_fs(problem_f_handler, not_needed_list, orig_num_fname,
                 if index not in orig_new_nums:    
                     max_new_value += 1
                     orig_new_nums[index] = max_new_value
-                    new_num_fname[index] = orig_num_fname[index]
+                    new_num_fname[max_new_value] = orig_num_fname[index]
                 needed_data.append('{0}:{1}'.format(orig_new_nums[index],
                     value))    
         a.write('{0}\n'.format(' '.join(needed_data)))            
