@@ -1,3 +1,4 @@
+# coding=utf-8
 """
 Copyright 2011-13 Attila Zseder
 Email: zseder@gmail.com
@@ -19,9 +20,6 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
-
-
-# coding: utf-8
 
 # KR kódok beolvasása, a megfelelõ memóriareprezentációk megépítése.
 
