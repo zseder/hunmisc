@@ -102,8 +102,7 @@ def add_unambig_freebase(freebase_unambig_types_f, entity_db):
                 entity_db.add_entity(k, (t, l), "freebase_unambig")
 
 def main():
-    entity_db = EntityDB(["freebase", "dbpedia", "geonames",
-                         "german_wikt_defined", "german_wikt_undefined"])
+    entity_db = EntityDB()
     freebase_notable_types_f = sys.argv[1]
     dbpedia_en_f = sys.argv[2]
     dbpedia_de_f = sys.argv[3]
