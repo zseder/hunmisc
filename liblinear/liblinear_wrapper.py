@@ -55,9 +55,9 @@ class LiblinearWrapper(object):
         logging.info("cutoff done")
 
     def save_problem(self, ofn):
-        f = open('{0}.problem'.format(ofn))
+        f = open('{0}.problem'.format(ofn), 'w')
         for i in xrange(len(self.problem.y_)):
-            ofn.write("{0} {1}\n".format(
+            f.write("{0} {1}\n".format(
                 self.problem.y_[i],
                 " ".join("{0}:{1}".format(f.index, f.value) for f in 
                 sorted(self.problem.x_space[i], key=lambda x: x.index)[2:])))
@@ -74,7 +74,7 @@ class LiblinearWrapper(object):
         if gold:
             gold_int_labels = [self.class_cache[g] for g in gold]
         else:
-            gold_int_labels = [0 for i in xrange(features)]
+            gold_int_labels = [0 for i in xrange(len(features))]
         p_labels, _, _ = predict(gold_int_labels, int_features, self.model, '-b 1')
         
         d = dict([(v, k) for k, v in self.class_cache.iteritems()])
