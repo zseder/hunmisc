@@ -1,6 +1,7 @@
-
+import logging
 from hunmisc.liblinear.liblinearutil import problem, predict, load_model, \
-        train, parameter, save_model
+        train, parameter
+from collections import defaultdict
 
 class LiblinearWrapper(object):
     def __init__(self):
@@ -56,7 +57,7 @@ class LiblinearWrapper(object):
     def save_problem(self, ofn):
         f = open('{0}.problem'.format(ofn))
         for i in xrange(len(self.problem.y_)):
-            of.write("{0} {1}\n".format(
+            ofn.write("{0} {1}\n".format(
                 self.problem.y_[i],
                 " ".join("{0}:{1}".format(f.index, f.value) for f in 
                 sorted(self.problem.x_space[i], key=lambda x: x.index)[2:])))
@@ -80,7 +81,7 @@ class LiblinearWrapper(object):
         return [d[int(label)] for label in p_labels]
     
     def save_labels(self, ofn):
-        l_fm = open('{0}.labelNumbers'.format(ofn), 'w')
+        l_fn = open('{0}.labelNumbers'.format(ofn), 'w')
         for i in self.class_cache:
             l_fn.write('{0}\t{1}\n'.format(i, self.class_cache[i]))  
         l_fn.close()   
@@ -93,7 +94,7 @@ class LiblinearWrapper(object):
      
     @staticmethod 
     def load(ifn):
-        ed = EntityDisambig()
+        ed = LiblinearWrapper()
         ed.class_cache = dict([(l.strip().split('\t')[0], 
             int(l.strip().split('\t')[1])) 
             for l in open('{0}.labelNumbers'.format(ifn))])
