@@ -35,8 +35,9 @@ class LiblinearWrapper(object):
 
     def choose(self, n):
         counts = {}
-        for x in self.problem.x_space:
-            for f, _ in x:
+        for xi in xrange(len(self.problem.x_space)):
+            for fi in xrange(len(self.problem.x_space[xi])):
+                f = self.problem.x_space[xi][fi].index
                 counts[f] = 1 + counts.get(f, 0)
         to_remove = set([f for f, c in counts.iteritems() if c < n])
         return to_remove
