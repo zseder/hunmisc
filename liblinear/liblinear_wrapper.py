@@ -33,25 +33,24 @@ class LiblinearWrapper(object):
         y_int = self.class_cache.setdefault(y, len(self.class_cache))
         self.problem.add_event(y_int, x_int)
 
+    def choose(self, n):
+        counts = {}
+        for x in self.problem.x_space:
+            for f, _ in x:
+                counts[f] = 1 + counts.get(f, 0)
+        to_remove = set([f for f, c in counts.iteritems() if c < n])
+        return to_remove
+
     def cutoff(self, n=10):
         logging.info("Running global cutoff with n={0}".format(n))
-        fcounts = defaultdict(int)
-        for feats in self.X:
-            for feat in feats.iterkeys():
-                fcounts[feat] += 1
-
-        min_n = set([feat for feat, count in fcounts.iteritems() if count >=n])
-        filtered_X = []
-        filtered_Y = []
-        for i in xrange(len(self.X)):
-            x = self.X[i]
-            xfeats = list(set([f for f in x.keys() if f in min_n]))
-            if len(xfeats) > 0:
-                filtered_Y.append(self.Y[i])
-                filtered_x = dict([(f, 1) for f in xfeats])
-                filtered_X.append(filtered_x)
-        self.X = filtered_X
-        self.Y = filtered_Y
+        to_remove = self.choose(n)
+        new_feat_cache = {}
+        renumbering = {}
+        for feat in self.feat_cache:
+            if feat not in to_remove:
+                new_feat_cache[feat] = len(new_feat_cache) + 1
+            renumbering[feat] = new_feat_cache[feat]
+        self.problem.remove(to_remove, renumbering)
         logging.info("cutoff done")
 
     def save_problem(self, ofn):
