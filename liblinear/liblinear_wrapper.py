@@ -50,8 +50,9 @@ class LiblinearWrapper(object):
         for feat in self.feat_cache:
             if feat not in to_remove:
                 new_feat_cache[feat] = len(new_feat_cache) + 1
-            renumbering[feat] = new_feat_cache[feat]
+                renumbering[self.feat_cache[feat]] = new_feat_cache[feat]
         self.problem.remove(to_remove, renumbering)
+        self.feat_cahce = new_feat_cache
         logging.info("cutoff done")
 
     def save_problem(self, ofn):
