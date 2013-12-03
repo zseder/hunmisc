@@ -81,7 +81,7 @@ diff -u -r ../../1/liblinear-1.93//linear.cpp ./linear.cpp
  		}
 diff -u -r ../../1/liblinear-1.93//python/liblinear.py ./python/liblinear.py
 --- ../../1/liblinear-1.93//python/liblinear.py	2013-01-21 19:03:19.000000000 +0100
-+++ ./python/liblinear.py	2013-12-03 12:34:58.129820480 +0100
++++ ./python/liblinear.py	2013-12-03 12:37:01.217206944 +0100
 @@ -10,7 +10,7 @@
  	if sys.platform == 'win32':
  		liblinear = CDLL(path.join(dirname, r'..\windows\liblinear.dll'))
@@ -194,7 +194,7 @@ diff -u -r ../../1/liblinear-1.93//python/liblinear.py ./python/liblinear.py
 +			# go through features (except bias (<-xrange(1,))),
 +			# and renumber kept features
 +			new_x = dict([renumbering[x[fi].index]
-+				for fi in xrange(1, len(x)) if x[fi].index not in to_remove])
++				for fi in xrange(len(x) - 2) if x[fi].index not in to_remove])
 +			new_x, new_tmp_max = gen_feature_nodearray(new_x)
 +			new_max = max(new_max, new_tmp_max)
 +			self.x_space[xi] = new_x
