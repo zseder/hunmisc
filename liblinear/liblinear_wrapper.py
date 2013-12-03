@@ -74,7 +74,7 @@ class LiblinearWrapper(object):
             gold_int_labels = [self.class_cache[g] for g in gold]
         else:
             gold_int_labels = [0 for i in xrange(len(features))]
-        p_labels, _, _ = predict(gold_int_labels, int_features, self.model, '-b 1')
+        p_labels, _, p_vals = predict(gold_int_labels, int_features, self.model, '-b 1')
         
         d = dict([(v, k) for k, v in self.class_cache.iteritems()])
         return [d[int(label)] for label in p_labels]
@@ -141,7 +141,9 @@ def get_feat_weights(fn):
     while l:
         l = model_fh.readline()
         data = l.strip().split(' ')
+        if len(data) < 2:
+            continue
         for j, d in enumerate(data):
-            fw[i][j] = d   
+            fw[i][j] = float(d)
         i += 1
     return fw
