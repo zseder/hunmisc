@@ -7,7 +7,7 @@ class LiblinearWrapper(object):
     def __init__(self):
         self.class_cache = {}
         self.feat_cache = {}
-        self.liblin_params = "-s 0 -c 1"
+        self.liblin_params = "-s 6 -c 1"
         self.problem = problem()
 
     def create_from_file(self, f):
