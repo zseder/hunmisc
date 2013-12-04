@@ -18,7 +18,7 @@ class Hunspell_chache_aimed(object):
     def __init__(self, runnable, path, cache_file, only_alpha=False):
         
         self.hunspell = Hunspell(runnable, path)
-        self._cache = open(cache_file, 'a+')
+        self._cache_file = cache_file
         self.cached_words = {}
         if cache_file != None:
             self.read_cache()
@@ -29,8 +29,8 @@ class Hunspell_chache_aimed(object):
         self.hunspell.start()
         
     def read_cache(self):
-        
-        for l_utf in self._cache:
+         
+        for l_utf in open(self._cache_file):
             l = l_utf.strip().decode('utf-8')
             if len(l.split(' ')) == 1:
                 self.cached_words[l] = l
@@ -39,9 +39,10 @@ class Hunspell_chache_aimed(object):
                 self.cached_words[orig] = stemmed
 
     def write_cache(self):
-
-        for tok in self.new_cached_words:
-            self._cache.write(u'{0} {1}\n'.format(tok,
+        
+        with open(self._cache_file, "w") as f:
+            for tok in self.new_cached_words:
+                f.write(u'{0} {1}\n'.format(tok,
                               self.new_cached_words[tok]).encode('utf-8'))
 
     def cached_stem(self, word):
@@ -117,11 +118,13 @@ def main():
     hunspell_path_infos = sys.argv[3]
     cache_file = sys.argv[4]
     hs, tokenizer = get_tools(language, hunspell_path, hunspell_path_infos, cache_file)
-    todo = [ lambda x: "\n".join(tokenizer.sen_tokenize(x)), 
-             lambda x: "\n".join([' '.join(tokenizer.word_tokenize(line)) for line in x.split('\n')]),
-             lambda x: "\n".join([' '.join([hs.cached_stem(w) for w in l.strip().split(' ')]) for l in x.split('\n')]) ] 
+    hs.read_cache()
+    todo =         [lambda x: "\n".join(tokenizer.sen_tokenize(x)), 
+                    lambda x: "\n".join([' '.join(tokenizer.word_tokenize(line)) for line in x.split('\n')]), 
+                    lambda x: "\n".join([' '.join([hs.cached_stem(w) for w in l.strip().split(' ')]) for l in x.split('\n')]) ] 
 
     process_wp(sys.stdin, todo)
+    hs.write_cache()
 
 if __name__ == "__main__":
     main()
