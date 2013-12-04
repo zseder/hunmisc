@@ -1,0 +1,38 @@
+\documentclass[10pt, a4paper]{article}
+\usepackage{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage{url}
+
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\pgfplotsset{compat=1.9}
+%\usetikzlibrary{pgfplots.clickable}
+
+\begin{document}
+
+\resizebox{10cm}{5cm}{
+\begin{tikzpicture}
+\begin{axis}[
+        xlabel=xlabel,
+        ylabel=ylabel]
+\addplot[color=red,mark=*] coordinates {
+        (5,    8.31160034e-02)
+        (17,   2.54685628e-02)
+        (49,   7.40715288e-03)
+        (129,  2.10192154e-03)
+        (321,  5.87352989e-04)
+        (769,  1.62269942e-04)
+        (1793, 4.44248889e-05)
+        (4097, 1.20714122e-05)
+        (9217, 3.26101452e-06)
+};
+
+%\addplot[color=blue,mark=*] 
+%        table[x expr=\coordindex,y=Speakers] {vbbar};
+
+\legend{Legend1,Case 2}
+\end{axis}
+\end{tikzpicture}
+}
+
+\end{document}

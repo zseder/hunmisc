@@ -1,0 +1,250 @@
+release track	music
+musical recording	music
+recording	music
+isbn	book
+book	book
+book edition	book
+canonical version	music
+tv series episode	film
+book edition	book
+musical album	music
+creative work	work
+film character	fictional character
+author	person
+person	person
+city/town/village	location
+film actor	person
+business operation	business
+musical release	music
+musical artist	person
+artist	person
+musical group	music
+deceased person	person
+film	work
+person	person
+fictional character	fictional character
+school	organization
+location	location
+gene	biology
+organism classification	biology
+gene ontology group membership evidence	biology
+football player	person
+genomic locus	biology
+politician	person
+organism classification	biology
+stock ticker symbol	business
+composition	music
+film crewmember	person
+location	location
+us census tract	location
+organization leader	person
+tv series season	film
+consumer product	product
+record label	music
+film director	person
+game version	product
+olympic athlete	person
+postal code	location
+provenance	freebase task
+mass data operation	freebase task
+issue	cultural artifact
+organization	organization
+delete task	freebase task
+athlete	person
+recording	music
+album	music
+video game	product
+film producer	person
+release	music
+quotation	work	
+musician	person
+building	location
+event	event
+tv program	film
+academic	organization
+transit stop	location
+military person	person
+visual artist	person
+river	location
+multi-part musical release	music
+college/university	organization
+award winner	person
+written work	work
+artwork	work
+tv program	film
+gene group	biology
+asteroid	astronomy
+american football player	person
+organization location	location
+baseball player	person
+structure	work
+school district	location
+ship	product
+road	location
+award-winning work	work
+drug formulation	medical
+trim level	product
+fictional character	fictional character
+discussion thread	freebase task
+football team	organization
+job title	cultural artifact
+organization	organization
+radio station	organization
+tv actor	person
+film cinematographer	person
+film editor	person
+composer	person
+dissertation	work
+film	film
+film writer	person
+cricket player	person
+mountain	location
+noble person	person
+military unit	organization
+person or entity appearing in film	fictional character
+u.s. congressperson	person
+record producer	person
+election contest	organization
+military conflict	event
+human language	cultural artifact
+composition	music
+award category	cultural artifact
+merge task	freebase task
+soundtrack	music
+airport	location
+venue	location
+award nominee	person
+chemical compound	chemistry
+film music contributor	person
+organization founder	person
+administrative division	location
+artwork	work
+lake	location
+sports league season	event
+tournament event competition	event
+public library	organization
+educational institution	organization
+public library system	organization
+island	location
+nonprofit organization	organization
+award-nominated work	work
+video game developer	person
+magazine issue	cultural artifact
+political district	location
+political party	organization
+newspaper	organization
+truck trim level	product
+tourist attraction	location
+tv personality	person
+film costumer designer	person
+tv producer	person
+basketball player	person
+drug	medical
+museum	organization
+skyscraper	location
+english civil parish	location
+tv character	fictional character
+employer	organization
+model year	product
+protected site	location
+aircraft model	product
+literary series	book
+film job	film
+gene group membership evidence	biology
+icd 9 cm classification	medical
+play	work
+disease	medical
+restaurant	location
+architect	person
+film festival event	event
+bridge	location
+recurring event	event
+simple merge task	freebase task
+film art director	person
+film story contributor	person
+family name	person
+noble title	person
+sports facility	location
+ice hockey player	person
+neighborhood	location
+olympic event competition	event
+statistical region	location
+protein	biology
+theater actor	person
+magazine	organization
+us census designated place	location
+journal	organization
+educational institution campus	location
+legal case	cultural artifact
+project	event
+website	cultural artifact
+software	product
+ethnicity	cultural artifact
+hospital	organization
+theater production	work
+government agency	organization
+production company	organization
+short story	work
+tv writer	person
+industry	business
+ship	product
+religious jurisdiction	cultural artifact
+sports team	organization
+film production designer	person
+disease or medical condition	medical
+boxer	person
+judge	person
+competition	event
+content	work
+release	event
+geographical feature	location
+place of worship	location
+work of fiction	work
+book subject	cultural artifact
+airline	organization
+publication	work
+person or entity appearing in film	fictional character
+body of water	location
+general election	event
+beer	product
+comic book character	person
+file format	product
+exhibition	event
+australian suburb	location
+sports team	organization
+isotope	chemistry
+publisher	organization
+cyclist	person
+us county	location
+software	product
+monarch	organization
+shopping center	location
+music contributor	film
+tennis player	person
+cricket player stats	cultural artifact
+religious leader	person
+award nominated work	work
+star	astronomy
+inventor	person
+film set decorator	person
+translation	work
+event	event
+tv episode	film
+school mascot	cultural artifact
+brand	business
+recording engineer	person
+award	cultural artifact
+golfer	person
+pedigreed animal	animal
+film casting director	person
+podcast feed	product
+australian rules footballer	person
+mountain range	location
+guitarist	person
+government office or title	organization
+adaptation	work
+sports association	organization
+tv program creator	organization
+hud section 8 area	location
+automobile model	product
+ship class	product
