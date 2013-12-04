@@ -8,7 +8,7 @@ setup(
     version=version,
     provides=['hunmisc'],
     url='https://github.com/zseder/hunmisc',
-    packages=['hunmisc'],
+    packages=['hunmisc', 'hunmisc.db'],
     package_dir={'': '.'},
     include_package_data=True,
     zip_safe=False,
