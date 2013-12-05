@@ -137,7 +137,7 @@ def get_feat_weights(fn):
     fw = defaultdict(lambda: defaultdict(dict))
     model_fh = open('{0}.model'.format(fn))
 
-    for i in range(7):
+    for i in range(6):
         l = model_fh.readline()
     i = 1
     while l:
