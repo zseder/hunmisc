@@ -85,13 +85,18 @@ def add_unambig_freebase(freebase_unambig_types_f, entity_db):
     f = open(freebase_unambig_types_f)
     fb_d = defaultdict(set)
     for l in f:
-        le = l.strip().split("\t")
+        le = l.rstrip().split("\t")
         if len(le) != 8: continue
-        en_entity = le[4].decode("utf-8").lower()
-        de_entity = le[5].decode("utf-8").lower()
         t = le[7]
+        mention = le[0].decode("utf-8").lower()
+        if len(mention) > 0:
+            fb_d[mention].add((t, "en"))
+
+        en_entity = le[4].decode("utf-8").lower()
         if len(en_entity) > 0:
             fb_d[en_entity].add((t, "en"))
+
+        de_entity = le[5].decode("utf-8").lower()
         if len(de_entity) > 0:
             fb_d[de_entity].add((t, "de"))
 
