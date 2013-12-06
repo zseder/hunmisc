@@ -47,6 +47,12 @@ def gen_simple_list_pairs(f):
         l = l.strip().decode("utf-8")
         yield l, None
 
+def gen_entity_type_pairs(f):
+    for l in f:
+        le = l.strip().decode("utf-8").split("\t")
+        if len(le) == 2:
+            yield le[0], le[1]
+
 def add_freebase(freebase_dump_gzip_f, entity_db):
     f = gzip_open(freebase_dump_gzip_f)
     c = 0
@@ -74,11 +80,11 @@ def add_geonames(geo_f, entity_db):
 
 def add_wikt(gerword_def_f, gerword_undef_f, entity_db):
     with open(gerword_def_f) as f:
-        for entity, data in gen_simple_list_pairs(f):
+        for entity, data in gen_entity_type_pairs(f):
             entity_db.add_entity(entity, data, "german_wikt_defined")
 
     with open(gerword_undef_f) as f:
-        for entity, data in gen_simple_list_pairs(f):
+        for entity, data in gen_entity_type_pairs(f):
             entity_db.add_entity(entity, data, "german_wikt_undefined")
 
 def add_unambig_freebase(freebase_unambig_types_f, entity_db):
