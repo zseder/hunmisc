@@ -1,12 +1,12 @@
 from setuptools import setup
-from mrtools import version
+from subprocess import call
 
+call(['cd hunmisc/liblinear; bash install.sh'], shell=True)
 
 setup(
     author='Attila Zseder',
     author_email='zseder@gmail.com',
     name='hunmisc',
-    version=version,
     provides=['hunmisc'],
     url='https://github.com/zseder/hunmisc',
     packages=['hunmisc', 'hunmisc.db'],
