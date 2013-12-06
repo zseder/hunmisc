@@ -51,7 +51,7 @@ def gen_entity_type_pairs(f):
     for l in f:
         le = l.strip().decode("utf-8").split("\t")
         if len(le) == 2:
-            yield le[0], le[1]
+            yield le[0], tuple(le[1].split(","))
 
 def add_freebase(freebase_dump_gzip_f, entity_db):
     f = gzip_open(freebase_dump_gzip_f)
