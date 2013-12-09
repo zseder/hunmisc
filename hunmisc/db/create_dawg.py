@@ -1,5 +1,6 @@
 import sys
 import logging
+from collections import defaultdict
 
 from hunmisc.db.entitydb import EntityDB
 from hunmisc.corpustools import dbpedia
@@ -46,10 +47,63 @@ def gen_simple_list_pairs(f):
         l = l.strip().decode("utf-8")
         yield l, None
 
+def add_freebase(freebase_dump_gzip_f, entity_db):
+    f = gzip_open(freebase_dump_gzip_f)
+    c = 0
+    for entity, data in gen_freebase_pairs(f):
+        for dat in data:
+            entity_db.add_entity(entity, dat, "freebase")
+        c += 1
+        if c % 1000000 == 0:
+            logging.info("freebase: {0}".format(c))
+
+
+def add_dbpedia(dbpedia_en_f, dbpedia_de_f, entity_db):
+    with open(dbpedia_en_f) as f:
+        for entity, data in gen_dbpedia_pairs(f, "en"):
+            entity_db.add_entity(entity, data, "dbpedia")
+
+    with open(dbpedia_de_f) as f:
+        for entity, data in gen_dbpedia_pairs(f, "de"):
+            entity_db.add_entity(entity, data, "dbpedia")
+
+def add_geonames(geo_f, entity_db):
+    with open(geo_f) as f:
+        for entity, data in gen_geoname_pairs(f):
+            entity_db.add_entity(entity, data, "geonames")
+
+def add_wikt(gerword_def_f, gerword_undef_f, entity_db):
+    with open(gerword_def_f) as f:
+        for entity, data in gen_simple_list_pairs(f):
+            entity_db.add_entity(entity, data, "german_wikt_defined")
+
+    with open(gerword_undef_f) as f:
+        for entity, data in gen_simple_list_pairs(f):
+            entity_db.add_entity(entity, data, "german_wikt_undefined")
+
+def add_unambig_freebase(freebase_unambig_types_f, entity_db):
+    f = open(freebase_unambig_types_f)
+    fb_d = defaultdict(set)
+    for l in f:
+        le = l.strip().split("\t")
+        if len(le) != 8: continue
+        en_entity = le[4].decode("utf-8").lower()
+        de_entity = le[5].decode("utf-8").lower()
+        t = le[7]
+        if len(en_entity) > 0:
+            fb_d[en_entity].add((t, "en"))
+        if len(de_entity) > 0:
+            fb_d[de_entity].add((t, "de"))
+
+    for k in fb_d:
+        types = set(t for t, l in fb_d[k])
+        if len(types) == 1:
+            for t, l in fb_d[k]:
+                entity_db.add_entity(k, (t, l), "freebase_unambig")
+
 def main():
-    entity_db = EntityDB(["freebase", "dbpedia", "geonames",
-                         "german_wikt_defined", "german_wikt_undefined"])
-    freebase_dump_gzip_f = sys.argv[1]
+    entity_db = EntityDB()
+    freebase_notable_types_f = sys.argv[1]
     dbpedia_en_f = sys.argv[2]
     dbpedia_de_f = sys.argv[3]
     geo_f = sys.argv[4]
@@ -61,36 +115,13 @@ def main():
     if len(sys.argv) > 10:
         with open(sys.argv[7]) as f:
             entity_db.add_to_keep_list(
-                [l.strip().decode("utf-8") for l in f.readlines()])
+                [l.strip().decode("utf-8").lower() for l in f.readlines()])
 
-    f = gzip_open(freebase_dump_gzip_f)
-    c = 0
-    for entity, data in gen_freebase_pairs(f):
-        for dat in data:
-            entity_db.add_entity(entity, dat, "freebase")
-        c += 1
-        if c % 100000 == 0:
-            logging.info("freebase: {0}".format(c))
-
-    with open(dbpedia_en_f) as f:
-        for entity, data in gen_dbpedia_pairs(f, "en"):
-            entity_db.add_entity(entity, data, "dbpedia")
-
-    with open(dbpedia_de_f) as f:
-        for entity, data in gen_dbpedia_pairs(f, "de"):
-            entity_db.add_entity(entity, data, "dbpedia")
-
-    with open(geo_f) as f:
-        for entity, data in gen_geoname_pairs(f):
-            entity_db.add_entity(entity, data, "geonames")
-
-    with open(gerword_def_f) as f:
-        for entity, data in gen_simple_list_pairs(f):
-            entity_db.add_entity(entity, data, "german_wikt_defined")
-
-    with open(gerword_undef_f) as f:
-        for entity, data in gen_simple_list_pairs(f):
-            entity_db.add_entity(entity, data, "german_wikt_undefined")
+    add_unambig_freebase(freebase_notable_types_f, entity_db)
+    #add_freebase(freebase_dump_gz_f, entity_db)
+    #add_dbpedia(dbpedia_en_f, dbpedia_de_f, entity_db)
+    #add_geonames(geo_f, entity_db)
+    add_wikt(gerword_def_f, gerword_undef_f, entity_db)
 
     with open(dawg_fn, 'wb') as dawg_fb:
         with open(entities_fn, "w") as pickle_f:

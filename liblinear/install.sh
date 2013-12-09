@@ -3,8 +3,8 @@ mv liblinear*gz liblinear.tar.gz
 tar xzvf liblinear.tar.gz
 mv liblinear-* liblinear
 cd liblinear
+patch -p0 < ../liblinear.patch
 make
 cd python
-patch < ../../liblinear.patch
 make
 mv *py ../../
