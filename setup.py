@@ -1,5 +1,5 @@
+from distutils.core import setup
 from mrtools import version
-
 
 setup(
     author='Attila Zseder',
