@@ -1,6 +1,6 @@
 from setuptools import setup
 
 setup(name='hunmisc',
-	  packages=['db'],
+	  packages=['db', 'xstring'],
 	  py_modules=['intervaltree'])
 
