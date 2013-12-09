@@ -134,7 +134,7 @@ def generate_freq_feats(ed, fn, count):
 
 def get_feat_weights(fn):        
     
-    fw = defaultdict(lambda: defaultdict(dict))
+    fw = {}
     model_fh = open('{0}.model'.format(fn))
 
     for i in range(6):
@@ -145,6 +145,7 @@ def get_feat_weights(fn):
         data = l.strip().split(' ')
         if len(data) < 2:
             continue
+        fw[i] = {}
         for j, d in enumerate(data):
             fw[i][j] = float(d)
         i += 1
