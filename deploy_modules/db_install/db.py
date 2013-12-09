@@ -13,7 +13,7 @@ def install_db():
 	cliqz.cli.system_package('build-essential', 'python-dev')
 	cliqz.cli.python_package('dawg')
 	pkg = cliqz.package.gen_definition()
-	pkg['strip'] = 1
+	pkg['strip'] = 0
 	with lcd( resource_file( '.' ) ):
 		local( 'PACKAGE={} make package'.format( pkg['local'] ) )
 	cliqz.package.install( pkg, path )
