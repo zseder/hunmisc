@@ -57,13 +57,15 @@ class LiblinearWrapper(object):
 
     def save_problem(self, ofn):
         f = open('{0}.problem'.format(ofn), 'w')
+        self.write_problem_to_file(f)
+        f.close()
+
+    def write_problem_to_file(self, f):
         for i in xrange(len(self.problem.y_)):
             f.write("{0} {1}\n".format(
                 self.problem.y_[i],
                 " ".join("{0}:{1}".format(f.index, f.value) for f in 
                 sorted(self.problem.x_space[i], key=lambda x: x.index)[2:])))
-        f.close()
-
 
     def train(self):
          logging.info("Training...")
@@ -85,17 +87,22 @@ class LiblinearWrapper(object):
                 for event_i in xrange(len(p_labels))]
     
     def save_labels(self, ofn):
-        l_fn = open('{0}.labelNumbers'.format(ofn), 'w')
+        l_f = open('{0}.labelNumbers'.format(ofn), 'w')
+        f_f = open('{0}.featureNumbers'.format(ofn), 'w')
+        self.write_features_to_file(l_f)
+        self.write_classes_to_file(f_f)
+        l_f.close()
+        f_f.close()
+
+    def write_classes_to_file(self, f):
         for i in self.class_cache:
-            l_fn.write('{0}\t{1}\n'.format(i, self.class_cache[i]))  
-        l_fn.close()   
-        f_fn = open('{0}.featureNumbers'.format(ofn), 'w')
+            f.write('{0}\t{1}\n'.format(i, self.class_cache[i]))  
+
+    def write_features_to_file(self, f):    
         for i in self.feat_cache:
-            f_fn.write('{0}\t{1}\n'.format(i.encode('utf-8'), \
+            f.write('{0}\t{1}\n'.format(i.encode('utf-8'), \
                  self.feat_cache[i])) 
-        f_fn.close()
-        
-     
+
     @staticmethod 
     def load(ifn):
         ed = LiblinearWrapper()
