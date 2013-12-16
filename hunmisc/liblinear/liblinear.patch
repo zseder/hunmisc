@@ -80,14 +80,14 @@ diff -u -r ../../1/liblinear-1.94//linear.cpp ./linear.cpp
  
  		}
 diff -u -r ../../1/liblinear-1.94//python/liblinear.py ./python/liblinear.py
---- ../../1/liblinear-1.94//python/liblinear.py	2013-12-16 15:47:26.515654889 +0100
-+++ ./python/liblinear.py	2013-12-16 15:43:17.279677452 +0100
+--- ../../1/liblinear-1.94//python/liblinear.py	2013-12-16 15:53:24.647175091 +0100
++++ ./python/liblinear.py	2013-12-16 15:52:43.071103360 +0100
 @@ -10,7 +10,7 @@
  	if sys.platform == 'win32':
  		liblinear = CDLL(path.join(dirname, r'..\windows\liblinear.dll'))
  	else:
--		liblinear = CDLL(path.join(dirname, 'liblinear/liblinear.so.1'))
-+		liblinear = CDLL(path.join(dirname, '../liblinear.so.1'))
+-		liblinear = CDLL(path.join(dirname, '../liblinear.so.1'))
++		liblinear = CDLL(path.join(dirname, 'liblinear/liblinear.so.1'))
  except:
  # For unix the prefix 'lib' is not considered.
  	if find_library('linear'):
