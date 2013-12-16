@@ -9,7 +9,7 @@ setup(
     name='hunmisc',
     provides=['hunmisc'],
     url='https://github.com/zseder/hunmisc',
-    packages=['hunmisc', 'hunmisc.db'],
+    packages=['hunmisc', 'hunmisc.db', 'hunmisc.liblinear'],
     package_dir={'': '.'},
     include_package_data=True,
     zip_safe=False,
