@@ -70,7 +70,7 @@ class LiblinearWrapper(object):
          self.problem.finish()
          self.model = train(self.problem, parameter(self.liblin_params))
     
-    def predict(self, features, gold = None):
+    def predict(self, features, gold=None, acc_bound=0.5):
         int_features = [self.int_feats(fvec) for fvec in features]
         if gold:
             gold_int_labels = [self.class_cache[g] for g in gold]
@@ -79,7 +79,10 @@ class LiblinearWrapper(object):
         p_labels, _, p_vals = predict(gold_int_labels, int_features, self.model, '-b 1')
         
         d = dict([(v, k) for k, v in self.class_cache.iteritems()])
-        return [d[int(label)] for label in p_labels]
+        return [(d[int(p_labels[event_i])] 
+                 if p_vals[event_i][int(p_labels[event_i])] > acc_bound
+                 else "unknown") 
+                for event_i in xrange(len(p_labels))]
     
     def save_labels(self, ofn):
         l_fn = open('{0}.labelNumbers'.format(ofn), 'w')
