@@ -89,8 +89,8 @@ class LiblinearWrapper(object):
     def save_labels(self, ofn):
         l_f = open('{0}.labelNumbers'.format(ofn), 'w')
         f_f = open('{0}.featureNumbers'.format(ofn), 'w')
-        self.write_features_to_file(l_f)
-        self.write_classes_to_file(f_f)
+        self.write_classes_to_file(l_f)
+        self.write_features_to_file(f_f)
         l_f.close()
         f_f.close()
 
