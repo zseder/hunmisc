@@ -1,4 +1,5 @@
 import logging
+import sys
 from hunmisc.liblinear.liblinearutil import problem, predict, load_model, \
         train, parameter
 from collections import defaultdict
@@ -60,9 +61,9 @@ class LiblinearWrapper(object):
         self.write_problem_to_file(f)
         f.close()
 
-    def write_problem_to_file(self, f):
+    def write_problem_to_file(self, g):
         for i in xrange(len(self.problem.y_)):
-            f.write("{0} {1}\n".format(
+            g.write("{0} {1}\n".format(
                 self.problem.y_[i],
                 " ".join("{0}:{1}".format(f.index, f.value) for f in 
                 sorted(self.problem.x_space[i], key=lambda x: x.index)[2:])))
