@@ -60,12 +60,19 @@ class LiblinearWrapper(object):
         self.write_problem_to_file(f)
         f.close()
 
-    def write_problem_to_file(self, f):
+    def write_problem_to_file(self, g):
         for i in xrange(len(self.problem.y_)):
-            f.write("{0} {1}\n".format(
+            g.write("{0} {1}\n".format(
                 self.problem.y_[i],
                 " ".join("{0}:{1}".format(f.index, f.value) for f in 
                 sorted(self.problem.x_space[i], key=lambda x: x.index)[2:])))
+
+    def generate_events(self):
+        for i in xrange(len(self.problem.y_)):
+            yield "{0} {1}\n".format(
+                self.problem.y_[i],
+                " ".join("{0}:{1}".format(f.index, f.value) for f in
+                sorted(self.problem.x_space[i], key=lambda x: x.index)[2:]))         
 
     def train(self):
          logging.info("Training...")
