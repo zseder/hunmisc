@@ -10,6 +10,7 @@ setup(
     provides=['hunmisc'],
     url='https://github.com/zseder/hunmisc',
     packages=['hunmisc', 'hunmisc.db', 'hunmisc.liblinear'],
+    py_modules=['xstring'],
     package_dir={'': '.'},
     include_package_data=True,
     zip_safe=False,
