@@ -69,7 +69,7 @@ class LiblinearWrapper(object):
 
     def generate_events(self):
         for i in xrange(len(self.problem.y_)):
-            yield "{0} {1}\n".format(
+            yield "{0} {1}".format(
                 self.problem.y_[i],
                 " ".join("{0}:{1}".format(f.index, f.value) for f in
                 sorted(self.problem.x_space[i], key=lambda x: x.index)[2:]))         
