@@ -16,7 +16,7 @@ setup(
     provides=['hunmisc'],
     url='https://github.com/zseder/hunmisc',
     packages=['hunmisc', 'hunmisc.db', 'hunmisc.liblinear', 'hunmisc.xstring'],
-    scripts=["hunmisc/liblinear/install.sh", "hunmisc/liblinear/liblinear.patch"],
+    package_data={"hunmisc": ["liblinear/install.sh", "liblinear/liblinear.patch"]},
     package_dir={'': '.'},
     include_package_data=True,
     zip_safe=False,
