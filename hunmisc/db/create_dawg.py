@@ -47,6 +47,12 @@ def gen_simple_list_pairs(f):
         l = l.strip().decode("utf-8")
         yield l, None
 
+def gen_entity_type_pairs(f):
+    for l in f:
+        le = l.strip().decode("utf-8").split("\t")
+        if len(le) == 2:
+            yield le[0], tuple(le[1].split(","))
+
 def add_freebase(freebase_dump_gzip_f, entity_db):
     f = gzip_open(freebase_dump_gzip_f)
     c = 0
@@ -74,24 +80,29 @@ def add_geonames(geo_f, entity_db):
 
 def add_wikt(gerword_def_f, gerword_undef_f, entity_db):
     with open(gerword_def_f) as f:
-        for entity, data in gen_simple_list_pairs(f):
+        for entity, data in gen_entity_type_pairs(f):
             entity_db.add_entity(entity, data, "german_wikt_defined")
 
     with open(gerword_undef_f) as f:
-        for entity, data in gen_simple_list_pairs(f):
+        for entity, data in gen_entity_type_pairs(f):
             entity_db.add_entity(entity, data, "german_wikt_undefined")
 
 def add_unambig_freebase(freebase_unambig_types_f, entity_db):
     f = open(freebase_unambig_types_f)
     fb_d = defaultdict(set)
     for l in f:
-        le = l.strip().split("\t")
+        le = l.rstrip().split("\t")
         if len(le) != 8: continue
-        en_entity = le[4].decode("utf-8").lower()
-        de_entity = le[5].decode("utf-8").lower()
         t = le[7]
+        mention = le[0].decode("utf-8").lower()
+        if len(mention) > 0:
+            fb_d[mention].add((t, "en"))
+
+        en_entity = le[4].decode("utf-8").lower()
         if len(en_entity) > 0:
             fb_d[en_entity].add((t, "en"))
+
+        de_entity = le[5].decode("utf-8").lower()
         if len(de_entity) > 0:
             fb_d[de_entity].add((t, "de"))
 

@@ -7,7 +7,7 @@ class LiblinearWrapper(object):
     def __init__(self):
         self.class_cache = {}
         self.feat_cache = {}
-        self.liblin_params = "-s 0 -c 1"
+        self.liblin_params = "-s 6 -c 1"
         self.problem = problem()
 
     def create_from_file(self, f):
@@ -48,29 +48,38 @@ class LiblinearWrapper(object):
         new_feat_cache = {}
         renumbering = {}
         for feat in self.feat_cache:
-            if feat not in to_remove:
+            if self.feat_cache[feat] not in to_remove:
                 new_feat_cache[feat] = len(new_feat_cache) + 1
                 renumbering[self.feat_cache[feat]] = new_feat_cache[feat]
         self.problem.remove(to_remove, renumbering)
-        self.feat_cahce = new_feat_cache
+        self.feat_cache = new_feat_cache
         logging.info("cutoff done")
 
     def save_problem(self, ofn):
         f = open('{0}.problem'.format(ofn), 'w')
+        self.write_problem_to_file(f)
+        f.close()
+
+    def write_problem_to_file(self, g):
         for i in xrange(len(self.problem.y_)):
-            f.write("{0} {1}\n".format(
+            g.write("{0} {1}\n".format(
                 self.problem.y_[i],
                 " ".join("{0}:{1}".format(f.index, f.value) for f in 
                 sorted(self.problem.x_space[i], key=lambda x: x.index)[2:])))
-        f.close()
 
+    def generate_events(self):
+        for i in xrange(len(self.problem.y_)):
+            yield "{0} {1}".format(
+                self.problem.y_[i],
+                " ".join("{0}:{1}".format(f.index, f.value) for f in
+                sorted(self.problem.x_space[i], key=lambda x: x.index)[2:]))         
 
     def train(self):
          logging.info("Training...")
          self.problem.finish()
          self.model = train(self.problem, parameter(self.liblin_params))
     
-    def predict(self, features, gold = None):
+    def predict(self, features, gold=None, acc_bound=0.5):
         int_features = [self.int_feats(fvec) for fvec in features]
         if gold:
             gold_int_labels = [self.class_cache[g] for g in gold]
@@ -79,20 +88,28 @@ class LiblinearWrapper(object):
         p_labels, _, p_vals = predict(gold_int_labels, int_features, self.model, '-b 1')
         
         d = dict([(v, k) for k, v in self.class_cache.iteritems()])
-        return [d[int(label)] for label in p_labels]
+        return [(d[int(p_labels[event_i])] 
+                 if p_vals[event_i][int(p_labels[event_i])] > acc_bound
+                 else "unknown") 
+                for event_i in xrange(len(p_labels))]
     
     def save_labels(self, ofn):
-        l_fn = open('{0}.labelNumbers'.format(ofn), 'w')
+        l_f = open('{0}.labelNumbers'.format(ofn), 'w')
+        f_f = open('{0}.featureNumbers'.format(ofn), 'w')
+        self.write_classes_to_file(l_f)
+        self.write_features_to_file(f_f)
+        l_f.close()
+        f_f.close()
+
+    def write_classes_to_file(self, f):
         for i in self.class_cache:
-            l_fn.write('{0}\t{1}\n'.format(i, self.class_cache[i]))  
-        l_fn.close()   
-        f_fn = open('{0}.featureNumbers'.format(ofn), 'w')
+            f.write('{0}\t{1}\n'.format(i, self.class_cache[i]))  
+
+    def write_features_to_file(self, f):    
         for i in self.feat_cache:
-            f_fn.write('{0}\t{1}\n'.format(i.encode('utf-8'), \
+            f.write('{0}\t{1}\n'.format(i.encode('utf-8'), \
                  self.feat_cache[i])) 
-        f_fn.close()
-        
-     
+
     @staticmethod 
     def load(ifn):
         ed = LiblinearWrapper()
@@ -134,10 +151,10 @@ def generate_freq_feats(ed, fn, count):
 
 def get_feat_weights(fn):        
     
-    fw = defaultdict(lambda: defaultdict(dict))
+    fw = {}
     model_fh = open('{0}.model'.format(fn))
 
-    for i in range(7):
+    for i in range(6):
         l = model_fh.readline()
     i = 1
     while l:
@@ -145,6 +162,7 @@ def get_feat_weights(fn):
         data = l.strip().split(' ')
         if len(data) < 2:
             continue
+        fw[i] = {}
         for j, d in enumerate(data):
             fw[i][j] = float(d)
         i += 1
