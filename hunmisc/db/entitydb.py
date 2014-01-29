@@ -1,7 +1,7 @@
 from collections import defaultdict
 import logging
 import cPickle
-
+import os
 import dawg
 
 import cache
@@ -121,10 +121,11 @@ class EntityDB(object):
         del self.long_entities
         cPickle.dump(self, pickle_f, 2)
 
-    def dump_to_files(self, model_name):
-        prefix_dawg_fn = model_name+'.pdawg'
-        dawg_fn = model_name+'.dawg'
-        entities_fn = model_name+'.edb'
+    def dump_to_files(self, model_dir):
+        if not os.path.exists(model_dir): os.makedirs(model_dir)
+        prefix_dawg_fn = model_dir+'/prefix.dawg'
+        dawg_fn = model_dir+'/entities.dawg'
+        entities_fn = model_dir+'/entitydb.pickle'
         with open(dawg_fn, 'wb') as dawg_fb:
             with open(entities_fn, "w") as pickle_f:
                 with open(prefix_dawg_fn, "wb") as pd_fb:
@@ -140,10 +141,10 @@ class EntityDB(object):
         return entity_db
 
     @staticmethod
-    def load_from_files(file_name):
-        entitydb_fn = file_name+'.edb'
-        main_dawg_fn = file_name+'.dawg'
-        prefix_dawg_fn = file_name+'.pdawg'
+    def load_from_files(dir_name):
+        entitydb_fn = dir_name+'/entitydb.pickle'
+        main_dawg_fn = dir_name+'/entities.dawg'
+        prefix_dawg_fn = dir_name+'/prefix.dawg'
         return EntityDB.load(open(entitydb_fn), main_dawg_fn, prefix_dawg_fn)
     
     @staticmethod
