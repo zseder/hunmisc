@@ -82,7 +82,11 @@ class LiblinearWrapper(object):
     def predict(self, features, gold=None, acc_bound=0.5):
         int_features = [self.int_feats(fvec) for fvec in features]
         if gold:
-            gold_int_labels = [self.class_cache[g] for g in gold]
+            gold_int_labels = [
+                (self.class_cache[g] if type(g) == str 
+                 and g in self.class_cache 
+                 else g)
+                for g in gold]
         else:
             gold_int_labels = [0 for i in xrange(len(features))]
         p_labels, _, p_vals = predict(gold_int_labels, int_features, self.model, '-b 1')
