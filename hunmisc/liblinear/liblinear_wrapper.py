@@ -24,13 +24,16 @@ class LiblinearWrapper(object):
             for feat in features])
         return feats
 
+    def int_class(self, class_):
+        return self.class_cache.setdefault(y, len(self.class_cache))
+
     def add_event(self, event):
         y, x = event
         if len(x) == 0:
             return
 
         x_int = self.int_feats(x)
-        y_int = self.class_cache.setdefault(y, len(self.class_cache))
+        y_int = self.int_class(y)
         self.problem.add_event(y_int, x_int)
         return y_int, x_int
 
