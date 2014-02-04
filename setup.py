@@ -9,7 +9,8 @@ class HunmiscInstall(install):
         cwd = self.install_libbase
         call(['cd {0}/hunmisc/liblinear; bash install.sh'.format(cwd)], shell=True)
 
-setup(
+def my_setup():
+    return setup(
     author='Attila Zseder',
     author_email='zseder@gmail.com',
     name='hunmisc',
@@ -23,3 +24,6 @@ setup(
     platforms='any',
     cmdclass={'install': HunmiscInstall}
 )
+
+if __name__ == "__main__":
+    my_setup()
