@@ -25,7 +25,7 @@ class LiblinearWrapper(object):
         return feats
 
     def int_class(self, class_):
-        return self.class_cache.setdefault(y, len(self.class_cache))
+        return self.class_cache.setdefault(class_, len(self.class_cache))
 
     def add_event(self, event):
         y, x = event
