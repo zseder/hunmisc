@@ -35,6 +35,7 @@ class LiblinearWrapper(object):
         x_int = self.int_feats(x)
         y_int = self.int_class(y)
         self.problem.add_event(y_int, x_int)
+        return y_int, x_int
 
     def choose(self, n):
         counts = {}
@@ -69,13 +70,6 @@ class LiblinearWrapper(object):
                 self.problem.y_[i],
                 " ".join("{0}:{1}".format(f.index, f.value) for f in 
                 sorted(self.problem.x_space[i], key=lambda x: x.index)[2:])))
-
-    def generate_events(self):
-        for i in xrange(len(self.problem.y_)):
-            yield "{0} {1}".format(
-                self.problem.y_[i],
-                " ".join("{0}:{1}".format(f.index, f.value) for f in
-                sorted(self.problem.x_space[i], key=lambda x: x.index)[2:]))         
 
     def train(self):
          logging.info("Training...")
