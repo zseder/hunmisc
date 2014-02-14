@@ -1,0 +1,204 @@
+diff -u -r ../../1/liblinear-1.94//Makefile ./Makefile
+--- ../../1/liblinear-1.94//Makefile	2013-11-11 11:16:15.000000000 +0100
++++ ./Makefile	2013-12-06 17:53:14.948871955 +0100
+@@ -1,6 +1,6 @@
+ CXX ?= g++
+ CC ?= gcc
+-CFLAGS = -Wall -Wconversion -O3 -fPIC
++CFLAGS = -Wall -Wconversion -O3 -fPIC -fopenmp
+ LIBS = blas/blas.a
+ SHVER = 1
+ OS = $(shell uname)
+@@ -14,7 +14,7 @@
+ 	else \
+ 		SHARED_LIB_FLAG="-shared -Wl,-soname,liblinear.so.$(SHVER)"; \
+ 	fi; \
+-	$(CXX) $${SHARED_LIB_FLAG} linear.o tron.o blas/blas.a -o liblinear.so.$(SHVER)
++	$(CXX) $${SHARED_LIB_FLAG} linear.o tron.o blas/blas.a -lgomp -o liblinear.so.$(SHVER)
+ 
+ train: tron.o linear.o train.c blas/blas.a
+ 	$(CXX) $(CFLAGS) -o train train.c tron.o linear.o $(LIBS)
+diff -u -r ../../1/liblinear-1.94//linear.cpp ./linear.cpp
+--- ../../1/liblinear-1.94//linear.cpp	2013-11-11 11:16:16.000000000 +0100
++++ ./linear.cpp	2013-12-06 18:04:47.152344862 +0100
+@@ -2387,27 +2387,36 @@
+ 			}
+ 			else
+ 			{
+-				model_->w=Malloc(double, w_size*nr_class);
+-				double *w=Malloc(double, w_size);
+-				for(i=0;i<nr_class;i++)
+-				{
+-					int si = start[i];
+-					int ei = si+count[i];
+-
+-					k=0;
+-					for(; k<si; k++)
+-						sub_prob.y[k] = -1;
+-					for(; k<ei; k++)
+-						sub_prob.y[k] = +1;
+-					for(; k<sub_prob.l; k++)
+-						sub_prob.y[k] = -1;
+-
+-					train_one(&sub_prob, param, w, weighted_C[i], param->C);
+-
+-					for(int j=0;j<w_size;j++)
+-						model_->w[j*nr_class+i] = w[j];
+-				}
+-				free(w);
++                model_->w=Malloc(double, w_size*nr_class);
++#pragma omp parallel for private(i) 
++                for(i=0;i<nr_class;i++)
++                {
++                    problem sub_prob_omp;
++                    sub_prob_omp.l = l;
++                    sub_prob_omp.n = n;
++                    sub_prob_omp.x = x;
++                    sub_prob_omp.y = Malloc(double,l);
++
++                    int si = start[i];
++                    int ei = si+count[i];
++
++                    double *w=Malloc(double, w_size);
++
++                    int t=0;
++                    for(; t<si; t++)
++                        sub_prob_omp.y[t] = -1;
++                    for(; t<ei; t++)
++                        sub_prob_omp.y[t] = +1;
++                    for(; t<sub_prob_omp.l; t++)
++                        sub_prob_omp.y[t] = -1;
++
++                    train_one(&sub_prob_omp, param, w, weighted_C[i], param->C);
++
++                    for(int j=0;j<w_size;j++)
++                        model_->w[j*nr_class+i] = w[j];
++                    free(sub_prob_omp.y);
++                    free(w);
++                }
+ 			}
+ 
+ 		}
+diff -u -r ../../1/liblinear-1.94//python/liblinear.py ./python/liblinear.py
+--- ../../1/liblinear-1.94//python/liblinear.py	2013-12-16 15:53:24.647175091 +0100
++++ ./python/liblinear.py	2013-12-16 15:52:43.071103360 +0100
+@@ -10,7 +10,7 @@
+ 	if sys.platform == 'win32':
+ 		liblinear = CDLL(path.join(dirname, r'..\windows\liblinear.dll'))
+ 	else:
+-		liblinear = CDLL(path.join(dirname, '../liblinear.so.1'))
++		liblinear = CDLL(path.join(dirname, 'liblinear/liblinear.so.1'))
+ except:
+ # For unix the prefix 'lib' is not considered.
+ 	if find_library('linear'):
+@@ -47,14 +47,36 @@
+ 	def __str__(self):
+ 		return '%d:%g' % (self.index, self.value)
+ 
++def gen_feature_nodearray_from_array(xi, feature_max=None, issparse=True):
++	values = xi
++	if feature_max:
++		assert(isinstance(feature_max, int))
++		values = filter(lambda x: x[0] <= feature_max, values)
++	if issparse: 
++		values = filter(lambda x: x[1] != 0, values)
++
++	values = sorted(values, key=lambda x: x[0])
++	ret = (feature_node * (len(values)+2))()
++	ret[-1].index = -1 # for bias term
++	ret[-2].index = -1
++	for idx, (feature, value) in enumerate(values):
++		ret[idx].index = feature
++		ret[idx].value = value
++	max_idx = 0
++	if values: 
++		max_idx = values[-1][0]
++	return ret, max_idx
++
+ def gen_feature_nodearray(xi, feature_max=None, issparse=True):
+ 	if isinstance(xi, dict):
+ 		index_range = xi.keys()
+ 	elif isinstance(xi, (list, tuple)):
+ 		xi = [0] + xi  # idx should start from 1
+ 		index_range = range(1, len(xi))
++	elif isinstance(xi, Array):
++		return gen_feature_nodearray_from_array(xi, feature_max, issparse)
+ 	else:
+-		raise TypeError('xi should be a dictionary, list or tuple')
++		raise TypeError('xi should be a dictionary, list, tuple or ctypes.Array')
+ 
+ 	if feature_max:
+ 		assert(isinstance(feature_max, int))
+@@ -79,27 +101,58 @@
+ 	_types = [c_int, c_int, POINTER(c_double), POINTER(POINTER(feature_node)), c_double]
+ 	_fields_ = genFields(_names, _types)
+ 
+-	def __init__(self, y, x, bias = -1):
++	def __init__(self, y=None, x=None, bias = -1):
++		self.__init_raw__(bias)
++		if x is None and y is None:
++			self.finished = False
++			return
++
+ 		if len(y) != len(x) :
+ 			raise ValueError("len(y) != len(x)")
+-		self.l = l = len(y)
+-		self.bias = -1
++		self.unset_bias = -1
+ 
+-		max_idx = 0
+-		x_space = self.x_space = []
+-		for i, xi in enumerate(x):
+-			tmp_xi, tmp_idx = gen_feature_nodearray(xi)
+-			x_space += [tmp_xi]
+-			max_idx = max(max_idx, tmp_idx)
+-		self.n = max_idx
++		for i in xrange(len(x)):
++			self.add_event(y[i], x[i])
+ 
+-		self.y = (c_double * l)()
+-		for i, yi in enumerate(y): self.y[i] = y[i]
++		self.set_bias(self.unset_bias)
++	
++	def __init_raw__(self, bias):
++		self.x_space = []
++		self.y_ = []
++		self.max_idx = 0
++		self.bias = -1
++		self.unset_bias = bias
++	
++	def add_event(self, y, x):
++		tmp_xi, tmp_idx = gen_feature_nodearray(x)
++		self.x_space.append(tmp_xi)
++		self.max_idx = max(self.max_idx, tmp_idx)
++		self.y_.append(y)
++	
++	def finish(self):
++		self.l = len(self.y_)
++		self.n = self.max_idx
++		self.y = (c_double * self.l)()
++		for i, yi in enumerate(self.y_): self.y[i] = yi
+ 
+-		self.x = (POINTER(feature_node) * l)() 
++		self.x = (POINTER(feature_node) * self.l)() 
+ 		for i, xi in enumerate(self.x_space): self.x[i] = xi
+ 
+-		self.set_bias(bias)
++		self.set_bias(self.unset_bias)
++		self.finished = True
++
++	def remove(self, to_remove, renumbering):
++		new_max = 0
++		for xi in xrange(len(self.x_space)):
++			x = self.x_space[xi]
++			# go through features (except bias (<-xrange(1,))),
++			# and renumber kept features
++			new_x = dict([(renumbering[x[fi].index], 1)
++				for fi in xrange(len(x) - 2) if x[fi].index not in to_remove])
++			new_x, new_tmp_max = gen_feature_nodearray(new_x)
++			new_max = max(new_max, new_tmp_max)
++			self.x_space[xi] = new_x
++		self.max_idx = new_max
+ 
+ 	def set_bias(self, bias):
+ 		if self.bias == bias:

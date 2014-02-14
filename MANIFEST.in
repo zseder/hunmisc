@@ -1,0 +1,2 @@
+include hunmisc/liblinear/install.sh
+include hunmisc/liblinear/liblinear.patch
