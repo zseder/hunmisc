@@ -24,14 +24,18 @@ class LiblinearWrapper(object):
             for feat in features])
         return feats
 
+    def int_class(self, class_):
+        return self.class_cache.setdefault(class_, len(self.class_cache))
+
     def add_event(self, event):
         y, x = event
         if len(x) == 0:
             return
 
         x_int = self.int_feats(x)
-        y_int = self.class_cache.setdefault(y, len(self.class_cache))
+        y_int = self.int_class(y)
         self.problem.add_event(y_int, x_int)
+        return y_int, x_int
 
     def choose(self, n):
         counts = {}
@@ -67,13 +71,6 @@ class LiblinearWrapper(object):
                 " ".join("{0}:{1}".format(f.index, f.value) for f in 
                 sorted(self.problem.x_space[i], key=lambda x: x.index)[2:])))
 
-    def generate_events(self):
-        for i in xrange(len(self.problem.y_)):
-            yield "{0} {1}".format(
-                self.problem.y_[i],
-                " ".join("{0}:{1}".format(f.index, f.value) for f in
-                sorted(self.problem.x_space[i], key=lambda x: x.index)[2:]))         
-
     def train(self):
          logging.info("Training...")
          self.problem.finish()
@@ -82,7 +79,11 @@ class LiblinearWrapper(object):
     def predict(self, features, gold=None, acc_bound=0.5):
         int_features = [self.int_feats(fvec) for fvec in features]
         if gold:
-            gold_int_labels = [self.class_cache[g] for g in gold]
+            gold_int_labels = [
+                (self.class_cache[g] if type(g) == str 
+                 and g in self.class_cache 
+                 else g)
+                for g in gold]
         else:
             gold_int_labels = [0 for i in xrange(len(features))]
         p_labels, _, p_vals = predict(gold_int_labels, int_features, self.model, '-b 1')
