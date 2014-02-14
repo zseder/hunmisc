@@ -9,6 +9,7 @@ easily extandable for other text inputs.
 from hunmisc.utils.huntool_wrapper import Hunspell
 from hunmisc.nltk.nltktools import NltkTools 
 
+import os
 import sys
 import re
 import cPickle
@@ -22,14 +23,15 @@ class Hunspell_chache_aimed(object):
         self.cached_words = {}
         if cache_file != None:
             self.read_cache()
-        self.new_cached_words = {}    
         self.only_alpha = only_alpha
         if self.only_alpha is True:
             self.alpha_matcher = re.compile("[^\W\d_]+", re.UNICODE)
         self.hunspell.start()
         
     def read_cache(self):
-         
+        
+        if not os.path.exists(self._cache_file):
+            return 
         for l_utf in open(self._cache_file):
             l = l_utf.strip().decode('utf-8')
             if len(l.split(' ')) == 1:
@@ -41,9 +43,10 @@ class Hunspell_chache_aimed(object):
     def write_cache(self):
         
         with open(self._cache_file, "w") as f:
-            for tok in self.new_cached_words:
+            for tok in self.cached_words:
+                print 4655555555555555555555
                 f.write(u'{0} {1}\n'.format(tok,
-                              self.new_cached_words[tok]).encode('utf-8'))
+                              self.cached_words[tok]).encode('utf-8'))
 
     def cached_stem(self, word):
 
@@ -54,9 +57,7 @@ class Hunspell_chache_aimed(object):
         if word in self.cached_words:
             return self.cached_words[word]
         stem = self.hunspell.stem_word(word)
-        self.hunspell._process.stdout.flush()
         self.cached_words[word] = stem
-        self.new_cached_words[word] = stem
         return stem
    
 def get_lang_spec_path(language, info_file):
@@ -124,6 +125,7 @@ def main():
                     lambda x: "\n".join([' '.join([hs.cached_stem(w) for w in l.strip().split(' ')]) for l in x.split('\n')]) ] 
 
     process_wp(sys.stdin, todo)
+    print repr(hs.cached_words)
     hs.write_cache()
 
 if __name__ == "__main__":
