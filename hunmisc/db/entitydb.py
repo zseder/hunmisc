@@ -131,8 +131,8 @@ class EntityDB(object):
                     self.dump(pickle_f, dawg_fb, pd_fb)
 
     @staticmethod
-    def load(pickle_f, dawg_fn, prefix_dawg_fn):
-        entity_db = cPickle.load(pickle_f)
+    def load(pickle_fn, dawg_fn, prefix_dawg_fn):
+        entity_db = cPickle.load(open(pickle_fn))
         entity_db.dawg = dawg.IntCompletionDAWG()
         entity_db.dawg.load(dawg_fn)
         entity_db.long_entities = dawg.IntDAWG()
@@ -144,7 +144,7 @@ class EntityDB(object):
         entitydb_fn = file_name+'.edb'
         main_dawg_fn = file_name+'.dawg'
         prefix_dawg_fn = file_name+'.pdawg'
-        return EntityDB.load(open(entitydb_fn), main_dawg_fn, prefix_dawg_fn)
+        return EntityDB.load(entitydb_fn, main_dawg_fn, prefix_dawg_fn)
     
     @staticmethod
     def create_from_list(file_name):
