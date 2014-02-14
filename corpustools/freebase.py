@@ -246,38 +246,41 @@ def parse_notable_fors(file_handler, code_to_notable_code, names_of_types):
             yield freebase_code, english_name, notable_for_str        
                  
 
+def make_replace_dicts(file_handler):
+
+    replace_dict = defaultdict(list) 
+    for l in file_handler:
+        v, k = l.strip().split('\t')
+        replace_dict[k[:-1]].append(v)
+
+    return replace_dict    
+        
 
 
-def parse_with_noteble(file_handler, names_of_types, domains_of_types, names_of_domains, classes_of_types):
+def parse_with_noteble(file_handler, names_of_types, domains_of_types, names_of_domains, classes_of_types, replace_file):
     
     type_name_dict = get_dict(names_of_types)
     type_domain_dict = get_dict(domains_of_types)
     domain_name_dict = get_dict(names_of_domains)
     type_class_dict = get_dict(classes_of_types)
-
+    replace_dict = make_replace_dicts(replace_file)
 
     for item in generate_object_dicts(file_handler):
         freebase_code, info_dict = item
-        lista = local_parse(info_dict)
-        if lista != []:
-            freebase_domains = lista[0][2]
-            freebase_types = lista[0][3]
-            notable_type, notable_domain = get_notable(type_name_dict, type_domain_dict,\
+        freebase_code, info_dict = item
+        if 'ns:common.topic.' in info_dict['ns:type.object.type']:
+            
+            
+            notable_type, _ = get_notable(type_name_dict, type_domain_dict,\
                                                        domain_name_dict, info_dict, freebase_code)
 
             if notable_type == 'not found':
-                notable_type = freebase_types[0]
-
-            if notable_domain == 'not found':
-                notable_domain = freebase_domains[0]
-
-            _, lang_list, freebase_domains, freebase_types,  aliases = lista[0]
-
+                notable_type = get_relev_type(info_dict)
+                
             english_name = get_name(info_dict, 'en')
             german_name = get_name(info_dict, 'de')
 
             notable_type_formatted = formatize(notable_type)
-            notable_domain_formatted = formatize(notable_domain)
 
             if notable_type_formatted in type_class_dict:
                 category = type_class_dict[notable_type_formatted]
@@ -286,8 +289,9 @@ def parse_with_noteble(file_handler, names_of_types, domains_of_types, names_of_
                 category = 'not categorized'
             
 
-            yield english_name, german_name, lang_list, freebase_domains, freebase_types,\
-                  aliases, freebase_code, notable_type_formatted, notable_domain_formatted, category
+            yield english_name, german_name, freebase_code, notable_type_formatted, category
+            for code in replace_dict[freebase_code]:
+                yield english_name, german_name, code, notable_type_formatted, category
 
 
 def get_type_names(file_handler):
@@ -319,22 +323,23 @@ def get_domain_names(file_handler):
 def main():
 
     file_handler = sys.stdin
-    #names_of_types = open(sys.argv[1])
-    #domains_of_types = open(sys.argv[2])
-    #names_of_domains = open(sys.argv[3])
-    #classes_of_types = open(sys.argv[4])
+    names_of_types = open(sys.argv[1])
+    domains_of_types = open(sys.argv[2])
+    names_of_domains = open(sys.argv[3])
+    classes_of_types = open(sys.argv[4])
+    replace_file = open(sys.argv[5])
 
-    #for item in parse_with_noteble(file_handler, names_of_types, domains_of_types, names_of_domains, classes_of_types):
-    #    english_name, german_name, _, _, _, _, freebase_code, notable_type, notable_domain, category = item
-    #    print "{0}\t{1}\t{2}\t{3}\t{4}".format(english_name, german_name, freebase_code, notable_type, category)
+    for item in parse_with_noteble(file_handler, names_of_types, domains_of_types, names_of_domains, classes_of_types, replace_file):
+        english_name, german_name, freebase_code, notable_type, category = item
+        print "{0}\t{1}\t{2}\t{3}\t{4}".format(english_name, german_name, freebase_code, notable_type, category)
 
-    #file_handler.close()
+    file_handler.close()
     
-    code_to_notable_code = open(sys.argv[1])
-    names_of_types = open(sys.argv[2])
-    for l in parse_notable_fors(file_handler, code_to_notable_code, names_of_types):
-        freebase_code, english_name, notable_str = l
-        print '{0}\t{1}\t{2}'.format(freebase_code, english_name, notable_str)
+    #code_to_notable_code = open(sys.argv[1])
+    #names_of_types = open(sys.argv[2])
+    #for l in parse_notable_fors(file_handler, code_to_notable_code, names_of_types):
+    #    freebase_code, english_name, notable_str = l
+    #    print '{0}\t{1}\t{2}'.format(freebase_code, english_name, notable_str)
 
 if __name__ == "__main__":
     main()
