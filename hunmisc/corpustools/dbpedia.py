@@ -29,6 +29,7 @@ def get_entity_from_line(l):
     entity_matcher = re.search('resource/(.*?)>', l)
     entity = entity_matcher.groups()[0]
     entity = entity.decode('unicode-escape')
+    entity = unquote(entity)
     entity_formatted = entity.replace('_', ' ')
 
     return entity_formatted
