@@ -3,13 +3,14 @@ import os
 import subprocess
 import tempfile
 
-def gzip_open(filename):
+def handle_subprocess_file(command_format_str):
     tmpdir = tempfile.mkdtemp()
     tmp_fifo = os.path.join(tmpdir, 'myfifo')
 
     os.mkfifo(tmp_fifo)
 
-    p = subprocess.Popen("gzip --stdout -d %s > %s" % (filename, tmp_fifo), shell=True)
+    p = subprocess.Popen(command_format_str.format(tmp_fifo), shell=True, 
+                         stderr=subprocess.PIPE)
     f = io.open(tmp_fifo, "rb")
 
     while True:
@@ -22,3 +23,13 @@ def gzip_open(filename):
      
     os.remove(tmp_fifo)
     os.rmdir(tmpdir)
+
+def gzip_open(filename):
+    command = "gzip --stdout -d {0} > ".format(filename) + "{0}"
+    for line in handle_subprocess_file(command):
+        yield line
+
+def l7zip_open(filename):
+    command = "7zr x -so {0} > ".format(filename) + "{0}"
+    for line in handle_subprocess_file(command):
+        yield line
