@@ -58,6 +58,8 @@ See http://www.python.org/psf/license.html for details, and
 http://www.python.org/2.3.2/license.html for the full text of the license.
 """
 
+import sys
+
 
 
 def hamming(s1, s2, case_sensitive=0):
@@ -81,7 +83,7 @@ def hamming(s1, s2, case_sensitive=0):
 
 
 
-def levenshtein(s1, s2, case_sensitive=0):
+def levenshtein(s1, s2, case_sensitive=0, max_distance=sys.maxint):
 	"""Levenshtein edit distance between two strings.
 
 	s1 and s2 should be two arbitrary length strings. Returns an integer count of the
@@ -137,6 +139,8 @@ def levenshtein(s1, s2, case_sensitive=0):
 			y = array[row][col-1] + 1  # Cell immediately to the left plus one.
 			z = array[row-1][col-1] + cost  # Cell diagonally above and to the left, plus the cost.
 			array[row][col] = min(x, y, z)
+			if array[row][col] >= max_distance:
+				return array[row][col]
 	# When done, the bottom-right cell contains the Levenshtein distance.
 	return array[-1][-1]
 
