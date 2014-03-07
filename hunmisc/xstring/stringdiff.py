@@ -83,7 +83,8 @@ def hamming(s1, s2, case_sensitive=0):
 
 
 
-def levenshtein(s1, s2, case_sensitive=0, max_distance=sys.maxint):
+def levenshtein(s1, s2, case_sensitive=0, max_distance=sys.maxint,
+                w_insert=1, w_delete=1, w_replace=1):
 	"""Levenshtein edit distance between two strings.
 
 	s1 and s2 should be two arbitrary length strings. Returns an integer count of the
@@ -94,6 +95,12 @@ def levenshtein(s1, s2, case_sensitive=0, max_distance=sys.maxint):
 
 	If case_sensitive is false (the default), comparisons are case insensitive. Case sensitive 
 	comparisons only consider standard ASCII upper/lower case and are not internationalised.
+
+    The rest of the parameters are:
+    - max_distance: return as soon as the distance reaches this value.
+    - w_insert: weight of the insertion operator. The default is 1.
+    - w_delete: weight of the deletion operator. The default is 1.
+    - w_replace: weight of the replacement operator. The default is 1 (!).
 	"""
 	m = len(s1)
 	n = len(s2)
@@ -107,6 +114,7 @@ def levenshtein(s1, s2, case_sensitive=0, max_distance=sys.maxint):
 	if n < m:
 		s1, s2 = s2, s1
 		m, n = n, m
+		w_insert, w_delete = w_delete, w_insert
 	# Adjust for case sensitivity.
 	if not case_sensitive:
 		s1 = s1.upper()
@@ -121,10 +129,10 @@ def levenshtein(s1, s2, case_sensitive=0, max_distance=sys.maxint):
 		array[i] = [None]*(n+1)
 	# Initialise the first row to 0..n.
 	for i in range(n+1):
-		array[0][i] = i
+		array[0][i] = w_insert * i
 	# Initialize the first column to 0..m.
 	for i in range(m+1):
-		array[i][0] = i
+		array[i][0] = w_delete * i
 
 	# Measure the differences.
 	# Loop over the rows and columns of the array, skipping the first of each.
@@ -134,9 +142,9 @@ def levenshtein(s1, s2, case_sensitive=0, max_distance=sys.maxint):
 		for col in range(1, n+1):
 			c2 = s2[col - 1]
 			# If the characters are the same, the cost is 0, otherwise it is 1.
-			cost = 1 - int(c1==c2)
-			x = array[row-1][col] + 1  # Cell immediately above plus one.
-			y = array[row][col-1] + 1  # Cell immediately to the left plus one.
+			cost = 0 if c1 == c2 else w_replace
+			x = array[row-1][col] + w_delete  # Cell immediately above plus one.
+			y = array[row][col-1] + w_insert  # Cell immediately to the left plus one.
 			z = array[row-1][col-1] + cost  # Cell diagonally above and to the left, plus the cost.
 			array[row][col] = min(x, y, z)
 			if array[row][col] >= max_distance:
@@ -161,6 +169,11 @@ def verify():
 	assert levenshtein("spam", "ham") == 2
 	assert levenshtein("spam", "SPAM") == 0
 	assert levenshtein("spam", "SPAM", 1) == 4
+	assert levenshtein("GUMBO", "GAMBOL", w_insert=10) == 11
+	assert levenshtein("GUMBO", "GAMBOL", w_insert=10, w_replace=2) == 12
+	assert levenshtein("spam", "ham", w_replace=2) == 3
+	assert levenshtein("spam", "ham", w_delete=10, w_replace=2) == 12
+	assert levenshtein("xyz", "abcde", w_insert=0, w_delete=0, w_replace=0) == 0
 	print "No errors with Levenshtein edit distance."
 
 
