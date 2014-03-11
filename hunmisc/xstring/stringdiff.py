@@ -286,17 +286,21 @@ def verify():
 	print "No errors with Levenshtein edit distance."
 	print "========================================================"
 	print "Verifying custom Levenshtein edit distance:"
-	assert levenshtein_custom_weights("ANT", "AUNT") == 1
-	assert levenshtein_custom_weights("ANT", "AUNT", delete_map={"A": 10}) == 1
-	assert levenshtein_custom_weights("ANT", "AUNT", insert_map={"U": 10}, w_replace=20) == 10
-	assert levenshtein_custom_weights("AAA", "BB", replace_map={("A", "B"): 0.25}) == 1.5
-	assert levenshtein_custom_weights("AA", "BBB", replace_map={("A", "B"): 0.25}, w_insert=0.5) == 1
-	assert levenshtein_custom_weights("AAA", "BBB", replace_map={("A", "B"): 0.5}) == 1.5
+	l = LevenshteinCustomWeights()
+	assert l.levenshtein("ANT", "AUNT") == 1
+	l = LevenshteinCustomWeights(delete_map={"A": 10})
+	assert l.levenshtein("ANT", "AUNT") == 1
+	l = LevenshteinCustomWeights(insert_map={"U": 10}, w_replace=20)
+	assert l.levenshtein("ANT", "AUNT") == 10
+	l = LevenshteinCustomWeights(replace_map={("A", "B"): 0.25})
+	assert l.levenshtein("AAA", "BB") == 1.5
+	l = LevenshteinCustomWeights(replace_map={("A", "B"): 0.25}, w_insert=0.5)
+	assert l.levenshtein("AA", "BBB") == 1
+	l = LevenshteinCustomWeights(replace_map={("A", "B"): 0.5})
+	assert l.levenshtein("AAA", "BBB") == 1.5
 	print "No errors with custom Levenshtein edit distance."
 
 
 
 if __name__ == "__main__":
 	verify()
-
-
