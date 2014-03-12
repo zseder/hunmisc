@@ -99,7 +99,7 @@ def levenshtein(s1, s2, case_sensitive=0, max_distance=sys.maxint,
     and are not internationalised.
 
     The rest of the parameters are:
-    - max_distance: return as soon as the distance reaches this value.
+    - max_distance: caps the distance value.
     - w_insert: weight of the insertion operator. The default is 1.
     - w_delete: weight of the deletion operator. The default is 1.
     - w_replace: weight of the replacement operator. The default is 1 (!).
@@ -153,10 +153,8 @@ def levenshtein(s1, s2, case_sensitive=0, max_distance=sys.maxint,
             # Cell diagonally above and to the left, plus the cost.
             z = array[row-1][col-1] + cost
             array[row][col] = min(x, y, z)
-            if array[row][col] >= max_distance:
-                return array[row][col]
     # When done, the bottom-right cell contains the Levenshtein distance.
-    return array[-1][-1]
+    return min(max_distance, array[-1][-1])
 
 
 class LevenshteinCustomWeights(object):
@@ -269,10 +267,8 @@ class LevenshteinCustomWeights(object):
                 # Cell diagonally above and to the left, plus the cost.
                 z = array[row-1][col-1] + cost
                 array[row][col] = min(x, y, z)
-                if array[row][col] >= max_distance:
-                    return array[row][col]
         # When done, the bottom-right cell contains the Levenshtein distance.
-        return array[-1][-1]
+        return min(max_distance, array[-1][-1])
 
 
 def verify():
