@@ -1,6 +1,6 @@
 """
-Copyright 2011-13 Attila Zseder
-Email: zseder@gmail.com
+Copyright 2011-13 Attila Zseder David Nemeskey
+Email: zseder@gmail.com nemeskeyd@gmail.com
 
 This file is part of hunmisc project
 url: https://github.com/zseder/hunmisc
