@@ -88,16 +88,15 @@ class CloseWordsGenerator(object):
 
     def __get_closest_for_seen(self):
         best = [None, []]
-        skip_first_n = 0
         while len(best[1]) == 0:
             word, old_weight = sorted(self.seen.iteritems(),
-                                      key=lambda x: x[1])[skip_first_n]
+                                      key=lambda x: x[1])[self.skip_first_n]
             old_weight = self.seen[word]
             change_weight, new_words = self.get_closest(word)
             
             # @skip_first_n th word is done
             if len(new_words) == 0:
-                skip_first_n += 1
+                self.skip_first_n += 1
                 continue
 
             new_weight = old_weight + change_weight
@@ -114,8 +113,8 @@ class CloseWordsGenerator(object):
     def get_closest_correct(self, word):
         word = tuple(c for c in word)
         self.seen = {word: 0.}
+        self.skip_first_n = 0
         while True:
-            print len(self.seen)
             new_weight, new_words = self.__get_closest_for_seen()
             correct_words = new_words & self.corrects
             if len(correct_words) > 0:
