@@ -1,6 +1,8 @@
 import sys
 from collections import defaultdict
 
+from sortedcollection import SortedCollection
+
 
 def insert_char(word, char):
     for i in xrange(len(word) + 1):
@@ -30,8 +32,8 @@ def read_matrix(istream):
     for l in istream:
         le = l.split("\t")
         src, tgt, w = le
-        if len(src) > 1 or len(tgt) > 1:
-            continue
+        #if len(src) > 1 or len(tgt) > 1:
+        #    continue
         w = abs(float(w))
         d[src][tgt] = w
 
@@ -39,7 +41,7 @@ def read_matrix(istream):
 
 
 class CloseWordsGenerator(object):
-    def __init__(self, correct_words, transmatrix=None, max_distance=2):
+    def __init__(self, correct_words, transmatrix=None, max_distance=3):
         self.__store_matrix(transmatrix)
         self.corrects = set(tuple(c for c in w) for w in correct_words)
         self.max_dist = max_distance
@@ -88,7 +90,6 @@ class CloseWordsGenerator(object):
         if len(self.not_done) == 0:
             return
 
-        self.not_done.sort(key=lambda x: x[1][0])
         return self.not_done[0]
 
     def __get_closest_for_seen(self):
@@ -102,13 +103,13 @@ class CloseWordsGenerator(object):
             # skip if old_word is already as far as it can be
             if old_dist == self.max_dist:
                 self.done.add(word)
-                self.not_done.pop(0)
+                self.not_done.remove(self.not_done[0])
                 continue
 
             cl = self.get_closest(word)
             if cl is None:
                 self.done.add(word)
-                self.not_done.pop(0)
+                self.not_done.remove(self.not_done[0])
                 continue
 
             change_weight, new_words = cl
@@ -131,7 +132,8 @@ class CloseWordsGenerator(object):
         self.seen = {word: (0., 0)}
         self.change_cache = {}
         self.done = set()
-        self.not_done = self.seen.items()
+        self.not_done = SortedCollection(key=lambda x: x[1][0])
+        self.not_done.insert(self.seen.items()[0])
 
         while True:
             new_value, new_words = self.__get_closest_for_seen()
@@ -145,7 +147,7 @@ class CloseWordsGenerator(object):
             for w in new_words:
                 if w not in self.seen:
                     self.seen[w] = new_value
-                    self.not_done.append((w, new_value))
+                    self.not_done.insert((w, new_value))
 
 
 def main():
@@ -153,11 +155,9 @@ def main():
     m = read_matrix(matrix_f)
     good_words = ["facebook", "britney"]
     cwg = CloseWordsGenerator(good_words, m)
-    tests = ["fcaebook"]
+    tests = ["faremook"]
     for w in tests:
         print w, cwg.get_closest_correct(w)
 
 if __name__ == "__main__":
-    import cProfile
-    cProfile.run("main()")
-    #main()
+    main()
