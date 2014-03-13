@@ -54,7 +54,6 @@ class CloseWordsGenerator(object):
         self.transitions = d
 
     def best_char_change(self, word, src_char, row):
-        print word, src_char, row
         """returns best word(s) with changing @src_char and skips words
         already seen"""
         result = [-1, set()]
@@ -64,12 +63,13 @@ class CloseWordsGenerator(object):
             if weight != result[0] and len(result[1]) > 0:
                 break
 
-            print word, src_char, tgt
             words = set(gen_changed(word, src_char, tgt))
             words -= set(self.seen.iterkeys())
             if len(words) > 0:
                 result[0] = weight
                 result[1] |= words
+                for w in words:
+                    self.seen[w] = weight
 
         return result
 
@@ -79,9 +79,6 @@ class CloseWordsGenerator(object):
         t = self.transitions
         chars = set(word) | set([''])
 
-        #for c in chars:
-        #    print c, t[c]
-        #    print self.best_char_change(word, c, t[c])
         # call best_char_change (to skip already seen changes) on every char
         best = min((self.best_char_change(word, c, t[c])
                    for c in chars if (c in t and len(t[c]) > 0)),
@@ -90,10 +87,19 @@ class CloseWordsGenerator(object):
         return best
 
     def __get_closest_for_seen(self):
-        best = [None, None]
-        for word in self.seen:
+        best = [None, []]
+        skip_first_n = 0
+        while len(best[1]) == 0:
+            word, old_weight = sorted(self.seen.iteritems(),
+                                      key=lambda x: x[1])[skip_first_n]
             old_weight = self.seen[word]
             change_weight, new_words = self.get_closest(word)
+            
+            # @skip_first_n th word is done
+            if len(new_words) == 0:
+                skip_first_n += 1
+                continue
+
             new_weight = old_weight + change_weight
             if best[0] is None:
                 best[0] = new_weight
