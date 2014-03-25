@@ -98,7 +98,6 @@ class CloseWordsGenerator(object):
 
             word, (old_weight, old_dist) = sorted(self.seen.iteritems(),
                                       key=lambda x: x[1][1])[self.skip_first_n]
-            print word
 
             # skip if old_word is already as far as it can be
             if old_dist == self.max_dist:
