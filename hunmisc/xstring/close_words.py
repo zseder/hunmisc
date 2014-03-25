@@ -1,6 +1,8 @@
 import sys
 from collections import defaultdict
 
+from sortedcollection import SortedCollection
+
 
 def insert_char(word, char):
     for i in xrange(len(word) + 1):
@@ -30,8 +32,8 @@ def read_matrix(istream):
     for l in istream:
         le = l.split("\t")
         src, tgt, w = le
-        if len(src) > 1 or len(tgt) > 1:
-            continue
+        #if len(src) > 1 or len(tgt) > 1:
+        #    continue
         w = abs(float(w))
         d[src][tgt] = w
 
@@ -39,7 +41,7 @@ def read_matrix(istream):
 
 
 class CloseWordsGenerator(object):
-    def __init__(self, correct_words, transmatrix=None, max_distance=2):
+    def __init__(self, correct_words, transmatrix=None, max_distance=3):
         self.__store_matrix(transmatrix)
         self.corrects = set(tuple(c for c in w) for w in correct_words)
         self.max_dist = max_distance
@@ -56,60 +58,61 @@ class CloseWordsGenerator(object):
             d[c1] = sorted(values, key=lambda x: x[1])
         self.transitions = d
 
-    def best_char_change(self, word, src_char, row):
-        """returns best word(s) with changing @src_char and skips words
-        already seen"""
-        result = [-1, set()]
+    def get_char_changes(self, word, src_char):
+        row = self.transitions[src_char]
+        values = []
         for tgt, weight in row:
-            # to deal with more changes having the same penalty, we have to
-            # collect more results until there is an increase in weight
-            if weight != result[0] and len(result[1]) > 0:
-                break
-
-            words = set(gen_changed(word, src_char, tgt))
-            words -= set(self.seen.iterkeys())
-            if len(words) > 0:
-                result[0] = weight
-                result[1] |= words
-                for w in words:
-                    self.seen[w] = (weight, self.seen[word][1] + 1)
-
-        return result
+            new_words = set(gen_changed(word, src_char, tgt))
+            values.append((weight, new_words))
+        return sorted(values, key=lambda x: x[0])
 
     def get_closest(self, word):
-        """Computes closesd word(s) based on stored transition matrix
+        """Computes closest word(s) based on stored transition matrix
         """
         t = self.transitions
         chars = set(word) | set([''])
 
-        # call best_char_change (to skip already seen changes) on every char
-        best = min((self.best_char_change(word, c, t[c])
-                   for c in chars if (c in t and len(t[c]) > 0)),
-                   key=lambda x: x[0])
+        if word not in self.change_cache:
+            self.change_cache[word] = []
+            for c in chars:
+                if c not in t or len(t[c]) == 0:
+                    continue
 
-        return best
+                self.change_cache[word] += self.get_char_changes(word, c)
+
+        if len(self.change_cache[word]) == 0:
+            del self.change_cache[word]
+            return None
+
+        return self.change_cache[word].pop(0)
+
+    def choose_next(self):
+        if len(self.not_done) == 0:
+            return
+
+        return self.not_done[0]
 
     def __get_closest_for_seen(self):
         best = [None, set()]
         while len(best[1]) == 0:
-            # stop if there is no possible changes
-            if self.skip_first_n == len(self.seen):
+            n = self.choose_next()
+            if n is None:
                 break
 
-            word, (old_weight, old_dist) = sorted(self.seen.iteritems(),
-                                      key=lambda x: x[1][1])[self.skip_first_n]
-
+            word, (old_weight, old_dist) = n
             # skip if old_word is already as far as it can be
             if old_dist == self.max_dist:
-                self.skip_first_n += 1
+                self.done.add(word)
+                self.not_done.remove(self.not_done[0])
                 continue
 
-            change_weight, new_words = self.get_closest(word)
-
-            # @skip_first_n th word is done
-            if len(new_words) == 0:
-                self.skip_first_n += 1
+            cl = self.get_closest(word)
+            if cl is None:
+                self.done.add(word)
+                self.not_done.remove(self.not_done[0])
                 continue
+
+            change_weight, new_words = cl
 
             new_weight = old_weight + change_weight
             if best[0] is None:
@@ -124,8 +127,14 @@ class CloseWordsGenerator(object):
 
     def get_closest_correct(self, word):
         word = tuple(c for c in word)
+
+        # caching variables for speedup
         self.seen = {word: (0., 0)}
-        self.skip_first_n = 0
+        self.change_cache = {}
+        self.done = set()
+        self.not_done = SortedCollection(key=lambda x: x[1][0])
+        self.not_done.insert(self.seen.items()[0])
+
         while True:
             new_value, new_words = self.__get_closest_for_seen()
             if len(new_words) == 0:
@@ -138,6 +147,7 @@ class CloseWordsGenerator(object):
             for w in new_words:
                 if w not in self.seen:
                     self.seen[w] = new_value
+                    self.not_done.insert((w, new_value))
 
 
 def main():
@@ -145,7 +155,7 @@ def main():
     m = read_matrix(matrix_f)
     good_words = ["facebook", "britney"]
     cwg = CloseWordsGenerator(good_words, m)
-    tests = ["facebok", "facbok"]
+    tests = ["faremook"]
     for w in tests:
         print w, cwg.get_closest_correct(w)
 
