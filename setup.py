@@ -22,6 +22,7 @@ def my_setup():
     include_package_data=True,
     zip_safe=False,
     platforms='any',
+    install_requires=["DAWG"],
     cmdclass={'install': HunmiscInstall}
 )
 
