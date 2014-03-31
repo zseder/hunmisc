@@ -232,28 +232,29 @@ class LevenshteinCustomWeights(object):
         if not case_sensitive:
             s1 = s1.upper()
             s2 = s2.upper()
-        # Create an array with rows 0..m and columns 0..n.
-        # We represent the array as a list of lists:
-        #     array = [ row0, row1, row2, ... ]
-        # where each row is also a list.
-        # To access the item in row A column B, use array[A][B].
-        array = [None]*(m+1)
-        for i in range(m+1):
-            array[i] = [None]*(n+1)
-        # Initialise the first row to 0..n.
-        array[0][0] = 0
-        for i in range(1, n+1):
-            array[0][i] = array[0][i - 1] + insert_map.get(s2[i - 1], w_insert)
-        # Initialize the first column to 0..m.
-        for i in range(1, m+1):
-            array[i][0] = array[i - 1][0] + delete_map.get(s1[i - 1], w_delete)
+
+        # We use two arrays + the two marginals instead of a 2D array
+        # Only the first (vertical) marginal has been made implicit in the first
+        # coordinate of prev and curr.
+        #s1_marginal = [0] * (m + 1)
+        #for i in xrange(1, m + 1):
+        #    s1_marginal[i] = s1_marginal[i - 1] + delete_map.get(s1[i - 1], w_delete)
+        s2_marginal = [0] * (n + 1)
+        for i in xrange(1, n + 1):
+            s2_marginal[i] = s2_marginal[i - 1] + insert_map.get(s2[i - 1], w_insert)
+
+        curr = s2_marginal
+        prev = [0] * (n + 1)
 
         # Measure the differences.
-        # Loop over the rows and columns of the array, skipping the first
-        # of each. Remember that rows = 0..m and columns = 0..n.
-        for row in range(1, m+1):
+        # Loop over the rows and columns of the array, looking at two rows at a
+        # time.
+        for row in xrange(1, m + 1):
             c1 = s1[row - 1]
-            for col in range(1, n+1):
+            # The old prev == curr will be completely overwritten
+            prev, curr = curr, prev
+            curr[0] = prev[0] + delete_map.get(c1, w_delete)
+            for col in xrange(1, n + 1):
                 c2 = s2[col - 1]
                 # If the characters are the same, the cost is 0,
                 # otherwise it is 1.
@@ -261,14 +262,14 @@ class LevenshteinCustomWeights(object):
                         else replace_map.get((c1, c2), self.w_replace))
 
                 # Cell immediately above plus one.
-                x = array[row-1][col] + delete_map.get(c1, self.w_delete)
+                x = prev[col] + delete_map.get(c1, self.w_delete)
                 # Cell immediately to the left plus one.
-                y = array[row][col-1] + insert_map.get(c2, self.w_insert)
+                y = curr[col-1] + insert_map.get(c2, self.w_insert)
                 # Cell diagonally above and to the left, plus the cost.
-                z = array[row-1][col-1] + cost
-                array[row][col] = min(x, y, z)
+                z = prev[col-1] + cost
+                curr[col] = min(x, y, z)
         # When done, the bottom-right cell contains the Levenshtein distance.
-        return min(max_distance, array[-1][-1])
+        return min(max_distance, curr[-1])
 
 
 def verify():
@@ -296,17 +297,17 @@ def verify():
     print "========================================================"
     print "Verifying custom Levenshtein edit distance:"
     l = LevenshteinCustomWeights()
-    assert l.levenshtein("ANT", "AUNT") == 1
+    assert l.levenshtein2("ANT", "AUNT") == 1
     l = LevenshteinCustomWeights(delete_map={"A": 10})
-    assert l.levenshtein("ANT", "AUNT") == 1
+    assert l.levenshtein2("ANT", "AUNT") == 1
     l = LevenshteinCustomWeights(insert_map={"U": 10}, w_replace=20)
-    assert l.levenshtein("ANT", "AUNT") == 10
+    assert l.levenshtein2("ANT", "AUNT") == 10
     l = LevenshteinCustomWeights(replace_map={("A", "B"): 0.25})
-    assert l.levenshtein("AAA", "BB") == 1.5
+    assert l.levenshtein2("AAA", "BB") == 1.5
     l = LevenshteinCustomWeights(replace_map={("A", "B"): 0.25}, w_insert=0.5)
-    assert l.levenshtein("AA", "BBB") == 1
+    assert l.levenshtein2("AA", "BBB") == 1
     l = LevenshteinCustomWeights(replace_map={("A", "B"): 0.5})
-    assert l.levenshtein("AAA", "BBB") == 1.5
+    assert l.levenshtein2("AAA", "BBB") == 1.5
     print "No errors with custom Levenshtein edit distance."
 
 
