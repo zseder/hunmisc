@@ -153,6 +153,10 @@ def levenshtein(s1, s2, case_sensitive=0, max_distance=sys.maxint,
             # Cell diagonally above and to the left, plus the cost.
             z = array[row-1][col-1] + cost
             array[row][col] = min(x, y, z)
+
+        # Check if we reached max_distance
+        if min(array[row]) >= max_distance:
+            return max_distance
     # When done, the bottom-right cell contains the Levenshtein distance.
     return min(max_distance, array[-1][-1])
 
@@ -268,6 +272,10 @@ class LevenshteinCustomWeights(object):
                 # Cell diagonally above and to the left, plus the cost.
                 z = prev[col-1] + cost
                 curr[col] = min(x, y, z)
+
+            # Check if we reached max_distance
+            if min(curr) >= max_distance:
+                return max_distance
         # When done, the bottom-right cell contains the Levenshtein distance.
         return min(max_distance, curr[-1])
 
@@ -287,6 +295,7 @@ def verify():
     assert levenshtein("spam", "ham") == 2
     assert levenshtein("spam", "SPAM") == 0
     assert levenshtein("spam", "SPAM", 1) == 4
+    assert levenshtein("spam", "SPAM", 1, max_distance=2) == 2
     assert levenshtein("GUMBO", "GAMBOL", w_insert=10) == 11
     assert levenshtein("GUMBO", "GAMBOL", w_insert=10, w_replace=2) == 12
     assert levenshtein("spam", "ham", w_replace=2) == 3
@@ -297,17 +306,17 @@ def verify():
     print "========================================================"
     print "Verifying custom Levenshtein edit distance:"
     l = LevenshteinCustomWeights()
-    assert l.levenshtein2("ANT", "AUNT") == 1
+    assert l.levenshtein("ANT", "AUNT") == 1
     l = LevenshteinCustomWeights(delete_map={"A": 10})
-    assert l.levenshtein2("ANT", "AUNT") == 1
+    assert l.levenshtein("ANT", "AUNT") == 1
     l = LevenshteinCustomWeights(insert_map={"U": 10}, w_replace=20)
-    assert l.levenshtein2("ANT", "AUNT") == 10
+    assert l.levenshtein("ANT", "AUNT") == 10
     l = LevenshteinCustomWeights(replace_map={("A", "B"): 0.25})
-    assert l.levenshtein2("AAA", "BB") == 1.5
+    assert l.levenshtein("AAA", "BB") == 1.5
     l = LevenshteinCustomWeights(replace_map={("A", "B"): 0.25}, w_insert=0.5)
-    assert l.levenshtein2("AA", "BBB") == 1
+    assert l.levenshtein("AA", "BBB") == 1
     l = LevenshteinCustomWeights(replace_map={("A", "B"): 0.5})
-    assert l.levenshtein2("AAA", "BBB") == 1.5
+    assert l.levenshtein("AAA", "BBB") == 1.5
     print "No errors with custom Levenshtein edit distance."
 
 
