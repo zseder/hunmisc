@@ -13,7 +13,6 @@ class MorphistoStemmer():
         self.max_size = max_buffer_size
         self.chars_set = set([])
         self.buffer_ = list()
-        self.data_lines = list()
         self.line_count = 0
         self.word_split = {}
         self.morphisto_analyses = {}
@@ -68,8 +67,8 @@ class MorphistoStemmer():
     def clear_caches(self):
 
         self.word_split = {}
-        self.data_lines = list()
         self.chars_set = set([])
+        self.buffer_ = list()
 
     def analyse_update_cache(self, list_to_analyse):
         morphisto_input = '\n'.join(list_to_analyse).encode('utf-8')
@@ -124,11 +123,9 @@ class MorphistoStemmer():
         return False, a
 
     def is_good_split(self, split, analysis):
-        n = False
+        
         list_of_analysis = []
         word_in_orig = ''.join([p[0] for p in split[:-1]])
-        if n is True:
-            print split
         for c, versions in split:
             list_of_analysis.append([])
             for v in versions:
@@ -139,8 +136,6 @@ class MorphistoStemmer():
         list_of_analysis[-1] = filter(lambda x: len(x.split(' ')) == 1 or
                                     self.merge_ig_er_ung_endings(x)[0] is True,
                                      list_of_analysis[-1])
-        if n is True:
-            print list_of_analysis
         # last part of split should be analysed as one token
 
         for tuple_ in itertools.product(*list_of_analysis):
@@ -243,12 +238,10 @@ class MorphistoStemmer():
         self.close_filehandlers()
 
 
-#pattern = re.compile(ur'> ([\w]+)', re.UNICODE)
 def main():
 
     a = MorphistoStemmer()
     a.stem_input(sys.stdin)
-    #get_compound_words(sys.stdin)
 
 if __name__ == '__main__':
     main()
