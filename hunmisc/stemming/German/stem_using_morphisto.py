@@ -4,9 +4,10 @@ import sys
 import itertools
 from string import capitalize as cap
 
+
 class MorphistoStemmer():
 
-    def __init__(self, printout_res=True, morphisto_model_loc=
+    def __init__(self, result_tag, printout_res=True, morphisto_model_loc=
                  '/home/judit/morphisto/morphisto.ca',
                 max_buffer_size=200,
                 result_path='/home/pajkossy/stem_with_morphisto'):
@@ -21,18 +22,19 @@ class MorphistoStemmer():
         self.morphisto_model_loc = morphisto_model_loc
         self.printout_res = printout_res
         if self.printout_res is False:
-            self.open_filehandlers(result_path)
+            self.open_filehandlers(result_path, result_tag)
 
-    def open_filehandlers(self, result_path):
+    def open_filehandlers(self, result_path, result_tag):
 
         self.not_stemmed_fh =\
-        open('{0}/not_stemmed'.format(result_path), 'w')
+        open('{0}/{1}.not_stemmed'.format(result_path, result_tag), 'w')
         self.simple_stemmed_fh =\
-        open('{0}/simple_stemmed'.format(result_path), 'w')
+        open('{0}/{1}.simple_stemmed'.format(result_path, result_tag), 'w')
         self.compound_stemmed_fh =\
-        open('{0}/compound_stemmed'.format(result_path), 'w')
+        open('{0}/{1}.compound_stemmed'.format(result_path, result_tag), 'w')
         self.compound_not_stemmed_fh =\
-        open('{0}/compound_not_stemmed'.format(result_path), 'w')
+        open('{0}/{1}.compound_not_stemmed'.format(
+            result_path, result_tag), 'w')
 
     def close_filehandlers(self):
 
@@ -123,14 +125,37 @@ class MorphistoStemmer():
             return True, wds[0][:-2] + 'er'
         if len(wds) == 2 and wds[0][-2:] == 'en' and wds[1] == 'ung':
             return True, wds[0][:-2] + 'ung'
+        if len(wds) == 2 and wds[0][-2:] in ['e', 'n'] and wds[1] == 'ig':
+            return True, wds[0][:-1] + 'ig'
+        if len(wds) == 2 and wds[0][-2:] in ['e', 'n'] and wds[1] == 'er':
+            return True, wds[0][:-1] + 'er'
+        if len(wds) == 2 and wds[0][-2:] in ['e', 'n'] and wds[1] == 'ung':
+            return True, wds[0][:-1] + 'ung'
         if len(wds) == 2 and wds[1] == 'keit':
             return True, wds[0] + 'keit'
         if len(wds) == 2 and wds[1] == 'chen':
             return True, wds[0] + 'chen'
         return False, a
 
+    def merge_prefixes(self, a):
+
+        prefixes = set(['be', 'emp', 'ent', 'er', 'ge', 'miss', 'ver', 'voll',
+                        'zer', 'ab', 'an', 'auf', 'aus', 'be', 'durch', 'ein',
+                        'mit', 'nach', 'vor', 'zu', 'zusammen'])
+        wds = a.split(' ')
+        if wds[0] in prefixes:
+            return '{0}{1} {2}'.format(wds[0], wds[1], ' '.join(
+                wds[2:])).strip()
+        else:
+            return a
+
+    def merge_prefixes_ig_er_ung_endings(self, a):
+
+        a = self.merge_prefixes(a)
+        return self.merge_ig_er_ung_endings(a)
+
     def is_good_split(self, split, list_of_analysis_to_match):
-        
+
         list_of_analysis = []
         word_in_orig = ''.join([p[0] for p in split[:-1]])
         for c, versions in split:
@@ -139,14 +164,13 @@ class MorphistoStemmer():
                 if v in self.morphisto_analyses:
                     for a in self.morphisto_analyses[v]:
                         list_of_analysis[-1].append(a)
-
         list_of_analysis[-1] = filter(lambda x: len(x.split(' ')) == 1 or
-                                    self.merge_ig_er_ung_endings(x)[0] is True,
-                                     list_of_analysis[-1])
+                                    self.merge_prefixes_ig_er_ung_endings(x)[0]
+                                      is True, list_of_analysis[-1])
         # last part of split should be analysed as one token
         for tuple_ in itertools.product(*list_of_analysis):
             if ' '.join(tuple_) in list_of_analysis_to_match:
-                merged_ending = self.merge_ig_er_ung_endings(
+                merged_ending = self.merge_prefixes_ig_er_ung_endings(
                     tuple_[-1].lower())[1]
                 return True, word_in_orig + merged_ending
         return False, ''
@@ -181,7 +205,7 @@ class MorphistoStemmer():
                 self.analyse_update_cache(buffer_)
                 buffer_ = []
                 i = 0
-        self.analyse_update_cache(buffer_)        
+        self.analyse_update_cache(buffer_)
 
     def compound_word_stemming(self, compound_words):
 
@@ -248,7 +272,7 @@ class MorphistoStemmer():
             self.compound_stemmed_fh.write(compound_word_stemmings)
             self.compound_not_stemmed_fh.write(not_stemmed_compound)
         else:
-            sys.stderr.write(not_stemmed + simple_word_stemmings + 
+            sys.stderr.write(not_stemmed + simple_word_stemmings +
                             compound_word_stemmings + not_stemmed_compound)
 
     def stem_input(self, data):
@@ -269,7 +293,7 @@ class MorphistoStemmer():
 
 def main():
 
-    a = MorphistoStemmer(printout_res=False)
+    a = MorphistoStemmer('', printout_res=True)
     a.stem_input(sys.stdin)
 
 if __name__ == '__main__':
