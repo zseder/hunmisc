@@ -3,13 +3,14 @@ import re
 import sys
 import itertools
 from string import capitalize as cap
+from hunmisc.xstring.stringdiff import levenshtein
 
 
 class MorphistoStemmer():
 
     def __init__(self, result_tag, printout_res=True, morphisto_model_loc=
                  '/home/judit/morphisto/morphisto.ca',
-                max_buffer_size=200,
+                max_buffer_size=1000,
                 result_path='/home/pajkossy/stem_with_morphisto'):
 
         self.chars_set = set([])
@@ -100,6 +101,31 @@ class MorphistoStemmer():
                     if r not in results and r != '':
                         results.append(r)
                 yield title, results
+    
+    def get_patterns(self):
+        
+        patterns = {}
+        patterns['ue'] = u'\uc3bc'
+        patterns['oe'] = u'\uc3b6'
+        patterns['au'] = u'\uc3a4'
+        
+        return patterns
+
+    def stem_with_ue_replacement(self, data):
+        
+        mappings = self.get_patterns()
+        list_to_stem = []
+        dict_of_toks_to_stem = {}
+        for line in data:
+            l = line.decode('utf-8')
+            l_orig = l
+            for m in mappings:
+                l = re.sub(m, mappings[m], l)
+            if l != l_orig:
+                list_to_stem.append(l)
+                dict_of_toks_to_stem[l_orig] = l
+        print dict_of_toks_to_stem        
+
 
     def generate_output_blocks(self, morph_out):
 
@@ -144,15 +170,21 @@ class MorphistoStemmer():
                         'mit', 'nach', 'vor', 'zu', 'zusammen'])
         wds = a.split(' ')
         if wds[0] in prefixes:
-            return '{0}{1} {2}'.format(wds[0], wds[1], ' '.join(
-                wds[2:])).strip()
+            try:
+                return u'{0}{1} {2}'.format(wds[0], wds[1], ' '.join(
+                    wds[2:])).strip()
+            except:
+                print wds
+                quit()
         else:
             return a
 
     def merge_prefixes_ig_er_ung_endings(self, a):
-
+        if len(a.split(' ')) == 1:
+            return True, a
         a = self.merge_prefixes(a)
-        return self.merge_ig_er_ung_endings(a)
+        a2 = self.merge_ig_er_ung_endings(a)
+        return a2
 
     def is_good_split(self, split, list_of_analysis_to_match):
 
@@ -163,7 +195,9 @@ class MorphistoStemmer():
             for v in versions:
                 if v in self.morphisto_analyses:
                     for a in self.morphisto_analyses[v]:
-                        list_of_analysis[-1].append(a)
+                        a = a.strip()
+                        if len(a) > 0:
+                            list_of_analysis[-1].append(a)
         list_of_analysis[-1] = filter(lambda x: len(x.split(' ')) == 1 or
                                     self.merge_prefixes_ig_er_ung_endings(x)[0]
                                       is True, list_of_analysis[-1])
@@ -181,7 +215,11 @@ class MorphistoStemmer():
 
         for pair in compound_list:
             word, analysis_list = pair
-            max_split_count = max([len(a.split(' ')) for a in analysis_list])
+            try:
+               max_split_count = max([len(a.split(' ')) for a in analysis_list])
+            except:
+                print word, analysis_list
+                continue
             is_true = False
             for split in self.generate_all_split_with_casing_s\
                          (word, max_split_count):
@@ -201,7 +239,7 @@ class MorphistoStemmer():
         for item in all_list:
             i += 1
             buffer_.append(item)
-            if i > 500000:
+            if i > 100000:
                 self.analyse_update_cache(buffer_)
                 buffer_ = []
                 i = 0
@@ -212,9 +250,15 @@ class MorphistoStemmer():
         chars_to_analyse = []
         for pair in compound_words:
             word, analysis_list = pair
+            if len(word) > 25:
+                sys.stderr.write(u'{0}\n'.format(word).encode('utf-8'))
+                continue
             #self.word_split[word] = []
-            max_split_count = max([len(a.split(' ')) for a in analysis_list])
-            
+            try:
+                 max_split_count = max([len(a.split(' ')) for a in analysis_list])
+            except:
+                print word, analysis_list
+                continue
             for split in self.generate_all_split_with_casing_s\
                          (word, max_split_count):
                 #self.word_split[word].append(split)
@@ -233,18 +277,26 @@ class MorphistoStemmer():
         simple_word_stemmings = []
         compound_words = []
         for b in self.buffer_:
+            
             simple_found = False
             if b not in self.morphisto_analyses:
                 not_stemmed.append(b)
             else:
+                stemmed_versions = []
                 for a in self.morphisto_analyses[b]:
                     if len(a.split(' ')) == 1:
-                        simple_word_stemmings.append('\t'.join((b, a)))
+                        stemmed_versions.append(a)
                         simple_found = True
-                        break
                 if not simple_found:
                     compound_words.append((b, self.morphisto_analyses[b]))
+                else:
+                    simple_word_stemmings.append(
+                        '\t'.join((b, self.choose_most_similar_stemming(
+                            stemmed_versions, b))))
         return not_stemmed, simple_word_stemmings, compound_words
+    
+    def choose_most_similar_stemming(self, stemmed_versions, b):
+        return sorted(stemmed_versions, key=lambda x:levenshtein(x, b))[0]
 
     def stem_lines_with_morphisto(self):
 
@@ -276,11 +328,12 @@ class MorphistoStemmer():
                             compound_word_stemmings + not_stemmed_compound)
 
     def stem_input(self, data):
-
+        global_line_count = 0
         for line in data:
+            global_line_count += 1
             self.line_count += 1
-            if self.line_count % 100 == 0:
-                print self.line_count
+            if global_line_count % 1000 == 0:
+                print global_line_count
             l = line.strip().decode('utf-8')
             self.buffer_.append(cap(l))
             if self.line_count > self.max_size or line is None:
@@ -293,7 +346,7 @@ class MorphistoStemmer():
 
 def main():
 
-    a = MorphistoStemmer('', printout_res=True)
+    a = MorphistoStemmer('wordcount_lower_toks.3', printout_res=False)
     a.stem_input(sys.stdin)
 
 if __name__ == '__main__':
