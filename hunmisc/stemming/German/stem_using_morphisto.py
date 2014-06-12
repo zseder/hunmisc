@@ -10,9 +10,9 @@ import cPickle
 class MorphistoStemmer():
 
     def __init__(self, result_tag, printout_res=True, morphisto_model_loc=
-                 '/home/judit/morphisto/morphisto.ca',
+                 '/mnt/pajkossy/morphisto.ca',
                 max_buffer_size=1000,
-                result_path='/home/pajkossy/stem_with_morphisto'):
+                result_path='/mnt/pajkossy/results'):
 
         self.chars_set = set([])
         self.buffer_ = list()
@@ -28,17 +28,17 @@ class MorphistoStemmer():
         if self.printout_res is False:
             self.open_filehandlers()
 
-    def open_filehandlers(self, result_path, result_tag):
+    def open_filehandlers(self):
 
         self.not_stemmed_fh =\
-        open('{0}/{1}.not_stemmed'.format(self.result_path, result_tag), 'w')
+        open('{0}/{1}.not_stemmed'.format(self.result_path, self.result_tag), 'w')
         self.simple_stemmed_fh =\
-        open('{0}/{1}.simple_stemmed'.format(result_path, result_tag), 'w')
+        open('{0}/{1}.simple_stemmed'.format(self.result_path, self.result_tag), 'w')
         self.compound_stemmed_fh =\
-        open('{0}/{1}.compound_stemmed'.format(result_path, result_tag), 'w')
+        open('{0}/{1}.compound_stemmed'.format(self.result_path, self.result_tag), 'w')
         self.compound_not_stemmed_fh =\
         open('{0}/{1}.compound_not_stemmed'.format(
-            result_path, result_tag), 'w')
+            self.result_path, self.result_tag), 'w')
 
     def close_filehandlers(self):
 
@@ -358,8 +358,9 @@ class MorphistoStemmer():
 
 def main():
 
-    a = MorphistoStemmer('', printout_res=True)
-    a.stem_input(sys.stdin)
+    a = MorphistoStemmer(result_tag = sys.argv[2]
+                         , printout_res=False)
+    a.stem_input(open(sys.argv[1]))
 
 if __name__ == '__main__':
     main()
