@@ -4,6 +4,7 @@ import sys
 import itertools
 from string import capitalize as cap
 from hunmisc.xstring.stringdiff import levenshtein
+import cPickle
 
 
 class MorphistoStemmer():
@@ -16,6 +17,8 @@ class MorphistoStemmer():
         self.chars_set = set([])
         self.buffer_ = list()
         self.line_count = 0
+        self.result_tag = result_tag
+        self.result_path = result_path
         self.max_size = max_buffer_size
         self.morphisto_analyses = {}
         self.analysis_pattern = re.compile(r'<.*?>')
@@ -23,12 +26,12 @@ class MorphistoStemmer():
         self.morphisto_model_loc = morphisto_model_loc
         self.printout_res = printout_res
         if self.printout_res is False:
-            self.open_filehandlers(result_path, result_tag)
+            self.open_filehandlers()
 
     def open_filehandlers(self, result_path, result_tag):
 
         self.not_stemmed_fh =\
-        open('{0}/{1}.not_stemmed'.format(result_path, result_tag), 'w')
+        open('{0}/{1}.not_stemmed'.format(self.result_path, result_tag), 'w')
         self.simple_stemmed_fh =\
         open('{0}/{1}.simple_stemmed'.format(result_path, result_tag), 'w')
         self.compound_stemmed_fh =\
@@ -101,31 +104,36 @@ class MorphistoStemmer():
                     if r not in results and r != '':
                         results.append(r)
                 yield title, results
-    
+
     def get_patterns(self):
-        
+
         patterns = {}
-        patterns['ue'] = u'\uc3bc'
-        patterns['oe'] = u'\uc3b6'
-        patterns['au'] = u'\uc3a4'
-        
+        patterns['ue'] = u'\u00fc'
+        patterns['oe'] = u'\u00f6'
+        patterns['au'] = u'\u00e4'
+
         return patterns
 
     def stem_with_ue_replacement(self, data):
-        
+
         mappings = self.get_patterns()
         list_to_stem = []
         dict_of_toks_to_stem = {}
         for line in data:
-            l = line.decode('utf-8')
+            l = line.strip().decode('utf-8')
             l_orig = l
             for m in mappings:
                 l = re.sub(m, mappings[m], l)
             if l != l_orig:
-                list_to_stem.append(l)
-                dict_of_toks_to_stem[l_orig] = l
-        print dict_of_toks_to_stem        
-
+                list_to_stem.append(l.encode('utf-8'))
+                dict_of_toks_to_stem[l.encode('utf-8')] = \
+                        l_orig.encode('utf-8')
+        if len(list_to_stem) > 0:
+            self.stem_input(list_to_stem)
+            if self.printout_res is False:
+                f = open('{0}/{1}.dict.pickle'.format(
+                    self.result_path, self.result_tag), 'w')
+                cPickle.dump(dict_of_toks_to_stem, f)
 
     def generate_output_blocks(self, morph_out):
 
@@ -215,8 +223,10 @@ class MorphistoStemmer():
 
         for pair in compound_list:
             word, analysis_list = pair
+            solutions = []
             try:
-               max_split_count = max([len(a.split(' ')) for a in analysis_list])
+                max_split_count = max([len(a.split(' '))
+                                       for a in analysis_list])
             except:
                 print word, analysis_list
                 continue
@@ -225,10 +235,13 @@ class MorphistoStemmer():
                          (word, max_split_count):
                 is_true, stemmed = self.is_good_split(split, analysis_list)
                 if is_true is True:
-                    stemmed_list.append('\t'.join((word, stemmed)))
-                    break
-            if is_true is False:
-                    not_succeeded_list.append('\t'.join(
+                    solutions.append(stemmed)
+            if len(solutions) > 0:
+                stemmed_list.append('\t'.join((
+                    word, self.choose_most_similar_stemming
+                                              (solutions, word))))
+            else:
+                not_succeeded_list.append('\t'.join(
                         (word, ';'.join(analysis_list))))
         return not_succeeded_list, stemmed_list
 
@@ -253,9 +266,9 @@ class MorphistoStemmer():
             if len(word) > 25:
                 sys.stderr.write(u'{0}\n'.format(word).encode('utf-8'))
                 continue
-            #self.word_split[word] = []
             try:
-                 max_split_count = max([len(a.split(' ')) for a in analysis_list])
+                max_split_count = max([len(a.split(' '))
+                                        for a in analysis_list])
             except:
                 print word, analysis_list
                 continue
@@ -277,7 +290,6 @@ class MorphistoStemmer():
         simple_word_stemmings = []
         compound_words = []
         for b in self.buffer_:
-            
             simple_found = False
             if b not in self.morphisto_analyses:
                 not_stemmed.append(b)
@@ -294,9 +306,9 @@ class MorphistoStemmer():
                         '\t'.join((b, self.choose_most_similar_stemming(
                             stemmed_versions, b))))
         return not_stemmed, simple_word_stemmings, compound_words
-    
+
     def choose_most_similar_stemming(self, stemmed_versions, b):
-        return sorted(stemmed_versions, key=lambda x:levenshtein(x, b))[0]
+        return sorted(stemmed_versions, key=lambda x: levenshtein(x, b))[0]
 
     def stem_lines_with_morphisto(self):
 
@@ -346,7 +358,7 @@ class MorphistoStemmer():
 
 def main():
 
-    a = MorphistoStemmer('wordcount_lower_toks.3', printout_res=False)
+    a = MorphistoStemmer('', printout_res=True)
     a.stem_input(sys.stdin)
 
 if __name__ == '__main__':
