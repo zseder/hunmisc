@@ -5,14 +5,14 @@ import itertools
 from string import capitalize as cap
 from hunmisc.xstring.stringdiff import levenshtein
 import cPickle
-
+import dawg
 
 class MorphistoStemmer():
 
-    def __init__(self, result_tag, printout_res=True, morphisto_model_loc=
-                 '/mnt/pajkossy/morphisto.ca',
-                max_buffer_size=1000,
-                result_path='/mnt/pajkossy/results'):
+    def __init__(self, freq_file_path, result_tag, printout_res=True, 
+                 morphisto_model_loc='/mnt/pajkossy/morphisto.ca',
+                max_buffer_size=1000, result_path='/mnt/pajkossy/results', 
+                freq_struct_is_dawg=True, freq_ratio_limit=0.1):
 
         self.chars_set = set([])
         self.buffer_ = list()
@@ -27,6 +27,16 @@ class MorphistoStemmer():
         self.printout_res = printout_res
         if self.printout_res is False:
             self.open_filehandlers()
+        self.freq_struct_is_dawg = freq_struct_is_dawg
+        self.get_freqs(freq_file_path)
+        self.freq_ratio_limit = freq_ratio_limit
+   
+    def get_freqs(self, freq_file_path):
+
+        if self.freq_struct_is_dawg:
+            self.freqs = dawg.IntDAWG().load(freq_file_path)
+        else:
+            self.freqs = cPickle.load(open(freq_file_path))
 
     def open_filehandlers(self):
 
@@ -39,6 +49,8 @@ class MorphistoStemmer():
         self.compound_not_stemmed_fh =\
         open('{0}/{1}.compound_not_stemmed'.format(
             self.result_path, self.result_tag), 'w')
+        self.freq_discarded_fh =\
+        open('{0}/{1}.freq_discarded'.format(self.result_path, self.result_tag), 'w')         
 
     def close_filehandlers(self):
 
@@ -220,6 +232,7 @@ class MorphistoStemmer():
     def lookfor_matching_stemmed_split(self, compound_list):
         not_succeeded_list = []
         stemmed_list = []
+        freq_discarded = []
 
         for pair in compound_list:
             word, analysis_list = pair
@@ -237,13 +250,19 @@ class MorphistoStemmer():
                 if is_true is True:
                     solutions.append(stemmed)
             if len(solutions) > 0:
-                stemmed_list.append('\t'.join((
-                    word, self.choose_most_similar_stemming
-                                              (solutions, word))))
+                    chosen_stem = self.choose_most_frequent_stemming(
+                    solutions)
+                    if self.freqs.get(chosen_stem.lower(), 0) >\
+                       self.freq_ratio_limit * self.freqs.get(word.lower(), 0):
+                        stemmed_list.append(
+                            '\t'.join((word, chosen_stem)))
+                    else:
+                        freq_discarded.append(
+                            '\t'.join((word, chosen_stem)))
             else:
                 not_succeeded_list.append('\t'.join(
                         (word, ';'.join(analysis_list))))
-        return not_succeeded_list, stemmed_list
+        return not_succeeded_list, stemmed_list, freq_discarded
 
     def analyse_update_cache_in_parts(self, all_list):
 
@@ -280,15 +299,16 @@ class MorphistoStemmer():
                         if chars not in self.morphisto_analyses:
                             chars_to_analyse.append(chars)
         self.analyse_update_cache_in_parts(chars_to_analyse)
-        not_succeeded, stemmed = self.lookfor_matching_stemmed_split\
-                (compound_words)
-        return not_succeeded, stemmed
+        not_succeeded, stemmed, freq_discarded = \
+                self.lookfor_matching_stemmed_split(compound_words)
+        return not_succeeded, stemmed, freq_discarded
 
     def sort_analysed_buffer(self):
 
         not_stemmed = []
         simple_word_stemmings = []
         compound_words = []
+        freq_discarded = []
         for b in self.buffer_:
             simple_found = False
             if b not in self.morphisto_analyses:
@@ -302,27 +322,40 @@ class MorphistoStemmer():
                 if not simple_found:
                     compound_words.append((b, self.morphisto_analyses[b]))
                 else:
-                    simple_word_stemmings.append(
-                        '\t'.join((b, self.choose_most_similar_stemming(
-                            stemmed_versions, b))))
-        return not_stemmed, simple_word_stemmings, compound_words
+                    chosen_stem = self.choose_most_frequent_stemming(
+                    stemmed_versions)
+                    if self.freqs.get(chosen_stem.lower(), 0) >\
+                       self.freq_ratio_limit * self.freqs.get(b.lower(), 0):
+                        simple_word_stemmings.append(
+                            '\t'.join((b, chosen_stem)))
+                    else:
+                        freq_discarded.append(
+                            '\t'.join((b, chosen_stem)))
+        return not_stemmed, simple_word_stemmings, compound_words, freq_discarded
 
     def choose_most_similar_stemming(self, stemmed_versions, b):
         return sorted(stemmed_versions, key=lambda x: levenshtein(x, b))[0]
 
+    def choose_most_frequent_stemming(self, stemmed_versions):
+        return sorted(stemmed_versions, key=lambda x: self.freqs.get(x, 0), 
+                      reverse=True)[0] 
+
     def stem_lines_with_morphisto(self):
 
         self.analyse_update_cache(self.buffer_)
-        not_stemmed, simple_word_stemmings, compound_words =\
-                self.sort_analysed_buffer()
-        not_stemmed_compound, compound_word_stemmings =\
+        not_stemmed, simple_word_stemmings, compound_words,\
+                freq_discarded_simple = self.sort_analysed_buffer()
+        not_stemmed_compound, compound_word_stemmings,\
+                freq_discarded_compound =\
                 self.compound_word_stemming(compound_words)
-
+        freq_discarded = freq_discarded_simple + freq_discarded_compound
         self.write_out_result(not_stemmed, simple_word_stemmings,
-                              not_stemmed_compound, compound_word_stemmings)
+                              not_stemmed_compound, compound_word_stemmings,
+                              freq_discarded)
 
     def write_out_result(self, not_stemmed, simple_word_stemmings,
-                         not_stemmed_compound, compound_word_stemmings):
+                         not_stemmed_compound, compound_word_stemmings, 
+                         freq_discarded):
         not_stemmed = '\n'.join(not_stemmed).encode('utf-8') + '\n'
         simple_word_stemmings = '\n'.join(simple_word_stemmings)\
                 .encode('utf-8') + '\n'
@@ -330,14 +363,18 @@ class MorphistoStemmer():
                 .encode('utf-8') + '\n'
         not_stemmed_compound = '\n'.join(not_stemmed_compound)\
                 .encode('utf-8') + '\n'
+        freq_discarded = '\n'.join(freq_discarded)\
+                .encode('utf-8') + '\n'
         if self.printout_res is False:
             self.not_stemmed_fh.write(not_stemmed)
             self.simple_stemmed_fh.write(simple_word_stemmings)
             self.compound_stemmed_fh.write(compound_word_stemmings)
             self.compound_not_stemmed_fh.write(not_stemmed_compound)
+            self.freq_discarded_fh.write(freq_discarded)
         else:
             sys.stderr.write(not_stemmed + simple_word_stemmings +
-                            compound_word_stemmings + not_stemmed_compound)
+                            compound_word_stemmings + not_stemmed_compound
+                            + freq_discarded)
 
     def stem_input(self, data):
         global_line_count = 0
@@ -358,9 +395,9 @@ class MorphistoStemmer():
 
 def main():
 
-    a = MorphistoStemmer(result_tag = sys.argv[2]
-                         , printout_res=False)
-    a.stem_input(open(sys.argv[1]))
+    a = MorphistoStemmer(sys.argv[1], sys.argv[2], printout_res=False)
+   
+    a.stem_input(sys.stdin)
 
 if __name__ == '__main__':
     main()
