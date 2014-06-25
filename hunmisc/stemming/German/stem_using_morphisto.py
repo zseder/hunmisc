@@ -51,6 +51,8 @@ class MorphistoStemmer():
             self.result_path, self.result_tag), 'w')
         self.freq_discarded_fh =\
         open('{0}/{1}.freq_discarded'.format(self.result_path, self.result_tag), 'w')         
+        self.s_stripping_fh =\
+        open('{0}/{1}.s_stripping'.format(self.result_path, self.result_tag), 'w')        
 
     def close_filehandlers(self):
 
@@ -293,7 +295,6 @@ class MorphistoStemmer():
                 continue
             for split in self.generate_all_split_with_casing_s\
                          (word, max_split_count):
-                #self.word_split[word].append(split)
                 for chars, chars_versions in split:
                     for chars in chars_versions:
                         if chars not in self.morphisto_analyses:
@@ -309,10 +310,15 @@ class MorphistoStemmer():
         simple_word_stemmings = []
         compound_words = []
         freq_discarded = []
+        s_stripping = []
         for b in self.buffer_:
             simple_found = False
             if b not in self.morphisto_analyses:
-                not_stemmed.append(b)
+                if b[-1] == 's' and self.freqs.get(b[:-1].lower(), 0) >\
+                1/self.freq_ratio_limit * self.freqs.get(b.lower(), 0):
+                    s_stripping.append('\t'.join((b, b[:-1])))
+                else:    
+                    not_stemmed.append(b)
             else:
                 stemmed_versions = []
                 for a in self.morphisto_analyses[b]:
@@ -331,7 +337,8 @@ class MorphistoStemmer():
                     else:
                         freq_discarded.append(
                             '\t'.join((b, chosen_stem)))
-        return not_stemmed, simple_word_stemmings, compound_words, freq_discarded
+        return not_stemmed, simple_word_stemmings, compound_words,\
+                freq_discarded, s_stripping
 
     def choose_most_similar_stemming(self, stemmed_versions, b):
         return sorted(stemmed_versions, key=lambda x: levenshtein(x, b))[0]
@@ -344,18 +351,18 @@ class MorphistoStemmer():
 
         self.analyse_update_cache(self.buffer_)
         not_stemmed, simple_word_stemmings, compound_words,\
-                freq_discarded_simple = self.sort_analysed_buffer()
+                freq_discarded_simple, s_stripping = self.sort_analysed_buffer()
         not_stemmed_compound, compound_word_stemmings,\
                 freq_discarded_compound =\
                 self.compound_word_stemming(compound_words)
         freq_discarded = freq_discarded_simple + freq_discarded_compound
         self.write_out_result(not_stemmed, simple_word_stemmings,
                               not_stemmed_compound, compound_word_stemmings,
-                              freq_discarded)
+                              freq_discarded, s_stripping)
 
     def write_out_result(self, not_stemmed, simple_word_stemmings,
                          not_stemmed_compound, compound_word_stemmings, 
-                         freq_discarded):
+                         freq_discarded, s_stripping):
         not_stemmed = '\n'.join(not_stemmed).encode('utf-8') + '\n'
         simple_word_stemmings = '\n'.join(simple_word_stemmings)\
                 .encode('utf-8') + '\n'
@@ -365,16 +372,18 @@ class MorphistoStemmer():
                 .encode('utf-8') + '\n'
         freq_discarded = '\n'.join(freq_discarded)\
                 .encode('utf-8') + '\n'
+        s_stripping = '\n'.join(s_stripping).encode('utf-8') + '\n'
         if self.printout_res is False:
             self.not_stemmed_fh.write(not_stemmed)
             self.simple_stemmed_fh.write(simple_word_stemmings)
             self.compound_stemmed_fh.write(compound_word_stemmings)
             self.compound_not_stemmed_fh.write(not_stemmed_compound)
             self.freq_discarded_fh.write(freq_discarded)
+            self.s_stripping_fh.write(s_stripping)
         else:
             sys.stderr.write(not_stemmed + simple_word_stemmings +
                             compound_word_stemmings + not_stemmed_compound
-                            + freq_discarded)
+                            + freq_discarded + s_stripping)
 
     def stem_input(self, data):
         global_line_count = 0
