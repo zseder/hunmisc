@@ -12,7 +12,8 @@ class MorphistoStemmer():
     def __init__(self, freq_file_path, result_tag, printout_res=True,
                  morphisto_model_loc='/mnt/pajkossy/morphisto.ca',
                 max_buffer_size=1000, result_path='/mnt/pajkossy/results',
-                freq_struct_is_dawg=True, freq_ratio_limit=0.1):
+                freq_struct_is_dawg=True, freq_ratio_limit=0.1, 
+                 lenght_limit=20):
 
         self.chars_set = set([])
         self.buffer_ = list()
@@ -30,6 +31,7 @@ class MorphistoStemmer():
         self.freq_struct_is_dawg = freq_struct_is_dawg
         self.get_freqs(freq_file_path)
         self.freq_ratio_limit = freq_ratio_limit
+        self.lenght_limit=lenght_limit
 
     def get_freqs(self, freq_file_path):
 
@@ -289,7 +291,7 @@ class MorphistoStemmer():
         chars_to_analyse = []
         for pair in compound_words:
             word, analysis_list = pair
-            if len(word) > 25:
+            if len(word) > self.lenght_limit:
                 sys.stderr.write(u'{0}\n'.format(word).encode('utf-8'))
                 continue
             try:
