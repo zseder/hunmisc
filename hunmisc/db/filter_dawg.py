@@ -9,7 +9,6 @@ def create_filtered(dir_old, dir_new, needed_sources):
         types = orig_edb.get_type(e)
         for type_ in types:
             src, data = type_
-            print src
             if src in needed_sources:
                 filtered_edb.add_entity(e, data, src)  
     filtered_edb.dump_to_files(dir_new) 

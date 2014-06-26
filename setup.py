@@ -16,12 +16,13 @@ def my_setup():
     name='hunmisc',
     provides=['hunmisc'],
     url='https://github.com/zseder/hunmisc',
-    packages=['hunmisc', 'hunmisc.db', 'hunmisc.liblinear', 'hunmisc.xstring'],
+    packages=['hunmisc', 'hunmisc.db', 'hunmisc.liblinear', 'hunmisc.xstring', 'hunmisc.spell_checker'],
     package_data={"hunmisc": ["liblinear/install.sh", "liblinear/liblinear.patch"]},
     package_dir={'': '.'},
     include_package_data=True,
     zip_safe=False,
     platforms='any',
+    install_requires=["DAWG"],
     cmdclass={'install': HunmiscInstall}
 )
 

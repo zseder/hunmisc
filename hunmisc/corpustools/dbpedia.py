@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 import sys
 import re
+from urllib import unquote
 
 def get_entity_from_line(l):
 
@@ -94,11 +95,14 @@ def parse(file_handler):
 
 def main():
 
-    
     for item in parse(sys.stdin):
         entity, categories = item
-        main_category = select_main_category(categories)
-        print entity.encode('utf-8') + '\t' + main_category
+        try:
+            main_category = select_main_category(categories)
+            if main_category != 'PersonFunction':
+                print entity.encode('utf-8') + '\t' + main_category
+        except:
+            sys.stderr.write('error at {0}\n'.format(entity))
 
 
 if __name__ == "__main__":  

@@ -133,7 +133,7 @@ class EntityDB(object):
 
     @staticmethod
     def load(pickle_fn, dawg_fn, prefix_dawg_fn):
-        entity_db = cPickle.load(open(pickle_fn))
+        entity_db = cPickle.load(open(pickle_fn, "rb"))
         entity_db.dawg = dawg.IntCompletionDAWG()
         entity_db.dawg.load(dawg_fn)
         entity_db.long_entities = dawg.IntDAWG()
