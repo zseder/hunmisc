@@ -9,9 +9,9 @@ import dawg
 
 class MorphistoStemmer():
 
-    def __init__(self, freq_file_path, result_tag, printout_res=True, 
+    def __init__(self, freq_file_path, result_tag, printout_res=True,
                  morphisto_model_loc='/mnt/pajkossy/morphisto.ca',
-                max_buffer_size=1000, result_path='/mnt/pajkossy/results', 
+                max_buffer_size=1000, result_path='/mnt/pajkossy/results',
                 freq_struct_is_dawg=True, freq_ratio_limit=0.1):
 
         self.chars_set = set([])
@@ -30,7 +30,7 @@ class MorphistoStemmer():
         self.freq_struct_is_dawg = freq_struct_is_dawg
         self.get_freqs(freq_file_path)
         self.freq_ratio_limit = freq_ratio_limit
-   
+
     def get_freqs(self, freq_file_path):
 
         if self.freq_struct_is_dawg:
@@ -41,18 +41,23 @@ class MorphistoStemmer():
     def open_filehandlers(self):
 
         self.not_stemmed_fh =\
-        open('{0}/{1}.not_stemmed'.format(self.result_path, self.result_tag), 'w')
+        open('{0}/{1}.not_stemmed'.format(
+            self.result_path, self.result_tag), 'w')
         self.simple_stemmed_fh =\
-        open('{0}/{1}.simple_stemmed'.format(self.result_path, self.result_tag), 'w')
+        open('{0}/{1}.simple_stemmed'.format(
+            self.result_path, self.result_tag), 'w')
         self.compound_stemmed_fh =\
-        open('{0}/{1}.compound_stemmed'.format(self.result_path, self.result_tag), 'w')
+        open('{0}/{1}.compound_stemmed'.format(
+            self.result_path, self.result_tag), 'w')
         self.compound_not_stemmed_fh =\
         open('{0}/{1}.compound_not_stemmed'.format(
             self.result_path, self.result_tag), 'w')
         self.freq_discarded_fh =\
-        open('{0}/{1}.freq_discarded'.format(self.result_path, self.result_tag), 'w')         
+        open('{0}/{1}.freq_discarded'.format(
+            self.result_path, self.result_tag), 'w')
         self.s_stripping_fh =\
-        open('{0}/{1}.s_stripping'.format(self.result_path, self.result_tag), 'w')        
+        open('{0}/{1}.s_stripping'.format(
+            self.result_path, self.result_tag), 'w')
 
     def close_filehandlers(self):
 
@@ -317,7 +322,7 @@ class MorphistoStemmer():
                 if b[-1] == 's' and self.freqs.get(b[:-1].lower(), 0) >\
                 1/self.freq_ratio_limit * self.freqs.get(b.lower(), 0):
                     s_stripping.append('\t'.join((b, b[:-1])))
-                else:    
+                else:
                     not_stemmed.append(b)
             else:
                 stemmed_versions = []
@@ -344,14 +349,15 @@ class MorphistoStemmer():
         return sorted(stemmed_versions, key=lambda x: levenshtein(x, b))[0]
 
     def choose_most_frequent_stemming(self, stemmed_versions):
-        return sorted(stemmed_versions, key=lambda x: self.freqs.get(x, 0), 
-                      reverse=True)[0] 
+        return sorted(stemmed_versions, key=lambda x: self.freqs.get(x, 0),
+                      reverse=True)[0]
 
     def stem_lines_with_morphisto(self):
 
         self.analyse_update_cache(self.buffer_)
         not_stemmed, simple_word_stemmings, compound_words,\
-                freq_discarded_simple, s_stripping = self.sort_analysed_buffer()
+                freq_discarded_simple, s_stripping = \
+                self.sort_analysed_buffer()
         not_stemmed_compound, compound_word_stemmings,\
                 freq_discarded_compound =\
                 self.compound_word_stemming(compound_words)
@@ -361,7 +367,7 @@ class MorphistoStemmer():
                               freq_discarded, s_stripping)
 
     def write_out_result(self, not_stemmed, simple_word_stemmings,
-                         not_stemmed_compound, compound_word_stemmings, 
+                         not_stemmed_compound, compound_word_stemmings,
                          freq_discarded, s_stripping):
         not_stemmed = '\n'.join(not_stemmed).encode('utf-8') + '\n'
         simple_word_stemmings = '\n'.join(simple_word_stemmings)\
@@ -405,7 +411,7 @@ class MorphistoStemmer():
 def main():
 
     a = MorphistoStemmer(sys.argv[1], sys.argv[2], printout_res=False)
-   
+
     a.stem_input(sys.stdin)
 
 if __name__ == '__main__':
