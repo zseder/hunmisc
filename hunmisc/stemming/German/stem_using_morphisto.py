@@ -351,8 +351,8 @@ class MorphistoStemmer():
         return sorted(stemmed_versions, key=lambda x: levenshtein(x, b))[0]
 
     def choose_most_frequent_stemming(self, stemmed_versions):
-        return sorted(stemmed_versions, key=lambda x: self.freqs.get(x, 0),
-                      reverse=True)[0]
+        return sorted(stemmed_versions, key=lambda x: self.freqs.get(
+            x.lower(), 0), reverse=True)[0]
 
     def stem_lines_with_morphisto(self):
 
