@@ -26,10 +26,11 @@ class ModifyEBD():
             types = orig_edb.get_type(e)
             for type_ in types:
                 src, data = type_
-                needed, e_, data_, src_ = modifier(e, data, src)
+                needed, e_, data_, src_ = modifier((e, data, src))
+                if e_ == '':
+                    continue
                 if needed:
                     altered_edb.add_entity(e_, data_, src_)
-        altered_edb.finalize()
         altered_edb.dump_to_files(self.dir_new)
 
     def filter_edb_based_on_source(self, needed_sources):
@@ -45,9 +46,8 @@ def main():
 
     dir_old = sys.argv[1]
     dir_new = sys.argv[2]
-    needed_sources = set(sys.argv[3:])
-    a = ModifyEBD(dir_old, dir_new, needed_sources_list=needed_sources)
-    a.filter_edb_based_on_source(dir_old, dir_new, needed_sources)
+    a = ModifyEBD(dir_old, dir_new)
+    a.unidecode_entities()
  
 if __name__ == "__main__":
     main()
