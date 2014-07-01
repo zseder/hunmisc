@@ -45,21 +45,21 @@ class EntityDB(object):
             if entity not in self.to_keep:
                 return
 
+        if not entity in self.d:
+            self.d[entity] = len(self.values)
+            self.values.append(set())
+
         if src not in self.caches:
             self.__init_cache(src)
+
+        compact_value = self.caches[src].store(data)
+        compact_pair = self.value_cache.store((self.source_indices[src], 
+                                               compact_value))
+        self.values[self.d[entity]].add(compact_pair)
 
         es = entity.split()
         if len(es) > self.max_l:
             self.long_entities[" ".join(es[:self.max_l])].add(entity)
-        else:    
-            if not entity in self.d:
-                self.d[entity] = len(self.values)
-                self.values.append(set())
-
-            compact_value = self.caches[src].store(data)
-            compact_pair = self.value_cache.store((self.source_indices[src],
-                                                   compact_value))
-            self.values[self.d[entity]].add(compact_pair)
 
     def finalize_values(self):
         self.values = [frozenset(s) for s in self.values]
