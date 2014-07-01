@@ -1,5 +1,5 @@
 import sys
-from entitydb import EntityDB
+from hunmisc.db.entitydb import EntityDB
 from unidecode import unidecode
 import re
 
