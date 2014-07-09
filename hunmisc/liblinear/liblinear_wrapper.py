@@ -1,3 +1,4 @@
+import sys
 import logging
 from hunmisc.liblinear.liblinearutil import problem, predict, load_model, \
         train, parameter
@@ -195,3 +196,14 @@ def get_feat_weights(fn):
             fw[i][j] = float(d)
         i += 1
     return fw
+
+def main():
+    
+    model_fn = sys.argv[1]
+    test_fn = sys.argv[2]
+    output_fn = sys.argv[3]
+    a = LiblinearWrapper()
+    a.predict_problem(model_fn, test_fn, output_fn)
+    
+if __name__ == "__main__":
+    main()
