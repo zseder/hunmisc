@@ -7,7 +7,7 @@ http://googleresearch.blogspot.hu/2013/07/11-billion-clues-in-800-million.html
 See `clueweb12facc_to_mention.py` header for details
 1. extract dictionaries
 Use `clueweb12facc_to_mention.py`. See help with `-h` for instructions.
-Sample run is
+    1. Sample run is
     ~~~~
     python clueweb12facc_to_mention.py /path/to/Clueweb12FACC/ dmentions.pickle --output-reverse dmentions_rev.pickle
     ~~~~
