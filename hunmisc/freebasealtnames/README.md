@@ -1,5 +1,5 @@
 These scripts are to generate alternative names to entities based on this data:
-http://googleresearch.blogspot.hu/2013/07/11-billion-clues-in-800-million.html
+http://googleresearch.blogspot.com/2013/07/11-billion-clues-in-800-million.html
 
 ## Usage
 
