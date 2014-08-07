@@ -1,7 +1,8 @@
 These scripts are to generate alternative names to entities based on this data:
 http://googleresearch.blogspot.hu/2013/07/11-billion-clues-in-800-million.html
 
-=== Usage ===
+## Usage
+
 1. download data
 See `clueweb12facc_to_mention.py` header for details
 1. extract dictionaries
