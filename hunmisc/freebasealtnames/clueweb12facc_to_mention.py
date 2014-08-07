@@ -82,6 +82,7 @@ def get_argparser():
                     type=bool, default=False)
     return ap
 
+
 def main():
     arguments = get_argparser().parse_args()
     input_folder = arguments.input
