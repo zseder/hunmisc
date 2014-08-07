@@ -46,11 +46,14 @@ def yield_triplets(istream):
         yield mention, conf, entity
 
 
-def build_first_dict(input_folder, minconf):
+def build_first_dict(input_folder, minconf, lower):
     d = {}
     for f in yield_filepaths(input_folder):
         for triplet in yield_triplets(gzip_open(f)):
             m, c, e = triplet
+            if lower:
+                m = m.decode("utf-8").lower()
+
             if c < minconf:
                 continue
             if m not in d:
@@ -75,6 +78,8 @@ def get_argparser():
     ap.add_argument("--output-reverse", help="output 2 file name")
     ap.add_argument("-m", "--minconf", default=0.98,
                     help="minimum confidence")
+    ap.add_argument("--lower", help="lowercasing. needs utf-8 input",
+                    type=bool, default=False)
     return ap
 
 def main():
@@ -82,7 +87,8 @@ def main():
     input_folder = arguments.input
     out1 = arguments.output
     minconf = arguments.minconf
-    d = build_first_dict(input_folder, minconf)
+    lower = arguments.lower
+    d = build_first_dict(input_folder, minconf, lower)
     cPickle.dump(d, open(out1, "wb"), -1)
     if arguments.output_reverse is not None:
         d2 = reverse_dict(d)
