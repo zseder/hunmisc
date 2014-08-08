@@ -23,6 +23,7 @@ Parameters:
     1. `lower`: lowercasing mentions, if it wasn't done while building dictionaries
     1. `o`: output. If not given: stdout
     1. `parallel`: runs parallel. Uses as much cpu as there is. default=True
+Running time was 14 hrs using 1 core. with bunch(=n) of cores it shouldn't be n-times faster because of I/O throttling.
 
 Running:
     1.
