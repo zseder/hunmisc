@@ -1,6 +1,6 @@
 """This script needs 20 tgz files to be downloaded from here:
 http://lemurproject.org/clueweb12/FACC1/ and then extracted from
-tgz. The folder structure should look like
+tgz and then rezipped one by one. The folder structure should look like
 ClueWeb12_??/
     ??????/
         *.tsv.gz
