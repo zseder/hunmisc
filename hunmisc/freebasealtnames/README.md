@@ -22,6 +22,7 @@ Parameters:
     1. `min-fraction`: for a given entity, if a mention covers less than this ratio, filtered
     1. `lower`: lowercasing mentions, if it wasn't done while building dictionaries
     1. `o`: output. If not given: stdout
+
 Running:
     1.
     ~~~~
