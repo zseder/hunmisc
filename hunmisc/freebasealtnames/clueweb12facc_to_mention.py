@@ -13,6 +13,7 @@ import os
 import logging
 import argparse
 import cPickle
+import multiprocessing
 
 from hunmisc.xzip import gzip_open
 
@@ -26,13 +27,8 @@ def yield_valid_filenames(path):
 
 
 def yield_filepaths(path):
-    filenum = len([_ for _ in yield_valid_filenames(path)])
-    c = 1
     for fn in yield_valid_filenames(path):
-        logging.info("Processing {0}/{1} file: {2}".format(
-            c, filenum, fn))
         yield fn
-        c += 1
 
 
 def yield_triplets(istream):
@@ -46,19 +42,49 @@ def yield_triplets(istream):
         yield mention, conf, entity
 
 
-def build_first_dict(input_folder, minconf, lower):
+def filename_to_dict(args):
+    fn, minconf, lower = args
     d = {}
-    for f in yield_filepaths(input_folder):
-        for triplet in yield_triplets(gzip_open(f)):
-            m, c, e = triplet
-            if lower:
-                m = m.lower()
+    for triplet in yield_triplets(gzip_open(fn)):
+        m, c, e = triplet
+        if lower:
+            m = m.lower()
 
-            if c < minconf:
-                continue
-            if m not in d:
-                d[m] = {}
-            d[m][e] = d[m].get(e, 0) + 1
+        if c < minconf:
+            continue
+        if m not in d:
+            d[m] = {}
+        d[m][e] = d[m].get(e, 0) + 1
+    return d
+
+
+def merge_dicts(dicts, total):
+    d = {}
+    c = 0
+    for smalldict in dicts:
+        for k1 in smalldict:
+            if k1 not in d:
+                d[k1] = {}
+            for k2 in smalldict[k1]:
+                d[k1][k2] = d[k1].get(k2, 0) + smalldict[k1][k2]
+        c += 1
+        logging.info("{}/{} done.".format(c, total))
+    return d
+
+
+def build_first_dict_parallel(input_folder, minconf, lower):
+    p = multiprocessing.Pool()
+    fns = list(yield_filepaths(input_folder))
+    d = {}
+    res = p.imap(filename_to_dict, ((fn, minconf, lower) for fn in fns))
+    d = merge_dicts(res, len(fns))
+    return d
+
+
+def build_first_dict(input_folder, minconf, lower):
+    fns = list(yield_filepaths(input_folder))
+    d = merge_dicts((filename_to_dict((f, minconf, lower))
+                     for f in fns), len(fns))
     return d
 
 
@@ -81,6 +107,8 @@ def get_argparser():
                     help="minimum confidence")
     ap.add_argument("--lower", help="lowercasing",
                     type=bool, default=False)
+    ap.add_argument("--parallel", help="running in parallel. default is True",
+                    type=bool, default=True)
     return ap
 
 
@@ -90,7 +118,10 @@ def main():
     out1 = arguments.output
     minconf = arguments.minconf
     lower = arguments.lower
-    d = build_first_dict(input_folder, minconf, lower)
+    if arguments.parallel:
+        d = build_first_dict_parallel(input_folder, minconf, lower)
+    else:
+        d = build_first_dict(input_folder, minconf, lower)
     cPickle.dump(d, open(out1, "wb"), -1)
     if arguments.output_reverse is not None:
         d2 = reverse_dict(d)
