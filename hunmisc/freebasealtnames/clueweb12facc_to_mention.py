@@ -51,8 +51,9 @@ def build_first_dict(input_folder, minconf, lower):
     for f in yield_filepaths(input_folder):
         for triplet in yield_triplets(gzip_open(f)):
             m, c, e = triplet
+            m = m.decode("utf-8")
             if lower:
-                m = m.decode("utf-8").lower()
+                m = m.lower()
 
             if c < minconf:
                 continue
@@ -69,6 +70,7 @@ def reverse_dict(d):
             if k2 not in rd:
                 rd[k2] = {}
             rd[k2][k] = d[k][k2]
+    return rd
 
 
 def get_argparser():
@@ -78,7 +80,7 @@ def get_argparser():
     ap.add_argument("--output-reverse", help="output 2 file name")
     ap.add_argument("-m", "--minconf", default=0.98,
                     help="minimum confidence")
-    ap.add_argument("--lower", help="lowercasing. needs utf-8 input",
+    ap.add_argument("--lower", help="lowercasing",
                     type=bool, default=False)
     return ap
 
