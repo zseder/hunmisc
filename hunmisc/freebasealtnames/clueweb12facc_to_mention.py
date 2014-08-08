@@ -1,9 +1,12 @@
 """This script needs 20 tgz files to be downloaded from here:
 http://lemurproject.org/clueweb12/FACC1/ and then extracted from
-tgz and then rezipped one by one. The folder structure should look like
+tgz and then possibly rezipped one by one.
+The folder structure should look like
 ClueWeb12_??/
     ??????/
         *.tsv.gz
+        or
+        *.tsv
 
 
 Output will be two dictionaries: possible mentions->entityid and reverse
@@ -21,7 +24,7 @@ from hunmisc.xzip import gzip_open
 def yield_valid_filenames(path):
     for actual_dir, _, filenames in os.walk(path):
         for fn in filenames:
-            if fn.endswith("tsv.gz"):
+            if fn.endswith("tsv.gz") or fn.endswith("tsv"):
                 abspath = "{0}/{1}".format(actual_dir, fn)
                 yield abspath
 
@@ -45,7 +48,8 @@ def yield_triplets(istream):
 def filename_to_dict(args):
     fn, minconf, lower = args
     d = {}
-    for triplet in yield_triplets(gzip_open(fn)):
+    f = (gzip_open(fn) if fn.endswith(".gz") else open(fn))
+    for triplet in yield_triplets(f):
         m, c, e = triplet
         if lower:
             m = m.lower()
