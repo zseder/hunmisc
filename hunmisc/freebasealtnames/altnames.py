@@ -22,7 +22,7 @@ def get_argparser():
                     help="filter mentions with less total count")
     ap.add_argument("--min-entity-sum", default=1000, type=int,
                     help="filter entities with less total count")
-    ap.add_argument("--min-fraction", default=0.1, type=int,
+    ap.add_argument("--min-fraction", default=0.1, type=float,
                     help="filter (str, entity) pairs if they cover less " +
                     "than this ratio for a given entity")
     ap.add_argument("--lower", help="lowercasing. needs utf-8 input",
@@ -88,7 +88,7 @@ class AltNames(object):
                 continue
             if c / s < self.msr:
                 continue
-            if c / self.needed_entities[e] < self.mf:
+            if float(c) / self.needed_entities[e] < self.mf:
                 continue
 
             if e not in d:
