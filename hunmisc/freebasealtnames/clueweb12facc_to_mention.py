@@ -51,7 +51,6 @@ def build_first_dict(input_folder, minconf, lower):
     for f in yield_filepaths(input_folder):
         for triplet in yield_triplets(gzip_open(f)):
             m, c, e = triplet
-            m = m.decode("utf-8")
             if lower:
                 m = m.lower()
 
