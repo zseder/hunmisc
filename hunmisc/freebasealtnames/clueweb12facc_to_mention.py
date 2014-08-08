@@ -37,7 +37,7 @@ def yield_filepaths(path):
 
 def yield_triplets(istream):
     for l in istream:
-        le = l.decode("utf-8").split("\t")
+        le = l.decode("utf-8").rstrip().split("\t")
         if len(le) != 8:
             continue
         mention = le[2]
