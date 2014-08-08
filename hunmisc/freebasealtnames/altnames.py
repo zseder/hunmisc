@@ -57,7 +57,7 @@ class AltNames(object):
             if k1 not in newd:
                 newd[k1] = {}
 
-            for k2old in d[k1]:
+            for k2old in d[k1old]:
                 if whichkey == 1:
                     k2 = k2old.lower()
                 else:
