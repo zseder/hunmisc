@@ -15,7 +15,7 @@ def get_argparser():
                     default=sys.stdout)
     ap.add_argument("--min-str-entity", default=10, type=int,
                     help="filter (str, entity) pairs with less mentions")
-    ap.add_argument("--min-str-ratio", default=0.02, type=float,
+    ap.add_argument("--min-str-ratio", default=0.005, type=float,
                     help="filter entities for a mention when this entity " +
                     "gets less than this ratio")
     ap.add_argument("--min-str-sum", default=100, type=int,
