@@ -25,6 +25,9 @@ def get_argparser():
     ap.add_argument("--min-fraction", default=0.1, type=float,
                     help="filter (str, entity) pairs if they cover less " +
                     "than this ratio for a given entity")
+    ap.add_argument("--best-entity-ratio", default=5.0, type=float,
+                    help="filter mention if there are two concurrent " +
+                    "entities with less of a ratio than this")
     ap.add_argument("--lower", help="lowercasing. needs utf-8 input",
                     action="store_true")
     return ap
@@ -32,7 +35,7 @@ def get_argparser():
 
 class AltNames(object):
     def __init__(self, d1, d2, min_str_sum, min_str_entity, min_str_ratio,
-                 min_entity_sum, min_fraction, lower):
+                 min_entity_sum, min_fraction, best_entity_ratio, lower):
         self.d1 = d1
         self.d2 = d2
         self.mss = min_str_sum
@@ -40,6 +43,7 @@ class AltNames(object):
         self.msr = min_str_ratio
         self.mes = min_entity_sum
         self.mf = min_fraction
+        self.ber = best_entity_ratio
         if lower:
             self.d1 = self.lower_dict(d1, 0)
             self.d2 = self.lower_dict(d2, 1)
@@ -80,14 +84,29 @@ class AltNames(object):
             if m not in self.needed_mentions:
                 continue
             s = float(sum(d1[m].itervalues()))
-            best_e = max(d1[m].iteritems(), key=lambda x: x[1])
+            bests_e = sorted(d1[m].iteritems(), key=lambda x: x[1],
+                             reverse=True)[:2]
+            if len(bests_e) > 1:
+                # skip because this mention is disambigous
+                if float(bests_e[0][1]) / float(bests_e[1][1]) < self.ber:
+                    continue
+
+            best_e = bests_e[0]
             e, c = best_e
+            # skip non-common entities
             if e not in self.needed_entities:
                 continue
+
+            # skip low mentions for a given entity
             if c < self.mse:
                 continue
+
+            # skip mention if there are other entites with higher ratio
+            # and this mention covers less than msr ratio
             if c / s < self.msr:
                 continue
+
+            # skip if this mention covers low ratio for the entity
             if float(c) / self.needed_entities[e] < self.mf:
                 continue
 
@@ -102,7 +121,8 @@ def main():
     d1 = cPickle.load(open(a.d1))
     d2 = cPickle.load(open(a.d2))
     an = AltNames(d1, d2, a.min_str_sum, a.min_str_entity, a.min_str_ratio,
-                  a.min_entity_sum, a.min_fraction, a.lower)
+                  a.min_entity_sum, a.min_fraction, a.best_entity_ratio,
+                  a.lower)
     altnames = an.get_altnames()
     ostream = (open(a.output, "w") if type(a.output) == str else a.output)
     for e in altnames:
