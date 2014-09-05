@@ -79,11 +79,11 @@ def parse_bie1_sentence(sentence, chunk_field):
 
     return result
 
-def read_bie1_corpus(f, chunk_field=-1):
+def read_bie1_corpus(f, chunk_field=-1, sep="\t"):
     sentences = []
     sentence = []
     for l in f:
-        le = l.strip().split("\t")
+        le = l.strip().split(sep)
         if len(l.strip()) == 0:
             if len(sentence) > 0:
                 sentences.append(parse_bie1_sentence(sentence, chunk_field))
