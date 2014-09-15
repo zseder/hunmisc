@@ -21,6 +21,10 @@ class LiblinearWrapper(object):
             self.add_event((y, x))
 
     def int_feats(self, features):
+        """ non-boolean features are passed as a dictionary of named features
+        and values. If the features parameter is not a dictionary,
+        then a list of boolean features is expected
+        """
         try:
             feats = dict([
                 (self.feat_cache.setdefault(feat, len(self.feat_cache) + 1), v)
