@@ -1,3 +1,4 @@
+import sys
 import logging
 from hunmisc.liblinear.liblinearutil import problem, predict, load_model, save_model, \
     train, parameter
@@ -111,6 +112,31 @@ class LiblinearWrapper(object):
                      else "unknown")
                     for event_i in xrange(len(p_labels))]
 
+    def predict_problem(self, model_fn, test_fn, out_fn, acc_bound=0.5):
+        ed = self.load(model_fn)
+        fh = open(test_fn)
+        gold = []
+        features = []
+        query_string = []
+        for l in fh:
+            g, feats, query, string = l.strip().split('\t')
+            feats_d = dict([(int(f), 1) for f in feats.split(' ')])
+            gold.append(int(g))
+            features.append(feats_d)
+            query_string.append(';'.join([query, string]))
+        p_labels, _, p_vals = predict(gold, features, ed.model, '-b 1')
+        d = dict([(v, k) for k, v in ed.class_cache.iteritems()])
+        f = dict([(v, k) for k, v in ed.feat_cache.iteritems()])
+        out_fh = open(out_fn, 'w')
+        for i in xrange(len(p_labels)):
+            out_fh.write('{0}\t{1}\t{2}\t{3}\n'.format(
+                query_string[i], d[gold[i]],
+                (d[int(p_labels[i])]
+                 if p_vals[i][int(p_labels[i])] > acc_bound
+                 else "unknown"), ';'.join([f[int(feat)] for feat in features[i]])))
+        fh.close()
+        out_fh.close()
+
     def save_labels(self, ofn):
         l_f = open('{0}.labelNumbers'.format(ofn), 'w')
         f_f = open('{0}.featureNumbers'.format(ofn), 'w')
@@ -192,3 +218,15 @@ def get_feat_weights(fn):
             fw[i][j] = float(d)
         i += 1
     return fw
+
+
+def main():
+
+    model_fn = sys.argv[1]
+    test_fn = sys.argv[2]
+    output_fn = sys.argv[3]
+    a = LiblinearWrapper()
+    a.predict_problem(model_fn, test_fn, output_fn)
+
+if __name__ == "__main__":
+    main()

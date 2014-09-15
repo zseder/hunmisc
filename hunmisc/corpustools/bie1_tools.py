@@ -69,6 +69,12 @@ def parse_bie1_sentence(sentence, chunk_field):
                                 "\n".join(("\t".join(tok) for tok in sentence)
                                          ))
                 active_chunk = [[], tok[chunk_field][2:]]
+            else:
+                # if new chunk is different than old chunk, save it and create
+                # a new one
+                if active_chunk[1] != tok[chunk_field][2:]:
+                    result.append(tuple(active_chunk))
+                    active_chunk = [[], tok[chunk_field][2:]]
 
             active_chunk[0].append(token_if_append)
 
@@ -79,11 +85,11 @@ def parse_bie1_sentence(sentence, chunk_field):
 
     return result
 
-def read_bie1_corpus(f, chunk_field=-1):
+def read_bie1_corpus(f, chunk_field=-1, sep="\t"):
     sentences = []
     sentence = []
     for l in f:
-        le = l.strip().split("\t")
+        le = l.strip().split(sep)
         if len(l.strip()) == 0:
             if len(sentence) > 0:
                 sentences.append(parse_bie1_sentence(sentence, chunk_field))
@@ -95,6 +101,34 @@ def read_bie1_corpus(f, chunk_field=-1):
     if len(sentence) > 0:
         sentences.append(parse_bie1_sentence(sentence, chunk_field))
     return sentences
+
+def write_chunked_sen(of, sen, sep, s_tag=False):
+    for chunk in sen:
+        if chunk[1] == "O":
+            of.write("{0}{1}{2}\n".format(sep.join(chunk[0]), sep, "O"))
+        elif type(chunk[0]) == list:
+            if len(chunk[0]) == 1:
+                of.write("{0}{1}{2}\n".format(sep.join(chunk[0][0]), sep,
+                    "{0}-{1}".format(("S" if s_tag else "1") ,chunk[1])))
+            else:
+                #first
+                of.write("{0}{1}{2}\n".format(sep.join(chunk[0][0]), sep,
+                                              "B-{0}".format(chunk[1])))
+                # in-between
+                for tok in chunk[1:-1]:
+                    of.write("{0}{1}{2}\n".format(sep.join(tok[0]), sep,
+                                                  "I-{0}".format(chunk[1])))
+
+                # last
+                of.write("{0}{1}{2}\n".format(sep.join(chunk[0][-1]), sep,
+                                              "E-{0}".format(chunk[1])))
+        else:
+            raise ValueError("Sentence is not in good format: {0}".format(repr(sen)))
+
+def write_chunked_corp(of, corp, sep="\t", s_tag=False):
+    for s in corp:
+        write_chunked_sen(of, s, sep, s_tag)
+        of.write("\n")
 
 def test1():
     read_bie1_corpus(file(sys.argv[1]), int(sys.argv[2]))
