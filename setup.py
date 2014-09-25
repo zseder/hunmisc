@@ -19,7 +19,7 @@ def my_setup():
         url='https://github.com/zseder/hunmisc',
         packages=[
             'hunmisc', 'hunmisc.db', 'hunmisc.liblinear', 'hunmisc.xstring',
-            'hunmisc.spell_checker', 'hunmisc.utils'],
+            'hunmisc.spell_checker', 'hunmisc.utils', 'hunmisc.corpustools'],
         package_data={
             "hunmisc": ["liblinear/install.sh", "liblinear/liblinear.patch"]},
         package_dir={'': '.'},

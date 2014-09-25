@@ -6,8 +6,22 @@ import dawg
 
 import cache
 
+
 def intdict_to_list(d):
     return [k for k, v in sorted(d.iteritems(), key=lambda x: x[1])]
+
+
+def generate_filenames_from_path(path):
+    if os.path.exists(path):
+        entitydb_fn = path + '/entitydb.pickle'
+        main_dawg_fn = path + '/entities.dawg'
+        prefix_dawg_fn = path + '/prefix.dawg'
+    else:
+        entitydb_fn = path + ".pickle"
+        main_dawg_fn = path + '.main_dawg'
+        prefix_dawg_fn = path + '.prefix_dawg'
+    return entitydb_fn, main_dawg_fn, prefix_dawg_fn
+
 
 class EntityDB(object):
     def __init__(self, sources=None, max_length=5):
@@ -30,7 +44,7 @@ class EntityDB(object):
         self.caches = {}
         self.source_indices = {}
         self.source_names = []
-        
+
         if sources is None:
             sources = []
 
@@ -53,7 +67,7 @@ class EntityDB(object):
             self.__init_cache(src)
 
         compact_value = self.caches[src].store(data)
-        compact_pair = self.value_cache.store((self.source_indices[src], 
+        compact_pair = self.value_cache.store((self.source_indices[src],
                                                compact_value))
         self.values[self.d[entity]].add(compact_pair)
 
@@ -82,16 +96,16 @@ class EntityDB(object):
                 to_del.add(i)
 
         self.values = [self.values[vi] for vi in xrange(len(self.values))
-                      if vi not in to_del]
+                       if vi not in to_del]
 
     def finalize_long_entities(self):
         logging.info("Creating prefix dawg...")
         self.long_values = {}
         self.long_entities = dawg.IntDAWG(
-            (p, self.long_values.setdefault(frozenset(full), 
+            (p, self.long_values.setdefault(frozenset(full),
                                             len(self.long_values)))
             for p, full in self.long_entities.iteritems())
-        self.long_values = [k for k, _ in 
+        self.long_values = [k for k, _ in
                             sorted(self.long_values.iteritems(),
                                    key=lambda x: x[1])]
 
@@ -111,7 +125,13 @@ class EntityDB(object):
 
         logging.info("finalizing done.")
 
-    def dump(self, pickle_f, dawg_fb, prefix_trie_fb):
+    def dump(self, *args):
+        if len(args) == 3:
+            self.dump_to_files(*args)
+        elif len(args) == 1:
+            self.dump_to_path(*args)
+
+    def dump_to_files(self, pickle_f, dawg_fb, prefix_trie_fb):
         self.to_keep = None
         self.finalize()
         self.dawg.write(dawg_fb)
@@ -121,18 +141,15 @@ class EntityDB(object):
         del self.long_entities
         cPickle.dump(self, pickle_f, 2)
 
-    def dump_to_files(self, model_dir):
-        if not os.path.exists(model_dir): os.makedirs(model_dir)
-        prefix_dawg_fn = model_dir+'/prefix.dawg'
-        dawg_fn = model_dir+'/entities.dawg'
-        entities_fn = model_dir+'/entitydb.pickle'
-        with open(dawg_fn, 'wb') as dawg_fb:
-            with open(entities_fn, "w") as pickle_f:
-                with open(prefix_dawg_fn, "wb") as pd_fb:
+    def dump_to_path(self, path):
+        e_fn, md_fn, pd_fn = generate_filenames_from_path(path)
+        with open(e_fn, "w") as pickle_f:
+            with open(md_fn, 'wb') as dawg_fb:
+                with open(pd_fn, "wb") as pd_fb:
                     self.dump(pickle_f, dawg_fb, pd_fb)
 
     @staticmethod
-    def load(pickle_fn, dawg_fn, prefix_dawg_fn):
+    def load_from_files(pickle_fn, dawg_fn, prefix_dawg_fn):
         entity_db = cPickle.load(open(pickle_fn, "rb"))
         entity_db.dawg = dawg.IntCompletionDAWG()
         entity_db.dawg.load(dawg_fn)
@@ -141,18 +158,23 @@ class EntityDB(object):
         return entity_db
 
     @staticmethod
-    def load_from_files(dir_name):
-        entitydb_fn = dir_name+'/entitydb.pickle'
-        main_dawg_fn = dir_name+'/entities.dawg'
-        prefix_dawg_fn = dir_name+'/prefix.dawg'
-        return EntityDB.load(entitydb_fn, main_dawg_fn, prefix_dawg_fn)
-    
+    def load_from_path(path):
+        e_fn, md_fn, pd_fn = generate_filenames_from_path(path)
+        return EntityDB.load(e_fn, md_fn, pd_fn)
+
+    @staticmethod
+    def load(*args):
+        if len(args) == 3:
+            return EntityDB.load_from_files(*args)
+        elif len(args) == 1:
+            return EntityDB.load_from_path(*args)
+
     @staticmethod
     def create_from_list(file_name):
         db = EntityDB()
         entity_list = (line.strip().split('\t') for line in file(file_name))
         for entity, e_type in entity_list:
-            db.add_entity(entity, None, e_type)        
+            db.add_entity(entity, None, e_type)
         return db
 
     def get_type(self, name):
@@ -179,5 +201,3 @@ class EntityDB(object):
         for entity in self.long_values[self.long_entities[prefix]]:
             res.append((entity, self.get_type(entity)))
         return res
-         
-
