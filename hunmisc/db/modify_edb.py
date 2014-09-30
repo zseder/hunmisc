@@ -2,7 +2,7 @@ import sys
 from unidecode import unidecode
 import re
 
-from entitydb import EntityDB
+from hunmisc.db.entitydb import EntityDB
 
 
 class ModifyEBD():
