@@ -28,7 +28,7 @@ import sys
 
 from subprocess_wrapper import AbstractSubprocessClass
 from hunmisc.xstring.xstring import ispunct, isquot
-from hunmisc.corpustools.bie1_reader import parse_bie1_sentence
+from hunmisc.corpustools.bie1_tools import parse_bie1_sentence
 
 """
 TODO
