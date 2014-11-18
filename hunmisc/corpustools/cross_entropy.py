@@ -26,7 +26,7 @@ import math
 import re
 """This script calculates cross-entropy between two frequency lists. Zero frequencies, as well as words that are only present in one of the two files are discarded. Probability mass discarded in data1 is printed.
 Usage:
-    python entropy.py file1 file2 data_field freq_field
+    python entropy.py file1 file2
 """
 def cross_entropy(q, p):
     qsum = float(sum(q.itervalues()))
