@@ -115,8 +115,8 @@ def write_chunked_sen(of, sen, sep, s_tag=False):
                 of.write("{0}{1}{2}\n".format(sep.join(chunk[0][0]), sep,
                                               "B-{0}".format(chunk[1])))
                 # in-between
-                for tok in chunk[1:-1]:
-                    of.write("{0}{1}{2}\n".format(sep.join(tok[0]), sep,
+                for tok in chunk[0][1:-1]:
+                    of.write("{0}{1}{2}\n".format(sep.join(tok), sep,
                                                   "I-{0}".format(chunk[1])))
 
                 # last
