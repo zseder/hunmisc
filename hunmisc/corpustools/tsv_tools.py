@@ -136,6 +136,31 @@ def collapse_chunks_in_corp(stream):
     for sen in sentence_iterator(stream):
         print_sen(collapse_chunks(sen))
 
-def get_dependencies(sen, tok_field=1, lemma_field=2, msd_field=3,
+def get_dependencies(sen, id_field=0, word_field=1, lemma_field=2, msd_field=3,
                      gov_field=-2, dep_field=-1):
-    pass
+    id_to_toks = {"0": {"lemma": "ROOT", "tok": "ROOT", "msd": None}}
+    for tok in sen:
+        i, word, gov, dep = (
+            tok[id_field], tok[word_field], tok[gov_field], tok[dep_field])
+        lemma = None if lemma_field is None else tok[lemma_field]
+        msd = None if msd_field is None else tok[msd_field]
+        id_to_toks[i] = {
+            'tok': word, 'lemma': lemma, 'msd': msd, 'gov': gov, 'dep': dep}
+    deps = []
+    for i, t in id_to_toks.iteritems():
+        if t['lemma'] == 'ROOT':
+            continue
+        gov = id_to_toks[t['gov']]
+        deps.append({
+            "type": t['dep'].lower(),
+            "gov": {
+                'id': t['gov'], "word": gov['tok'], "lemma": gov['lemma'],
+                'msd': gov['msd']
+            },
+            "dep": {
+                'id': i, "word": t['tok'], "lemma": t['lemma'],
+                'msd': t['msd']
+            }
+        })
+
+    return deps
