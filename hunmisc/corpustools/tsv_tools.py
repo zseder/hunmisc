@@ -90,10 +90,13 @@ def collapse_chunks(sen, word_field=0, kr_field=1,
             new_sen.append(chunk[0])
         else:
             chunk_cat = chunk[0][chunk_field].split('-')[-1]
-            chunk_cat = chunk_cat.split('<')[0]  # some datasets already have case # nopep8
+            if chunk_cat.find('<') != -1:  # some datasets already have case
+                cased_chunk_tag = chunk_cat
+            else:
+                chunk_cat = chunk_cat.split('<')[0]
+                cased_chunk_tag = get_chunk_case(chunk, chunk_cat,
+                                                 kr_field, lemma_field)
             chunk_text = '_'.join([tok[word_field] for tok in chunk])
-            cased_chunk_tag = get_chunk_case(chunk, chunk_cat,
-                                             kr_field, lemma_field)
             new_sen.append([chunk_text, cased_chunk_tag, cased_chunk_tag])
     return new_sen
 
