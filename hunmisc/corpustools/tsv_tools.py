@@ -27,6 +27,7 @@ correspond to word form and POS-tag/morph-analysis respectively, while the last
 column is mostly expected to contain sequential tags such as chunk or NER tags.
 """
 import re
+
 class InvalidTaggingError(Exception):
     pass
 
@@ -69,7 +70,7 @@ def get_pp_case(chunk, kr_field=1, lemma_field=2):
         head = '???'
     else:
         head = postps[-1][lemma_field].lower()
-    return '<'+head+'>'
+    return '<' + head + '>'
 
 def get_chunk_case(chunk, cat, kr_field=1, lemma_field=2):
     if cat not in ('NP', 'PP'):
@@ -78,7 +79,7 @@ def get_chunk_case(chunk, cat, kr_field=1, lemma_field=2):
         case = get_np_case(chunk, kr_field)
     else:
         case = get_pp_case(chunk, kr_field, lemma_field)
-    return cat+case
+    return cat + case
 
 def collapse_chunks(sen, word_field=0, kr_field=1,
                     lemma_field=2, chunk_field=-1):
