@@ -49,53 +49,55 @@ def sentence_iterator(input):
         yield curr_sen
 
 cas_patt = re.compile('<CAS<...>>')
-def get_np_case(chunk):
-    nouns = [tok for tok in chunk if 'NOUN' in tok[1]]
+def get_np_case(chunk, kr_field=1):
+    nouns = [tok for tok in chunk if 'NOUN' in tok[kr_field]]
     if nouns == []:
         # If an NP contains no noun, we assume its rightmost element
         # to be the head
-        head_kr = chunk[-1][1]
+        head_kr = chunk[-1][kr_field]
     else:
-        head_kr = nouns[-1][1]
+        head_kr = nouns[-1][kr_field]
     if 'CAS' not in head_kr:
         case = '<CAS<NOM>>'
     else:
         case = cas_patt.findall(head_kr)[0]
     return case
 
-def get_pp_case(chunk):
-    postps = [tok for tok in chunk if 'POSTP' in tok[1]]
+def get_pp_case(chunk, kr_field=1, lemma_field=2):
+    postps = [tok for tok in chunk if 'POSTP' in tok[kr_field]]
     if postps == []:
         head = '???'
     else:
-        head = postps[-1][2].lower()
+        head = postps[-1][lemma_field].lower()
     return '<'+head+'>'
 
-def get_chunk_case(chunk, cat):
+def get_chunk_case(chunk, cat, kr_field=1, lemma_field=2):
     if cat not in ('NP', 'PP'):
         return cat
     elif cat == 'NP':
-        case = get_np_case(chunk)
+        case = get_np_case(chunk, kr_field)
     else:
-        case = get_pp_case(chunk)
+        case = get_pp_case(chunk, kr_field, lemma_field)
     return cat+case
 
-def collapse_chunks(sen):
+def collapse_chunks(sen, word_field=0, kr_field=1,
+                    lemma_field=2, chunk_field=-1):
     """converts chunks within a sentence into single tokens bearing the
     chunk tag (and its case, if applicable) as their analysis"""
     new_sen = []
-    for chunk in toks_to_chunks(sen):
-        if chunk[0][-1] == 'O':
+    for chunk in toks_to_chunks(sen, chunk_field):
+        if chunk[0][chunk_field] == 'O':
             new_sen.append(chunk[0])
         else:
-            chunk_cat = chunk[0][-1].split('-')[-1]
+            chunk_cat = chunk[0][chunk_field].split('-')[-1]
             chunk_cat = chunk_cat.split('<')[0]  # some datasets already have case # nopep8
-            chunk_text = '_'.join([tok[0] for tok in chunk])
-            cased_chunk_tag = get_chunk_case(chunk, chunk_cat)
+            chunk_text = '_'.join([tok[word_field] for tok in chunk])
+            cased_chunk_tag = get_chunk_case(chunk, chunk_cat,
+                                             kr_field, lemma_field)
             new_sen.append([chunk_text, cased_chunk_tag, cased_chunk_tag])
     return new_sen
 
-def toks_to_chunks(sen, strict=False):
+def toks_to_chunks(sen, strict=False, chunk_field=-1):
     """converts a list of tokens to a list of chunks, where out-of-chunk
     tokens constitute chunks on their own. If strict is set to True,
     tagging must conform to BIE1 standards, otherwise an exception is raised"""
@@ -104,12 +106,12 @@ def toks_to_chunks(sen, strict=False):
     # print sen
     for tok in sen:
         # print tok
-        if tok[-1] == 'O':
+        if tok[chunk_field] == 'O':
             if curr_chunk != [] and strict:
                 raise InvalidTaggingError
             new_sen.append([tok])
             continue
-        chunk_part, chunk_type = tok[-1].split('-')
+        chunk_part, chunk_type = tok[chunk_field].split('-')
         if chunk_part in ('B', '1'):
             if curr_chunk != [] and strict:
                 raise InvalidTaggingError
