@@ -76,12 +76,12 @@ class SentenceTagger(AbstractSubprocessClass):
         self.osep = sep
         self.isep = isep
         self.osep = osep
-        if chunk_field == None:
+        if chunk_field is None:
             self.chunk_mode = False
         else:
             self.chunk_mode = True
             self.chunk_field = chunk_field
-        
+
     def send(self, tokens):
         """
         send tokens to _process.stdin after encoding
@@ -108,7 +108,7 @@ class SentenceTagger(AbstractSubprocessClass):
 
     def get_std_err(self):
         return self._process.stderr.readlines()
-    
+
     def recv_and_append(self, tokens):
         tagged_tokens = []
         for token in tokens:
@@ -139,11 +139,11 @@ class SentenceTagger(AbstractSubprocessClass):
     def encode(self, token):
         """Encodes @p token before it is sent to the tagger."""
         return token.encode(self._encoding, 'xmlcharrefreplace')
-    
+
     def decode(self, line):
         """Decodes @p line before it is returned."""
         return line.decode(self._encoding).strip()
-    
+
     def tag_sentence(self, tokens):
         if self._closed:
             self.start()
@@ -175,10 +175,10 @@ class Ocamorph(LineByLineTagger):
         o.append("--blocking")
 
         self.options = o
-        
+
     def override_options(self):
         raise NotImplementedError()
-    
+
     def set_blocking(self, bl=True):
         if bl:
             self.options[8] = "--blocking"
@@ -206,7 +206,7 @@ class Hundisambig(SentenceTagger):
         o += ["--decompounding", "no"]  # Let's not bother with decompounding
 
         self.options = o
-    
+
     def set_morphtable(self, mt, load=False):
         if self._closed:
             self._morphtable = mt
@@ -244,15 +244,15 @@ class Hundisambig(SentenceTagger):
                     logging.debug(u"REPLACED " + token + u" WITH NOUN " + token_to_send.decode(self._encoding))
                 # else: no noun; the morphtable must be unusable anyway
         return token_to_send
-    
+
 class MorphAnalyzer(object):
     UNICODE_PATTERN = re.compile(ur"&#(\d+);")
     NUMBER_PATTERN = re.compile(ur"(\d+|[IVXLCDM]+)[.]", re.IGNORECASE)
 
     def __init__(self, ocamorph, hundisambig):
-        self._ocamorph    = ocamorph
+        self._ocamorph = ocamorph
         self._hundisambig = hundisambig
-        self._encoding    = ocamorph._encoding if ocamorph is not None else hundisambig._encoding
+        self._encoding = ocamorph._encoding if ocamorph is not None else hundisambig._encoding
 
     def analyze(self, data):
         from tempfile import NamedTemporaryFile
@@ -419,10 +419,10 @@ class Hunspell(AbstractSubprocessClass):
 
     """
 
-    stem_err_msg = "hunspell is blocking while using -s function because of"+\
-                " buffering. Modify pipe_interface() method in "\
-                "hunspell.cxx with fflush() stdout while stemming to make "+\
-                "this work.\n"
+    stem_err_msg = "hunspell is blocking while using -s function because of" \
+                   " buffering. Modify pipe_interface() method in " \
+                   "hunspell.cxx with fflush() stdout while stemming to make " \
+                   "this work.\n"
 
     MATCH = 0
     AFFIX = 1
@@ -461,7 +461,7 @@ class Hunspell(AbstractSubprocessClass):
         signal.signal(signal.SIGALRM, alarm_handler)
         if self.mode == "analyze":
             # useless status line printed to stdout...
-            _ = self._process.stdout.readline()
+            self._process.stdout.readline()
         if self.mode == "stem":
             try:
                 self._process.stdin.write("a\n")
@@ -475,10 +475,9 @@ class Hunspell(AbstractSubprocessClass):
                 raise Exception(Hunspell.stem_err_msg)
         self.stuck = False
 
-
     def check(self, text):
         words = text.split(" ")
-        return reduce(lambda x, y: x + y, 
+        return reduce(lambda x, y: x + y,
                       [self.check_word(word) for word in words])
 
     def check_word(self, word):
@@ -514,7 +513,7 @@ class Hunspell(AbstractSubprocessClass):
                     break
             except Alarm:
                 pass
-    
+
     def stem_word(self, word):
         try:
             to_send = word.encode(self._encoding)
@@ -559,8 +558,8 @@ class Hunspell(AbstractSubprocessClass):
 
     def analyze(self, text):
         words = text.split(" ")
-        res = reduce(lambda x, y: x + y, 
-                      [list(self.process_word(word)) for word in words])
+        res = reduce(lambda x, y: x + y,
+                     [list(self.process_word(word)) for word in words])
         new_res = []
         for r in res:
             if len(r.strip()) == 0:
@@ -628,11 +627,10 @@ if __name__ == "__main__":
     o = Ocamorph("/home/zseder/Proj/huntools/ocamorph-1.1-linux/ocamorph",
                  "/home/zseder/Proj/huntools/ocamorph-1.1-linux/morphdb.hu/morphdb_hu.bin")
     h = Hundisambig("/home/recski/sandbox/hundisambig_compact/hundisambig",
-                   "/home/recski/sandbox/hundisambig_compact/hu_szeged.model")
+                    "/home/recski/sandbox/hundisambig_compact/hu_szeged.model")
     a = MorphAnalyzer(o, h)
-    tagged = a.analyze([["tedd", "a", "piros", "kekszet", "a", "fekete", "fejre","."],
-                       ["de", "ne", "most", "!"]])
+    tagged = a.analyze([["tedd", "a", "piros", "kekszet", "a", "fekete",
+                         "fejre", "."],
+                        ["de", "ne", "most", "!"]])
     tagged = list(tagged)
     print tagged
-    
-
