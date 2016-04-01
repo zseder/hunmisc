@@ -610,7 +610,7 @@ class SFSTAnalyzer(LineByLineTagger):
     parameter and then outputs the analyses on one line, separated by tabs, as
     opposed to the stock version that outputs one analysis a line.
 
-    Returns the possible analyses of a word as a list. Returns None if none is
+    Returns the possible analyses of a word as a list. Returns [] if none is
     found.
     """
     def __init__(self, runnable, model, encoding='utf-8'):
@@ -623,7 +623,7 @@ class SFSTAnalyzer(LineByLineTagger):
             return analyses.split("\t")
         else:
             super(SFSTAnalyzer, self).recv_line()  # Error msg
-            return None
+            return []
 
     def start(self):
         super(SFSTAnalyzer, self).start()
