@@ -609,13 +609,21 @@ class SFSTAnalyzer(LineByLineTagger):
     This version requires my patched version that accepts the -t command line
     parameter and then outputs the analyses on one line, separated by tabs, as
     opposed to the stock version that outputs one analysis a line.
+
+    Returns the possible analyses of a word as a list. Returns None if none is
+    found.
     """
     def __init__(self, runnable, model, encoding='utf-8'):
         LineByLineTagger.__init__(self, runnable, encoding, ['-t', model])
 
     def recv_line(self):
         super(SFSTAnalyzer, self).recv_line()  # Throw away prompt
-        return super(SFSTAnalyzer, self).recv_line().strip().split("\t")
+        analyses = super(SFSTAnalyzer, self).recv_line().strip()
+        if len(analyses) > 0:
+            return analyses.split("\t")
+        else:
+            super(SFSTAnalyzer, self).recv_line()  # Error msg
+            return None
 
     def start(self):
         super(SFSTAnalyzer, self).start()
