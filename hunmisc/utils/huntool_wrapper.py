@@ -42,8 +42,8 @@ def alarm_handler(signum, frame):
     raise Alarm
 
 class LineByLineTagger(AbstractSubprocessClass):
-    def __init__(self, runnable, encoding):
-        AbstractSubprocessClass.__init__(self, runnable, encoding)
+    def __init__(self, runnable, encoding, options=None):
+        AbstractSubprocessClass.__init__(self, runnable, encoding, options)
 
     def send_line(self, line):
         self._process.stdin.write(line.encode(self._encoding, 'xmlcharrefreplace') + "\n")
@@ -601,6 +601,28 @@ class Hunspell(AbstractSubprocessClass):
             except Alarm:
                 yield Hunspell.TIMEOUT
                 return
+
+class SFSTAnalyzer(LineByLineTagger):
+    """
+    Wraps the SFST executable (there is pysfst, but 1. this is an alternative,
+    2. it didn't install for me).
+
+    This version requires my patched version that accepts the -t command line
+    parameter and then outputs the analyses on one line, separated by tabs, as
+    opposed to the stock version that outputs one analysis a line.
+    """
+    def __init__(self, runnable, model, encoding='utf-8'):
+        LineByLineTagger.__init__(self, runnable, encoding, ['-t', model])
+
+    def recv_line(self):
+        super(SFSTAnalyzer, self).recv_line()  # Throw away prompt
+        return super(SFSTAnalyzer, self).recv_line().strip().split("\t")
+
+    def start(self):
+        super(SFSTAnalyzer, self).start()
+        # Skip initial output
+        super(SFSTAnalyzer, self).recv_line()
+        super(SFSTAnalyzer, self).recv_line()
 
 if __name__ == "__main__":
     o = Ocamorph("/home/zseder/Proj/huntools/ocamorph-1.1-linux/ocamorph",
