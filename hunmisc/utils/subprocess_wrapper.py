@@ -21,7 +21,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
 
-
 from subprocess import Popen, PIPE
 
 class AbstractSubprocessClass(object):
@@ -29,10 +28,16 @@ class AbstractSubprocessClass(object):
     Simple abstract wrapper class for commands that need to be
     called with Popen and communicate with them
     """
-    def __init__(self, runnable, encoding="utf-8"):
+    def __init__(self, runnable, encoding="utf-8", options=None):
         self._runnable = runnable
         self._encoding = encoding
         self._closed = True
+        if isinstance(options, list):
+            self.options = options
+        elif options is None:
+            self.options = []
+        else:
+            raise ValueError('AbstractSubprocessClass: options must be a list')
 
     def start(self):
         #print self._runnable
@@ -54,4 +59,3 @@ class AbstractSubprocessClass(object):
     def __del__(self):
         if not self._closed:
             self.stop()
-
