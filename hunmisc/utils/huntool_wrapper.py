@@ -604,33 +604,20 @@ class Hunspell(AbstractSubprocessClass):
 
 class SFSTAnalyzer(LineByLineTagger):
     """
-    Wraps the SFST executable (there is pysfst, but 1. this is an alternative,
-    2. it didn't install for me).
+    Wraps the SFST executable fst-infl2 (there is pysfst, but
+      1. this is an alternative,
+      2. it didn't install for me).
 
-    This version requires my patched version that accepts the -t command line
-    parameter and then outputs the analyses on one line, separated by tabs, as
-    opposed to the stock version that outputs one analysis a line.
-
-    Returns the possible analyses of a word as a list. Returns None if none is
+    Returns the possible analyses of a word as a list. Returns [] if none is
     found.
     """
-    def __init__(self, runnable, model, encoding='utf-8'):
-        LineByLineTagger.__init__(self, runnable, encoding, ['-t', model])
+    def __init__(self, model, runnable='fst-infl2', encoding='utf-8'):
+        """Note: model should be a compressed FST (.ca)."""
+        LineByLineTagger.__init__(self, runnable, encoding,
+                                  ['-s', '-delim', "\t", model])
 
     def recv_line(self):
-        super(SFSTAnalyzer, self).recv_line()  # Throw away prompt
-        analyses = super(SFSTAnalyzer, self).recv_line().strip()
-        if len(analyses) > 0:
-            return analyses.split("\t")
-        else:
-            super(SFSTAnalyzer, self).recv_line()  # Error msg
-            return None
-
-    def start(self):
-        super(SFSTAnalyzer, self).start()
-        # Skip initial output
-        super(SFSTAnalyzer, self).recv_line()
-        super(SFSTAnalyzer, self).recv_line()
+        return super(SFSTAnalyzer, self).recv_line().strip().split("\t")[1:]
 
 class HFSTAnalyzer(LineByLineTagger):
     """
