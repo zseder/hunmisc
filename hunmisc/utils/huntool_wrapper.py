@@ -21,8 +21,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
 
-import re
+from itertools import izip_longest
 import logging
+import re
 import signal
 import sys
 
@@ -630,6 +631,42 @@ class SFSTAnalyzer(LineByLineTagger):
         # Skip initial output
         super(SFSTAnalyzer, self).recv_line()
         super(SFSTAnalyzer, self).recv_line()
+
+class HFSTAnalyzer(LineByLineTagger):
+    """
+    Wraps the HFST executable -- in case one doesn't want to install the Python
+    packages (not available in Pypi), only as Debian packages...
+
+    This code uses the Apertium output format, weights included, as that is the
+    one that fits on a line. An empty list is returned for words without
+    any analysis.
+    """
+    def __init__(self, model, runnable='hfst-proc', encoding='utf-8',
+                 weights=True):
+        """
+        @param weights if @c True (the default), recv_line (and therefore tag)
+                       returns a list of (analysis, weight) tuples, not just
+                       the analyses.
+        """
+        LineByLineTagger.__init__(self, runnable, encoding, ['-pW', model])
+        self.weights = weights
+        self.linep = re.compile(r'[\^][^/]+/([^$]+)[$]')
+        self.delimp = re.compile(r'~([^~]+)~(?:/|$)')
+
+    def send_line(self, line):
+        super(HFSTAnalyzer, self).send_line(line)
+        super(HFSTAnalyzer, self).send_line('')
+
+    def recv_line(self):
+        line = super(HFSTAnalyzer, self).recv_line()
+        while not line:
+            # Throw away empty line before 2nd & up requests
+            line = super(HFSTAnalyzer, self).recv_line()
+        lst = self.delimp.split(self.linep.search(line).group(1))[:-1]
+        if self.weights:
+            return [(a, float(w)) for a, w in izip_longest(*[iter(lst)] * 2)]
+        else:
+            return lst[::2]
 
 if __name__ == "__main__":
     o = Ocamorph("/home/zseder/Proj/huntools/ocamorph-1.1-linux/ocamorph",
