@@ -1,4 +1,4 @@
-# coding=utf-8
+# vim: set fileencoding=utf-8 :
 """
 Copyright 2011-13 Attila Zseder
 Email: zseder@gmail.com
@@ -21,7 +21,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
-# KR kÛdok beolvas·sa, a megfelelı memÛriareprezent·ciÛk megÈpÌtÈse.
+# KR k√≥dok beolvas√°sa, a megfelel≈ë mem√≥riareprezent√°ci√≥k meg√©p√≠t√©se.
 
 import sys
 
@@ -29,19 +29,19 @@ def cerr(txt) :
     sys.stderr.write(txt+"\n")
     sys.stderr.flush()
 
-# ÷SSZETETTKR = TELJESKR ( "+" TELJESKR )*
-# TELJESKR = T’ ( "/" DEKOR¡LTKR )+
-# DEKOR¡CI” = "[" KR "]" (Regen nem igy volt, hanem egyszeruen igy: DEKOR¡CI” = "[" V¡LTOZ”N…V "]" )
-# DEKOR¡LTKR = KR ( DEKOR¡CI” )*
-# FEJ = V¡LTOZ”N…V
+# √ñSSZETETTKR = TELJESKR ( "+" TELJESKR )*
+# TELJESKR = T≈ê ( "/" DEKOR√ÅLTKR )+
+# DEKOR√ÅCI√ì = "[" KR "]" (Regen nem igy volt, hanem egyszeruen igy: DEKOR√ÅCI√ì = "[" V√ÅLTOZ√ìN√âV "]" )
+# DEKOR√ÅLTKR = KR ( DEKOR√ÅCI√ì )*
+# FEJ = V√ÅLTOZ√ìN√âV
 # KR = FEJ ( "<" KR ">" )*
 #
-# T’ = T’BET€+
-# V¡LTOZ”N…V = V¡LTOZ”N…VBET€+
+# T≈ê = T≈êBET√õ+
+# V√ÅLTOZ√ìN√âV = V√ÅLTOZ√ìN√âVBET√õ+
 #
-# T’BET€ = [a-zA-Z0-9`;.@&-] vagy ami mÈg ezen kÌv¸l eszembe jut, Ès nem +/[]<>
+# T≈êBET√õ = [a-zA-Z0-9`;.@&-] vagy ami m√©g ezen k√≠v√ºl eszembe jut, √©s nem +/[]<>
 #
-# V¡LTOZ”N…VBET€ = [A-Z0-9_-] T’BET€-vel ellentÈtben ASCII karakterkÈszlet.
+# V√ÅLTOZ√ìN√âVBET√õ = [A-Z0-9_-] T≈êBET√õ-vel ellent√©tben ASCII karakterk√©szlet.
 
 
 class Node :
@@ -162,13 +162,13 @@ def analyzeConstituent( w ) :
         
         if p==-1 :
             p = len(part)
-	if p==0 :
-	    # Megengedjuk, hogy ne legyen fokategoria, de csak az elso
-	    # kepzoben. Ez igazibol nem kepzo, hanem a kepzes segitsegevel
-	    # megoldott alkategoria.
-	    if i!=0 :
-		cerr("SUBCATEGORIZATION (empty main category) IS ONLY ALLOWED AT THE FIRST POSITION: "+part)
-		assert p>0 or i==0
+        if p==0 :
+            # Megengedjuk, hogy ne legyen fokategoria, de csak az elso
+            # kepzoben. Ez igazibol nem kepzo, hanem a kepzes segitsegevel
+            # megoldott alkategoria.
+            if i!=0 :
+                cerr("SUBCATEGORIZATION (empty main category) IS ONLY ALLOWED AT THE FIRST POSITION: "+part)
+                assert p>0 or i==0
         krNode = analyzeKR( part[:p] )
         krCode.krNodes.append( krNode )
         # Csakis a vegen, opcionalisan lehet egy
@@ -191,10 +191,10 @@ def analyzeConstituent( w ) :
                 assert c!="["
                 if c=="]" :
                     state = OUT
-		    # Ez 2012.07.31 elott nem igy volt,
-		    # eddig a kepzonek nem volt kacsacsor-strukturaja.
-		    # Most mar van:
-		    parsedKepzo = analyzeKR(kepzo)
+                    # Ez 2012.07.31 elott nem igy volt,
+                    # eddig a kepzonek nem volt kacsacsor-strukturaja.
+                    # Most mar van:
+                    parsedKepzo = analyzeKR(kepzo)
                     kepzoGroup.append(parsedKepzo)
                     kepzo = ""
                 else :
@@ -205,8 +205,8 @@ def analyzeConstituent( w ) :
                         ok=True
                     if c=="_" or c=="-" :
                         ok=True
-		    if c=="<" or c==">" :
-			ok = True
+                    if c=="<" or c==">" :
+                        ok = True
                     if not ok :
                         raise "data error"
                     kepzo += c
@@ -309,9 +309,10 @@ def main() :
             if len(tokens)==1 and tokens[0]=="" :
                 continue
             for token in tokens :
-                analyze(token)
+                print u"\t".join(unicode(kr) for kr in
+                                 analyze(token.decode('utf-8'))).encode('utf-8')
     else :
-        # Az ocamorph standard, kacsacsÔøΩrÔøΩs kimenetÔøΩt vizsgÔøΩlja helyessÔøΩg szempontjÔøΩbÔøΩl.
+        # Az ocamorph standard, kacsacs≈ër√∂s kimenet√©t vizsg√°lja helyess√©g szempontj√°b√≥l.
         for l in sys.stdin :
             t = l.strip("\n")
             if t[:2]=="> " :
