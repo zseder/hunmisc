@@ -31,13 +31,17 @@ import re
 class InvalidTaggingError(Exception):
     pass
 
-def sentence_iterator(input):
-    """converts a tsv-format stream to a generator of lists of lists"""
+def sentence_iterator(input, comment_tag=None):
+    """converts a tsv-format stream to a generator of lists of lists
+    if comment_tag is not None, lines starting with comment_tag are ignored
+    (but do not count as sentence breaks)"""
     curr_sen = []
     while True:
         line = input.readline()
         if not line:
             break
+        if comment_tag and line.startswith(comment_tag):
+            continue
         if line == '\n':
             if curr_sen == []:
                 # consecutive empty lines between sentences are tolerated
@@ -146,8 +150,10 @@ def get_dependencies(sen, id_field=0, word_field=1, lemma_field=2, msd_field=3,
                      gov_field=-2, dep_field=-1):
     id_to_toks = {"0": {"lemma": "ROOT", "tok": "ROOT", "msd": None}}
     for tok in sen:
-        i, word, gov, dep = (
-            tok[id_field], tok[word_field], tok[gov_field], tok[dep_field])
+        i = tok[id_field]
+        if '.' in i:
+            continue
+        word, gov, dep = (tok[word_field], tok[gov_field], tok[dep_field])
         lemma = None if lemma_field is None else tok[lemma_field]
         msd = None if msd_field is None else tok[msd_field]
         id_to_toks[i] = {
