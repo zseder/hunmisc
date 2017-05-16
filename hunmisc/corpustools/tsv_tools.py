@@ -151,7 +151,7 @@ def get_dependencies(sen, id_field=0, word_field=1, lemma_field=2, msd_field=3,
     id_to_toks = {"0": {"lemma": "ROOT", "tok": "ROOT", "msd": None}}
     for tok in sen:
         i = tok[id_field]
-        if '.' in i:
+        if '.' in i or '-' in i:
             continue
         word, gov, dep = (tok[word_field], tok[gov_field], tok[dep_field])
         lemma = None if lemma_field is None else tok[lemma_field]
